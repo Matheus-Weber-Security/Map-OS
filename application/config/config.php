@@ -14,7 +14,8 @@
 | path to your installation.
 |
 */
-$config['base_url']	= 'http://localhost:8000';
+$env_app_url = getenv('APP_URL');
+$config['base_url'] = !empty($env_app_url) ? rtrim($env_app_url, '/') . '/' : 'http://localhost:8000/';
 
 /*
 |--------------------------------------------------------------------------

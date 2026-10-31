@@ -38,6 +38,41 @@
 
 /*
  *---------------------------------------------------------------
+ * CARREGADOR DE VARIÁVEIS DE AMBIENTE (.ENV)
+ *---------------------------------------------------------------
+ *
+ * Lê o arquivo .env se existir na raiz do projeto e injeta
+ * nas funções getenv(), $_ENV e $_SERVER de forma segura.
+ */
+$env_file = __DIR__ . DIRECTORY_SEPARATOR . '.env';
+if (file_exists($env_file)) {
+	$env_lines = file($env_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+	foreach ($env_lines as $env_line) {
+		$env_line = trim($env_line);
+		if ($env_line === '' || $env_line[0] === '#') {
+			continue;
+		}
+		if (strpos($env_line, '=') !== false) {
+			list($env_name, $env_value) = explode('=', $env_line, 2);
+			$env_name = trim($env_name);
+			$env_value = trim($env_value);
+			if (strlen($env_value) > 1 && (
+				($env_value[0] === '"' && $env_value[strlen($env_value) - 1] === '"') ||
+				($env_value[0] === "'" && $env_value[strlen($env_value) - 1] === "'")
+			)) {
+				$env_value = substr($env_value, 1, -1);
+			}
+			if (!array_key_exists($env_name, $_SERVER) && !array_key_exists($env_name, $_ENV)) {
+				putenv("{$env_name}={$env_value}");
+				$_ENV[$env_name] = $env_value;
+				$_SERVER[$env_name] = $env_value;
+			}
+		}
+	}
+}
+
+/*
+ *---------------------------------------------------------------
  * APPLICATION ENVIRONMENT
  *---------------------------------------------------------------
  *
@@ -53,7 +88,7 @@
  *
  * NOTE: If you change these, also change the error_reporting() code below
  */
-	define('ENVIRONMENT', isset($_SERVER['CI_ENV']) ? $_SERVER['CI_ENV'] : 'development');
+	define('ENVIRONMENT', getenv('CI_ENV') ?: (isset($_SERVER['CI_ENV']) ? $_SERVER['CI_ENV'] : 'development'));
 
 /*
  *---------------------------------------------------------------

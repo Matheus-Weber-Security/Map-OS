@@ -49,13 +49,17 @@ $active_group = 'default';
 $query_builder = TRUE;
 $active_record = TRUE;
 
+$db_ssl = (strtolower((string)getenv('DB_SSL')) === 'true' || getenv('DB_SSL') === '1');
+$encrypt_config = $db_ssl ? array('ssl_verify' => FALSE) : FALSE;
+
 $db['default'] = array(
 	'dsn'	=> '',
-	'hostname' => '127.0.0.1',
-	'username' => 'root',
-	'password' => 'root',
-	'database' => 'banco',
-	'dbdriver' => 'mysqli',
+	'hostname' => getenv('DB_HOST') ?: '127.0.0.1',
+	'port'     => (int)(getenv('DB_PORT') ?: 3306),
+	'username' => getenv('DB_USER') ?: 'root',
+	'password' => getenv('DB_PASS') !== false ? getenv('DB_PASS') : 'root',
+	'database' => getenv('DB_NAME') ?: 'banco',
+	'dbdriver' => getenv('DB_DRIVER') ?: 'mysqli',
 	'dbprefix' => '',
 	'pconnect' => FALSE,
 	'db_debug' => (ENVIRONMENT !== 'production'),
@@ -64,7 +68,7 @@ $db['default'] = array(
 	'char_set' => 'utf8',
 	'dbcollat' => 'utf8_general_ci',
 	'swap_pre' => '',
-	'encrypt' => FALSE,
+	'encrypt' => $encrypt_config,
 	'compress' => FALSE,
 	'stricton' => FALSE,
 	'failover' => array(),

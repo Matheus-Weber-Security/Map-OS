@@ -1,3 +1,6 @@
+# Arquivo de variáveis de ambiente locais (NUNCA enviar para o repositório)
+.env
+
 # Arquivos de backup e compactados
 *.zip
 controle_ordem_serviço_4_33_2.zip
