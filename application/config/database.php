@@ -50,7 +50,21 @@ $query_builder = TRUE;
 $active_record = TRUE;
 
 $db_ssl = (strtolower((string)getenv('DB_SSL')) === 'true' || getenv('DB_SSL') === '1');
-$encrypt_config = $db_ssl ? array('ssl_verify' => FALSE) : FALSE;
+$db_ssl_ca = getenv('DB_SSL_CA');
+if ($db_ssl) {
+	$encrypt_config = array(
+		'ssl_verify' => FALSE
+	);
+	if (!empty($db_ssl_ca)) {
+		$resolved_ca = file_exists($db_ssl_ca) ? $db_ssl_ca : FCPATH . $db_ssl_ca;
+		if (file_exists($resolved_ca)) {
+			$encrypt_config['ssl_ca'] = $resolved_ca;
+			$encrypt_config['ssl_verify'] = TRUE;
+		}
+	}
+} else {
+	$encrypt_config = FALSE;
+}
 
 $db['default'] = array(
 	'dsn'	=> '',

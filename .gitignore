@@ -1,5 +1,6 @@
 # Arquivo de variáveis de ambiente locais (NUNCA enviar para o repositório)
 .env
+*.pem
 
 # Arquivos de backup e compactados
 *.zip
