@@ -437,7 +437,7 @@ class Os extends CI_Controller {
         }
 
         // see what we get
-        if(count($error) > 0)
+        if(!empty($error))
         {
             //print_r($data['error'] = $error);
             echo json_encode(array('result'=> false, 'mensagem' => 'Nenhum arquivo foi anexado.'));

@@ -72,7 +72,6 @@ class Usuarios extends CI_Controller {
         } else
         {     
 
-            $this->load->library('encrypt');                       
             $data = array(
                     'nome' => set_value('nome'),
 					'rg' => set_value('rg'),
@@ -83,7 +82,7 @@ class Usuarios extends CI_Controller {
 					'cidade' => set_value('cidade'),
 					'estado' => set_value('estado'),
 					'email' => set_value('email'),
-					'senha' => $this->encrypt->sha1($this->input->post('senha')),
+					'senha' => password_hash($this->input->post('senha'), PASSWORD_DEFAULT),
 					'telefone' => set_value('telefone'),
 					'celular' => set_value('celular'),
 					'situacao' => set_value('situacao'),
@@ -143,8 +142,7 @@ class Usuarios extends CI_Controller {
 
             $senha = $this->input->post('senha'); 
             if($senha != null){
-                $this->load->library('encrypt');   
-                $senha = $this->encrypt->sha1($senha);
+                $senha = password_hash($senha, PASSWORD_DEFAULT);
 
                 $data = array(
                         'nome' => $this->input->post('nome'),

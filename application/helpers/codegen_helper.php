@@ -23,8 +23,11 @@ function v($a)
 function clean_header($array){
     $CI = get_instance();
     $CI->load->helper('inflector');
-    foreach($array as $a){
-        $arr[] = humanize($a);
+    $arr = array();
+    if(is_array($array)){
+        foreach($array as $a){
+            $arr[] = humanize($a);
+        }
     }
     return $arr;
 }

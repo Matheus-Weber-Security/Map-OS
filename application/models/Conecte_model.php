@@ -60,7 +60,7 @@ class Conecte_model extends CI_Model {
 
     public function count($table,$cliente){
     	$this->db->where('clientes_id', $cliente);
-		return $this->db->count_all($table);
+		return $this->db->count_all_results($table);
 	}
 
     public function getDados(){

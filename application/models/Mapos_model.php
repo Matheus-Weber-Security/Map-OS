@@ -36,16 +36,25 @@ class Mapos_model extends CI_Model {
         $this->db->limit(1);
         $usuario = $this->db->get('usuarios')->row();
 
-        if($usuario->senha != $oldSenha){
+        if(!$usuario){
             return false;
         }
-        else{
-            $this->db->set('senha',$senha);
-            $this->db->where('idUsuarios',$id);
-            return $this->db->update('usuarios');    
+
+        $valida = false;
+        if(password_verify($oldSenha, $usuario->senha)){
+            $valida = true;
+        } elseif(sha1($oldSenha) === $usuario->senha || $oldSenha === $usuario->senha) {
+            $valida = true;
         }
 
-        
+        if(!$valida){
+            return false;
+        }
+
+        $hash = password_hash($senha, PASSWORD_DEFAULT);
+        $this->db->set('senha',$hash);
+        $this->db->where('idUsuarios',$id);
+        return $this->db->update('usuarios');    
     }
 
     function pesquisar($termo){

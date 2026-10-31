@@ -51,7 +51,7 @@ class Conecte extends CI_Controller {
             $this->db->limit(1);
             $cliente = $this->db->get('clientes')->row();
 
-            if(count($cliente) > 0){
+            if($cliente != null){
                 $dados = array('nome' => $cliente->nomeCliente, 'id' => $cliente->idClientes,'token' => 20540658, 'conectado' => TRUE);
                 $this->session->set_userdata($dados);
 
