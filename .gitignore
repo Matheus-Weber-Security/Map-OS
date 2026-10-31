@@ -1,0 +1,21 @@
+# Arquivos de backup e compactados
+*.zip
+controle_ordem_serviço_4_33_2.zip
+backup/
+
+# IDE e editores
+nbproject/
+.idea/
+.vscode/
+
+# Logs e Cache
+application/cache/*
+!application/cache/index.html
+!application/cache/.htaccess
+application/logs/*
+!application/logs/index.html
+
+# Arquivos do sistema
+Thumbs.db
+Desktop.ini
+.DS_Store
