@@ -1,28 +1,41 @@
-# Arquivo de variáveis de ambiente locais (NUNCA enviar para o repositório)
+# See https://help.github.com/ignore-files/ for more about ignoring files.
+# production
+/install/files
+/docker/data
+
+# misc
+.DS_Store
+.vscode
+.phpunit.cache/
+.phpunit.result.cache
+
+/vendor/
+/application/vendor/
+
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+!blank/.gitkeep
+desktop.ini
+
+application/vendor/
+vendor/
+# As libs de JS copiadas pelo npm run build:vendor são commitadas (#2837).
+!/assets/vendor/
+node_modules/
+.idea/
+.php_cs.cache
+.php-cs-fixer.cache
+application/logs/*
+ci_sessions/
+
+uploads
+application/.env
 .env
 *.pem
-
-# Arquivos de backup e compactados
-*.zip
-controle_ordem_serviço_4_33_2.zip
-backup/
-
-# Scripts locais do Windows
 *.bat
-
-# IDE e editores
-nbproject/
-.idea/
-.vscode/
-
-# Logs e Cache
-application/cache/*
-!application/cache/index.html
-!application/cache/.htaccess
-application/logs/*
-!application/logs/index.html
-
-# Arquivos do sistema
-Thumbs.db
-Desktop.ini
-.DS_Store
+*.zip
+assets/userImage
+application/storage/

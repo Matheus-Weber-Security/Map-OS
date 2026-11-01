@@ -1,292 +1,257 @@
-<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+<?php
 
-class Arquivos extends CI_Controller {
+if (! defined('BASEPATH')) {
+    exit('No direct script access allowed');
+}
 
+class Arquivos extends MY_Controller
+{
+    /** Filtros da listagem, na query string: busca no texto e período (AAAA-MM-DD). */
+    public const FILTROS = ['pesquisa' => 'texto', 'de' => 'texto', 'ate' => 'texto'];
 
-	public function __construct(){
-		parent::__construct();
+    public function __construct()
+    {
+        parent::__construct();
 
-		if((!$this->session->userdata('session_id')) || (!$this->session->userdata('logado'))){
-        	redirect('mapos/login');
-        }
-
-        $this->load->helper(array('codegen_helper'));
-        $this->load->model('arquivos_model','',TRUE);
+        $this->load->model('arquivos_model');
         $this->data['menuArquivos'] = 'Arquivos';
-	}
+    }
 
-    public function index(){
+    public function index()
+    {
         $this->gerenciar();
     }
-	public function gerenciar(){
 
-        if(!$this->permission->checkPermission($this->session->userdata('permissao'),'vArquivo')){
-           $this->session->set_flashdata('error','Você não tem permissão para visualizar arquivos.');
-           redirect(base_url());
+    /**
+     * Listagem de arquivos (#2845), no padrão das listagens (#2852). As datas
+     * do período que não forem AAAA-MM-DD válidas são descartadas.
+     */
+    public function gerenciar()
+    {
+        if (! $this->permission->checkPermission($this->session->userdata('permissao'), 'vArquivo')) {
+            $this->session->set_flashdata('error', 'Você não tem permissão para visualizar arquivos.');
+            redirect(base_url());
         }
 
-		$this->load->library('pagination');
-
-        $pesquisa = $this->input->get('pesquisa');
-        $de = $this->input->get('data');
-        $ate = $this->input->get('data2');
-
-        if($pesquisa == null && $de == null && $ate == null){
-
-            
-                   
-            $config['base_url'] = base_url().'index.php/arquivos/gerenciar';
-            $config['total_rows'] = $this->arquivos_model->count('documentos');
-            $config['per_page'] = 10;
-            $config['next_link'] = 'Próxima';
-            $config['prev_link'] = 'Anterior';
-            $config['full_tag_open'] = '<div class="pagination alternate"><ul>';
-            $config['full_tag_close'] = '</ul></div>';
-            $config['num_tag_open'] = '<li>';
-            $config['num_tag_close'] = '</li>';
-            $config['cur_tag_open'] = '<li><a style="color: #2D335B"><b>';
-            $config['cur_tag_close'] = '</b></a></li>';
-            $config['prev_tag_open'] = '<li>';
-            $config['prev_tag_close'] = '</li>';
-            $config['next_tag_open'] = '<li>';
-            $config['next_tag_close'] = '</li>';
-            $config['first_link'] = 'Primeira';
-            $config['last_link'] = 'Última';
-            $config['first_tag_open'] = '<li>';
-            $config['first_tag_close'] = '</li>';
-            $config['last_tag_open'] = '<li>';
-            $config['last_tag_close'] = '</li>';
-            
-            $this->pagination->initialize($config);     
-            
-            $this->data['results'] = $this->arquivos_model->get('documentos','idDocumentos,documento,descricao,file,path,url,cadastro,categoria,tamanho,tipo','',$config['per_page'],$this->uri->segment(3));
-        
-        }
-        else{
-
-            if($de != null){
-
-                $de = explode('/', $de);
-                $de = $de[2].'-'.$de[1].'-'.$de[0];
-
-                if($ate != null){
-                    $ate = explode('/', $ate);
-                    $ate = $ate[2].'-'.$ate[1].'-'.$ate[0]; 
-                }
-                else{
-                    $ate = $de;
-                }
-            }
-
-            $this->data['results'] = $this->arquivos_model->search($pesquisa, $de, $ate);
-        }
-
-       	$this->data['view'] = 'arquivos/arquivos';
-		$this->load->view('tema/topo',$this->data);
-	}
-
-
-	public function adicionar() {
-
-        if(!$this->permission->checkPermission($this->session->userdata('permissao'),'aArquivo')){
-          $this->session->set_flashdata('error','Você não tem permissão para adicionar arquivos.');
-          redirect(base_url());
-        }
-
-        $this->load->library('form_validation');
-        $this->data['custom_error'] = '';
-
-        $this->form_validation->set_rules('nome', '', 'trim|required|xss_clean');
-
-
-        if ($this->form_validation->run() == false) {
-            $this->data['custom_error'] = (validation_errors() ? '<div class="form_error">' . validation_errors() . '</div>' : false);
-        } else {
-
-        	$arquivo = $this->do_upload();
-
-        	$file = $arquivo['file_name'];
-        	$path = $arquivo['full_path'];
-        	$url = base_url().'assets/arquivos/'.date('d-m-Y').'/'.$file;
-        	$tamanho = $arquivo['file_size'];
-        	$tipo = $arquivo['file_ext'];
-
-        	$data = $this->input->post('data');
-
-        	if($data == null){
-        		$data = date('Y-m-d');
-        	}
-        	else{
-        		$data = explode('/',$data);
-        		$data = $data[2].'-'.$data[1].'-'.$data[0];
-        	}
-
-            $data = array(
-                'documento' => $this->input->post('nome'),
-                'descricao' => $this->input->post('descricao'),
-                'file' => $file,
-                'path' => $path,
-                'url' => $url,
-                'cadastro' => $data,
-                'tamanho' => $tamanho,
-                'tipo' => $tipo
-            );
-
-            if ($this->arquivos_model->add('documentos', $data) == TRUE) {
-                $this->session->set_flashdata('success','Arquivo adicionado com sucesso!');
-                redirect(base_url() . 'index.php/arquivos/adicionar/');
+        $filtros = listagemFiltros(self::FILTROS, $this->input->get());
+        foreach (['de', 'ate'] as $periodo) {
+            $data = isset($filtros[$periodo]) ? dataIsoParaYmd($filtros[$periodo]) : null;
+            if ($data === null) {
+                unset($filtros[$periodo]);
             } else {
-                $this->data['custom_error'] = '<div class="form_error"><p>Ocorreu um erro.</p></div>';
+                $filtros[$periodo] = $data;
             }
         }
 
-        $this->data['view'] = 'arquivos/adicionarArquivo';
-        $this->load->view('tema/topo', $this->data);
+        $offset = (int) $this->uri->segment(3);
+        $total = $this->arquivos_model->contar($filtros);
 
-    }
+        $this->data['filtros'] = $filtros;
+        $this->data['total'] = $total;
+        $this->data['results'] = $this->arquivos_model->listar($filtros, (int) $this->data['configuration']['per_page'], $offset);
+        $this->data['paginacao'] = $this->paginacao(site_url('arquivos/gerenciar'), $total, $offset, null, $filtros);
+        $this->data['pode'] = [
+            'adicionar' => $this->permite('aArquivo'),
+            'editar' => $this->permite('eArquivo'),
+            'excluir' => $this->permite('dArquivo'),
+        ];
 
-    public function editar() {
-
-        if(!$this->permission->checkPermission($this->session->userdata('permissao'),'eArquivo')){
-          $this->session->set_flashdata('error','Você não tem permissão para editar arquivos.');
-          redirect(base_url());
+        if ($this->data['pode']['adicionar']) {
+            $this->data['topbar_acao'] = ['label' => 'Novo arquivo', 'icon' => 'plus', 'href' => site_url('arquivos/adicionar')];
         }
 
-        $this->load->library('form_validation');
-        $this->data['custom_error'] = '';
+        $this->data['view'] = 'arquivos/arquivos';
 
-        $this->form_validation->set_rules('nome', '', 'trim|required|xss_clean');
-        if ($this->form_validation->run() == false) {
-            $this->data['custom_error'] = (validation_errors() ? '<div class="form_error">' . validation_errors() . '</div>' : false);
+        return $this->layout();
+    }
+
+    public function adicionar()
+    {
+        if (! $this->permission->checkPermission($this->session->userdata('permissao'), 'aArquivo')) {
+            $this->session->set_flashdata('error', 'Você não tem permissão para adicionar arquivos.');
+            redirect(base_url());
+        }
+
+        return $this->formulario(null);
+    }
+
+    public function editar()
+    {
+        $arquivo = is_numeric($this->uri->segment(3)) ? $this->arquivos_model->getById((int) $this->uri->segment(3)) : null;
+        if (! $arquivo) {
+            $this->session->set_flashdata('error', 'Arquivo não encontrado ou parâmetro inválido.');
+            redirect('arquivos');
+        }
+
+        if (! $this->permission->checkPermission($this->session->userdata('permissao'), 'eArquivo')) {
+            $this->session->set_flashdata('error', 'Você não tem permissão para editar arquivos.');
+            redirect(base_url());
+        }
+
+        return $this->formulario($arquivo);
+    }
+
+    /**
+     * Formulário de arquivo, para enviar e editar (#2845), no padrão dos
+     * formulários (#2851). Ao enviar, o arquivo só é gravado depois de a
+     * validação passar; na edição só mudam nome, descrição e data. O id
+     * editado é o da URL.
+     */
+    private function formulario(?object $arquivo)
+    {
+        $erros = [];
+
+        if ($this->input->method() === 'post') {
+            $erros = $this->validarFormulario('arquivos');
+
+            $data = trim((string) $this->input->post('data'));
+            $data = $data === '' ? date('Y-m-d') : dataIsoParaYmd($data);
+            if ($data === null) {
+                $erros['data'] = 'Informe uma data válida.';
+            }
+
+            if ($erros === []) {
+                $salvou = false;
+                $dados = [
+                    'documento' => trim((string) $this->input->post('nome')),
+                    'descricao' => trim((string) $this->input->post('descricao')),
+                    'cadastro' => $data,
+                ];
+
+                if ($arquivo === null) {
+                    $envio = $this->do_upload();
+
+                    if (is_string($envio)) {
+                        $erros['userfile'] = $envio;
+                    } else {
+                        $dados += [
+                            'file' => $envio['file_name'],
+                            'path' => 'arquivos/' . date('d-m-Y') . '/' . $envio['file_name'],
+                            'url' => '',
+                            'tamanho' => $envio['file_size'],
+                            'tipo' => $envio['file_ext'],
+                        ];
+                        $salvou = $this->arquivos_model->add('documentos', $dados) == true;
+                    }
+                } else {
+                    $salvou = $this->arquivos_model->edit('documentos', $dados, 'idDocumentos', (int) $arquivo->idDocumentos) == true;
+                }
+
+                if ($erros === []) {
+                    if ($salvou) {
+                        log_info($arquivo === null ? 'Adicionou um arquivo' : 'Alterou um arquivo, ID: ' . (int) $arquivo->idDocumentos);
+                        $this->session->set_flashdata('success', $arquivo === null ? 'Arquivo enviado com sucesso!' : 'Alterações salvas.');
+
+                        return redirect('arquivos');
+                    }
+
+                    $erros['_geral'] = 'Não foi possível salvar. Tente de novo.';
+                }
+            }
+        }
+
+        $post = $this->input->method() === 'post' ? $this->input->post() : null;
+        $this->data['arquivo'] = $arquivo;
+        $this->data['valores'] = [
+            'nome' => is_array($post) ? (string) ($post['nome'] ?? '') : (string) ($arquivo->documento ?? ''),
+            'descricao' => is_array($post) ? (string) ($post['descricao'] ?? '') : (string) ($arquivo->descricao ?? ''),
+            'data' => is_array($post) ? (string) ($post['data'] ?? '') : (string) ($arquivo->cadastro ?? date('Y-m-d')),
+        ];
+        $this->data['erros'] = $erros;
+        $this->data['view'] = 'arquivos/formulario';
+
+        return $this->layout();
+    }
+
+    public function download($id = null)
+    {
+        if (! $this->permission->checkPermission($this->session->userdata('permissao'), 'vArquivo')) {
+            $this->session->set_flashdata('error', 'Você não tem permissão para visualizar arquivos.');
+            redirect(base_url());
+        }
+
+        $file = $id !== null && is_numeric($id) ? $this->arquivos_model->getById($id) : null;
+        $arquivo = $file ? armazenamentoLocalizar((string) $file->path, [FCPATH . 'assets' . DIRECTORY_SEPARATOR . 'arquivos']) : null;
+        if ($arquivo === null) {
+            $this->session->set_flashdata('error', 'Erro! O arquivo não pode ser localizado.');
+            redirect(base_url() . 'index.php/arquivos/');
+        }
+
+        // Imagens e PDF abrem na página; o resto baixa (armazenamentoEnviar()).
+        $nome = trim((string) $file->documento) !== '' ? (string) $file->documento : 'arquivo';
+        $extensao = strtolower(pathinfo($arquivo, PATHINFO_EXTENSION));
+        armazenamentoEnviar($arquivo, str_ends_with(strtolower($nome), '.' . $extensao) ? $nome : $nome . '.' . $extensao, $this->input->get('baixar') !== null);
+    }
+
+    public function excluir()
+    {
+        if (! $this->permission->checkPermission($this->session->userdata('permissao'), 'dArquivo')) {
+            $this->session->set_flashdata('error', 'Você não tem permissão para excluir arquivos.');
+            redirect(base_url());
+        }
+
+        $id = $this->input->post('id');
+        $file = $id !== null && is_numeric($id) ? $this->arquivos_model->getById($id) : null;
+        if (! $file) {
+            $this->session->set_flashdata('error', 'Erro! O arquivo não pode ser localizado.');
+            redirect(site_url('arquivos'));
+        }
+
+        $this->db->where('idDocumentos', $id);
+        if ($this->db->delete('documentos')) {
+            $arquivo = armazenamentoLocalizar((string) $file->path, [FCPATH . 'assets' . DIRECTORY_SEPARATOR . 'arquivos']);
+            if ($arquivo !== null) {
+                unlink($arquivo);
+            }
+            $this->session->set_flashdata('success', 'Arquivo excluído com sucesso!');
+            log_info('Removeu um arquivo. ID: ' . $id);
         } else {
-
-            $data = $this->input->post('data');
-            if($data == null){
-                $data = date('Y-m-d');
-            }
-            else{
-                $data = explode('/',$data);
-                $data = $data[2].'-'.$data[1].'-'.$data[0];
-            }
-
-            $data = array(
-                'documento' => $this->input->post('nome'),
-                'descricao' => $this->input->post('descricao'),
-                'cadastro' => $data,           
-            );
-
-            if ($this->arquivos_model->edit('documentos', $data, 'idDocumentos', $this->input->post('idDocumentos')) == TRUE) {
-                $this->session->set_flashdata('success','Alterações efetuadas com sucesso!');
-                redirect(base_url() . 'index.php/arquivos/editar/'.$this->input->post('idDocumentos'));
-            } else {
-                $this->data['custom_error'] = '<div class="form_error"><p>Ocorreu um erro.</p></div>';
-            }
+            $this->session->set_flashdata('error', 'Ocorreu um erro ao tentar excluir o arquivo.');
         }
 
-
-        $this->data['result'] = $this->arquivos_model->getById($this->uri->segment(3));
-        $this->data['view'] = 'arquivos/editarArquivo';
-        $this->load->view('tema/topo', $this->data);
-
+        redirect(site_url('arquivos') . listagemQuery(listagemFiltros(self::FILTROS, $this->input->get())));
     }
 
-
-    public function download($id = null){
-    	
-        if(!$this->permission->checkPermission($this->session->userdata('permissao'),'vArquivo')){
-          $this->session->set_flashdata('error','Você não tem permissão para visualizar arquivos.');
-          redirect(base_url());
+    /**
+     * Auxiliar interno (como método público seria acessível via
+     * /arquivos/do_upload). Devolve os dados do arquivo gravado, ou o texto do
+     * erro, que a tela mostra no campo do arquivo.
+     *
+     * @return array|string
+     */
+    protected function do_upload()
+    {
+        if (! $this->permission->checkPermission($this->session->userdata('permissao'), 'aArquivo')) {
+            $this->session->set_flashdata('error', 'Você não tem permissão para adicionar arquivos.');
+            redirect(base_url());
         }
 
-    	if($id == null || !is_numeric($id)){
-    		$this->session->set_flashdata('error','Erro! O arquivo não pode ser localizado.');
-            redirect(base_url() . 'index.php/arquivos/');
-    	}
+        $pasta = armazenamentoPasta('arquivos/' . date('d-m-Y'));
+        if ($pasta === null) {
+            return 'Não foi possível criar a pasta de arquivos no servidor.';
+        }
 
-    	$file = $this->arquivos_model->getById($id);
+        $config = armazenamentoConfigUpload($pasta, ['txt', 'jpg', 'jpeg', 'gif', 'png', 'pdf']);
+        $config['max_width'] = '3000';
+        $config['max_height'] = '2000';
 
-    	$this->load->library('zip');
+        $this->load->library('upload', $config);
 
-    	$path = $file->path;
+        if (empty($_FILES['userfile']['name'])) {
+            return 'Escolha o arquivo.';
+        }
 
-		$this->zip->read_file($path); 
+        if (! armazenamentoReceber($this->upload)) {
+            return 'Não foi possível enviar o arquivo. Use TXT, JPG, GIF, PNG ou PDF, de até ' . tamanhoDeArquivo(armazenamentoLimiteKb()) . ' (imagens de até 3000 × 2000 px).';
+        }
 
-		$this->zip->download('file'.date('d-m-Y-H.i.s').'.zip');
+        $dados = $this->upload->data();
+        if (($erro = armazenamentoValidarEnvio($dados)) !== null) {
+            return $erro;
+        }
+
+        return $dados;
     }
-
-
-    public function excluir(){
-    	if(!$this->permission->checkPermission($this->session->userdata('permissao'),'dArquivo')){
-          $this->session->set_flashdata('error','Você não tem permissão para excluir arquivos.');
-          redirect(base_url());
-        }
-
-    	$id = $this->input->post('id');
-    	if($id == null || !is_numeric($id)){
-    		$this->session->set_flashdata('error','Erro! O arquivo não pode ser localizado.');
-            redirect(base_url() . 'index.php/arquivos/');
-    	}
-
-    	$file = $this->arquivos_model->getById($id);
-
-    	$this->db->where('idDocumentos', $id);
-        
-        if($this->db->delete('documentos')){
-
-        	$path = $file->path;
-	    	unlink($path);
-
-	    	$this->session->set_flashdata('success','Arquivo excluido com sucesso!');
-	        redirect(base_url() . 'index.php/arquivos/');
-        }
-        else{
-
-        	$this->session->set_flashdata('error','Ocorreu um erro ao tentar excluir o arquivo.');
-            redirect(base_url() . 'index.php/arquivos/');
-        }
-
-
-    }
-
-    public function do_upload(){
-
-        if(!$this->permission->checkPermission($this->session->userdata('permissao'),'aArquivo')){
-          $this->session->set_flashdata('error','Você não tem permissão para adicionar arquivos.');
-          redirect(base_url());
-        }
-	
-    	$date = date('d-m-Y');
-
-		$config['upload_path'] = './assets/arquivos/'.$date;
-	    $config['allowed_types'] = 'txt|jpg|jpeg|gif|png|pdf|PDF|JPG|JPEG|GIF|PNG';
-	    $config['max_size']     = 0;
-	    $config['max_width']  = '3000';
-	    $config['max_height']  = '2000';
-	    $config['encrypt_name'] = true;
-
-
-		if (!is_dir('./assets/arquivos/'.$date)) {
-
-			mkdir('./assets/arquivos/' . $date, 0777, TRUE);
-
-		}
-
-		$this->load->library('upload', $config);
-
-		if ( ! $this->upload->do_upload())
-		{
-			$error = array('error' => $this->upload->display_errors());
-
-			$this->session->set_flashdata('error','Erro ao fazer upload do arquivo, verifique se a extensão do arquivo é permitida.');
-            redirect(base_url() . 'index.php/arquivos/adicionar/');
-		}
-		else
-		{
-			//$data = array('upload_data' => $this->upload->data());
-			return $this->upload->data();
-		}
-	}
-
 }
 
 /* End of file arquivos.php */

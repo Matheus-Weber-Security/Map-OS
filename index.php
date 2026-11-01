@@ -6,7 +6,7 @@
  *
  * This content is released under the MIT License (MIT)
  *
- * Copyright (c) 2014 - 2019, British Columbia Institute of Technology
+ * Copyright (c) 2014 - 2017, British Columbia Institute of Technology
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,50 +26,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  *
- * @package	CodeIgniter
  * @author	EllisLab Dev Team
  * @copyright	Copyright (c) 2008 - 2014, EllisLab, Inc. (https://ellislab.com/)
- * @copyright	Copyright (c) 2014 - 2019, British Columbia Institute of Technology (https://bcit.ca/)
- * @license	https://opensource.org/licenses/MIT	MIT License
+ * @copyright	Copyright (c) 2014 - 2017, British Columbia Institute of Technology (http://bcit.ca/)
+ * @license	http://opensource.org/licenses/MIT	MIT License
+ *
  * @link	https://codeigniter.com
  * @since	Version 1.0.0
+ *
  * @filesource
  */
-
-/*
- *---------------------------------------------------------------
- * CARREGADOR DE VARIÁVEIS DE AMBIENTE (.ENV)
- *---------------------------------------------------------------
- *
- * Lê o arquivo .env se existir na raiz do projeto e injeta
- * nas funções getenv(), $_ENV e $_SERVER de forma segura.
- */
-$env_file = __DIR__ . DIRECTORY_SEPARATOR . '.env';
-if (file_exists($env_file)) {
-	$env_lines = file($env_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-	foreach ($env_lines as $env_line) {
-		$env_line = trim($env_line);
-		if ($env_line === '' || $env_line[0] === '#') {
-			continue;
-		}
-		if (strpos($env_line, '=') !== false) {
-			list($env_name, $env_value) = explode('=', $env_line, 2);
-			$env_name = trim($env_name);
-			$env_value = trim($env_value);
-			if (strlen($env_value) > 1 && (
-				($env_value[0] === '"' && $env_value[strlen($env_value) - 1] === '"') ||
-				($env_value[0] === "'" && $env_value[strlen($env_value) - 1] === "'")
-			)) {
-				$env_value = substr($env_value, 1, -1);
-			}
-			if (!array_key_exists($env_name, $_SERVER) && !array_key_exists($env_name, $_ENV)) {
-				putenv("{$env_name}={$env_value}");
-				$_ENV[$env_name] = $env_value;
-				$_SERVER[$env_name] = $env_value;
-			}
-		}
-	}
-}
 
 /*
  *---------------------------------------------------------------
@@ -88,7 +54,51 @@ if (file_exists($env_file)) {
  *
  * NOTE: If you change these, also change the error_reporting() code below
  */
-	define('ENVIRONMENT', getenv('CI_ENV') ?: (isset($_SERVER['CI_ENV']) ? $_SERVER['CI_ENV'] : 'development'));
+
+$composerAutoloadFile = __DIR__ . DIRECTORY_SEPARATOR . 'application' . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
+if (file_exists($composerAutoloadFile)) {
+    require_once $composerAutoloadFile;
+} else {
+    // Sem as dependências nada sobe. Mensagem curta e sem caminhos do servidor (no navegador, só o
+    // que o administrador precisa para corrigir); no terminal sai no stderr com código de erro.
+    $mensagem = 'O Map-OS não encontrou as dependências (pasta application/vendor). Instale a versão completa da release '
+        . 'ou, a partir do código-fonte, execute "composer install --no-dev" na pasta do projeto.';
+    if (PHP_SAPI === 'cli') {
+        fwrite(STDERR, $mensagem . PHP_EOL);
+        exit(1);
+    }
+    http_response_code(503);
+    header('Content-Type: text/html; charset=utf-8');
+    header('Cache-Control: no-store');
+    exit('<!DOCTYPE html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Map-OS: dependências ausentes</title></head>'
+        . '<body style="font-family:sans-serif;max-width:36rem;margin:4rem auto;padding:0 1rem;line-height:1.5">'
+        . '<h1 style="font-size:1.25rem">Dependências ausentes</h1><p>' . htmlspecialchars($mensagem, ENT_QUOTES) . '</p></body></html>');
+}
+
+$envFile = __DIR__ . DIRECTORY_SEPARATOR . 'application' . DIRECTORY_SEPARATOR . '.env';
+if (file_exists($envFile) && file_exists($composerAutoloadFile)) {
+    $envFilePath = __DIR__ . DIRECTORY_SEPARATOR . 'application';
+    $dotenv = Dotenv\Dotenv::createImmutable($envFilePath);
+    $dotenv->load();
+}
+
+//set the environment to production after installation
+define('ENVIRONMENT', $_ENV['APP_ENVIRONMENT'] ?? 'pre_installation');
+
+// we don't want to access the main project before installation. redirect to installation page
+if (ENVIRONMENT === 'pre_installation') {
+    $domain = $_SERVER['HTTP_HOST'] . $_SERVER['SCRIPT_NAME'];
+
+    $domain = preg_replace('/index.php.*/', '', $domain); //remove everything after index.php
+    if (! empty($_SERVER['HTTPS'])) {
+        $domain = 'https://' . $domain;
+    } else {
+        $domain = 'http://' . $domain;
+    }
+
+    header("Location: $domain./install/index.php");
+    exit;
+}
 
 /*
  *---------------------------------------------------------------
@@ -98,30 +108,32 @@ if (file_exists($env_file)) {
  * Different environments will require different levels of error reporting.
  * By default development will show errors but testing and live will hide them.
  */
-switch (ENVIRONMENT)
-{
-	case 'development':
-		error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
-		ini_set('display_errors', 1);
-	break;
+switch (ENVIRONMENT) {
+    case 'development':
+        error_reporting(E_ALL & ~E_DEPRECATED);
+        ini_set('display_errors', 1);
+        break;
 
-	case 'testing':
-	case 'production':
-		ini_set('display_errors', 0);
-		if (version_compare(PHP_VERSION, '5.3', '>='))
-		{
-			error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_STRICT & ~E_USER_NOTICE & ~E_USER_DEPRECATED);
-		}
-		else
-		{
-			error_reporting(E_ALL & ~E_NOTICE & ~E_STRICT & ~E_USER_NOTICE);
-		}
-	break;
+    case 'testing':
+    case 'production':
+        ini_set('display_errors', 0);
+        if (version_compare(PHP_VERSION, '5.3', '>=')) {
+            error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_USER_NOTICE & ~E_USER_DEPRECATED);
+        } else {
+            error_reporting(E_ALL & ~E_NOTICE & ~E_STRICT & ~E_USER_NOTICE);
+        }
+        break;
 
-	default:
-		header('HTTP/1.1 503 Service Unavailable.', TRUE, 503);
-		echo 'The application environment is not set correctly.';
-		exit(1); // EXIT_ERROR
+    default:
+        header('HTTP/1.1 503 Service Unavailable.', true, 503);
+        echo 'The application environment is not set correctly.';
+        exit(1); // EXIT_ERROR
+}
+
+// No terminal (migrations, seeds), um erro fatal precisa aparecer para quem executou o comando:
+// sem isso, em produção, php index.php tools migrate saía com código 1 e nenhuma mensagem (#2858).
+if (PHP_SAPI === 'cli') {
+    ini_set('display_errors', 'stderr');
 }
 
 /*
@@ -132,7 +144,7 @@ switch (ENVIRONMENT)
  * This variable must contain the name of your "system" directory.
  * Set the path if it is not in the same directory as this file.
  */
-	$system_path = 'system';
+$system_path = 'application/vendor/codeigniter/framework/system';
 
 /*
  *---------------------------------------------------------------
@@ -145,11 +157,11 @@ switch (ENVIRONMENT)
  * use an absolute (full) server path.
  * For more info please see the user guide:
  *
- * https://codeigniter.com/userguide3/general/managing_apps.html
+ * https://codeigniter.com/user_guide/general/managing_apps.html
  *
  * NO TRAILING SLASH!
  */
-	$application_folder = 'application';
+$application_folder = 'application';
 
 /*
  *---------------------------------------------------------------
@@ -164,8 +176,7 @@ switch (ENVIRONMENT)
  *
  * NO TRAILING SLASH!
  */
-	$view_folder = '';
-
+$view_folder = '';
 
 /*
  * --------------------------------------------------------------------
@@ -186,16 +197,15 @@ switch (ENVIRONMENT)
  *
  * Un-comment the $routing array below to use this feature
  */
-	// The directory name, relative to the "controllers" directory.  Leave blank
-	// if your controller is not in a sub-directory within the "controllers" one
-	// $routing['directory'] = '';
+// The directory name, relative to the "controllers" directory.  Leave blank
+// if your controller is not in a sub-directory within the "controllers" one
+// $routing['directory'] = '';
 
-	// The controller class file name.  Example:  mycontroller
-	// $routing['controller'] = '';
+// The controller class file name.  Example:  mycontroller
+// $routing['controller'] = '';
 
-	// The controller function you wish to be called.
-	// $routing['function']	= '';
-
+// The controller function you wish to be called.
+// $routing['function']	= '';
 
 /*
  * -------------------------------------------------------------------
@@ -211,9 +221,7 @@ switch (ENVIRONMENT)
  *
  * Un-comment the $assign_to_config array below to use this feature
  */
-	// $assign_to_config['name_of_config_item'] = 'value of config item';
-
-
+// $assign_to_config['name_of_config_item'] = 'value of config item';
 
 // --------------------------------------------------------------------
 // END OF USER CONFIGURABLE SETTINGS.  DO NOT EDIT BELOW THIS LINE
@@ -225,120 +233,97 @@ switch (ENVIRONMENT)
  * ---------------------------------------------------------------
  */
 
-	// Set the current directory correctly for CLI requests
-	if (defined('STDIN'))
-	{
-		chdir(dirname(__FILE__));
-	}
+// Set the current directory correctly for CLI requests
+if (defined('STDIN')) {
+    chdir(dirname(__FILE__));
+}
 
-	if (($_temp = realpath($system_path)) !== FALSE)
-	{
-		$system_path = $_temp.DIRECTORY_SEPARATOR;
-	}
-	else
-	{
-		// Ensure there's a trailing slash
-		$system_path = strtr(
-			rtrim($system_path, '/\\'),
-			'/\\',
-			DIRECTORY_SEPARATOR.DIRECTORY_SEPARATOR
-		).DIRECTORY_SEPARATOR;
-	}
+if (($_temp = realpath($system_path)) !== false) {
+    $system_path = $_temp . DIRECTORY_SEPARATOR;
+} else {
+    // Ensure there's a trailing slash
+    $system_path = strtr(
+        rtrim($system_path, '/\\'),
+        '/\\',
+        DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR
+    ) . DIRECTORY_SEPARATOR;
+}
 
-	// Is the system path correct?
-	if ( ! is_dir($system_path))
-	{
-		header('HTTP/1.1 503 Service Unavailable.', TRUE, 503);
-		echo 'Your system folder path does not appear to be set correctly. Please open the following file and correct this: '.pathinfo(__FILE__, PATHINFO_BASENAME);
-		exit(3); // EXIT_CONFIG
-	}
+// Is the system path correct?
+if (! is_dir($system_path)) {
+    header('HTTP/1.1 503 Service Unavailable.', true, 503);
+    echo 'Sua instalação está incompleta, por favor instale as dependências utilizando o composer. A pasta system não foi localizada.';
+    exit(3); // EXIT_CONFIG
+}
 
 /*
  * -------------------------------------------------------------------
  *  Now that we know the path, set the main path constants
  * -------------------------------------------------------------------
  */
-	// The name of THIS file
-	define('SELF', pathinfo(__FILE__, PATHINFO_BASENAME));
+// The name of THIS file
+define('SELF', pathinfo(__FILE__, PATHINFO_BASENAME));
 
-	// Path to the system directory
-	define('BASEPATH', $system_path);
+// Path to the system directory
+define('BASEPATH', $system_path);
 
-	// Path to the front controller (this file) directory
-	define('FCPATH', dirname(__FILE__).DIRECTORY_SEPARATOR);
+// Path to the front controller (this file) directory
+define('FCPATH', dirname(__FILE__) . DIRECTORY_SEPARATOR);
 
-	// Name of the "system" directory
-	define('SYSDIR', basename(BASEPATH));
+// Name of the "system" directory
+define('SYSDIR', basename(BASEPATH));
 
-	// The path to the "application" directory
-	if (is_dir($application_folder))
-	{
-		if (($_temp = realpath($application_folder)) !== FALSE)
-		{
-			$application_folder = $_temp;
-		}
-		else
-		{
-			$application_folder = strtr(
-				rtrim($application_folder, '/\\'),
-				'/\\',
-				DIRECTORY_SEPARATOR.DIRECTORY_SEPARATOR
-			);
-		}
-	}
-	elseif (is_dir(BASEPATH.$application_folder.DIRECTORY_SEPARATOR))
-	{
-		$application_folder = BASEPATH.strtr(
-			trim($application_folder, '/\\'),
-			'/\\',
-			DIRECTORY_SEPARATOR.DIRECTORY_SEPARATOR
-		);
-	}
-	else
-	{
-		header('HTTP/1.1 503 Service Unavailable.', TRUE, 503);
-		echo 'Your application folder path does not appear to be set correctly. Please open the following file and correct this: '.SELF;
-		exit(3); // EXIT_CONFIG
-	}
+// The path to the "application" directory
+if (is_dir($application_folder)) {
+    if (($_temp = realpath($application_folder)) !== false) {
+        $application_folder = $_temp;
+    } else {
+        $application_folder = strtr(
+            rtrim($application_folder, '/\\'),
+            '/\\',
+            DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR
+        );
+    }
+} elseif (is_dir(BASEPATH . $application_folder . DIRECTORY_SEPARATOR)) {
+    $application_folder = BASEPATH . strtr(
+        trim($application_folder, '/\\'),
+        '/\\',
+        DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR
+    );
+} else {
+    header('HTTP/1.1 503 Service Unavailable.', true, 503);
+    echo 'Your application folder path does not appear to be set correctly. Please open the following file and correct this: ' . self;
+    exit(3); // EXIT_CONFIG
+}
 
-	define('APPPATH', $application_folder.DIRECTORY_SEPARATOR);
+define('APPPATH', $application_folder . DIRECTORY_SEPARATOR);
 
-	// The path to the "views" directory
-	if ( ! isset($view_folder[0]) && is_dir(APPPATH.'views'.DIRECTORY_SEPARATOR))
-	{
-		$view_folder = APPPATH.'views';
-	}
-	elseif (is_dir($view_folder))
-	{
-		if (($_temp = realpath($view_folder)) !== FALSE)
-		{
-			$view_folder = $_temp;
-		}
-		else
-		{
-			$view_folder = strtr(
-				rtrim($view_folder, '/\\'),
-				'/\\',
-				DIRECTORY_SEPARATOR.DIRECTORY_SEPARATOR
-			);
-		}
-	}
-	elseif (is_dir(APPPATH.$view_folder.DIRECTORY_SEPARATOR))
-	{
-		$view_folder = APPPATH.strtr(
-			trim($view_folder, '/\\'),
-			'/\\',
-			DIRECTORY_SEPARATOR.DIRECTORY_SEPARATOR
-		);
-	}
-	else
-	{
-		header('HTTP/1.1 503 Service Unavailable.', TRUE, 503);
-		echo 'Your view folder path does not appear to be set correctly. Please open the following file and correct this: '.SELF;
-		exit(3); // EXIT_CONFIG
-	}
+// The path to the "views" directory
+if (! isset($view_folder[0]) && is_dir(APPPATH . 'views' . DIRECTORY_SEPARATOR)) {
+    $view_folder = APPPATH . 'views';
+} elseif (is_dir($view_folder)) {
+    if (($_temp = realpath($view_folder)) !== false) {
+        $view_folder = $_temp;
+    } else {
+        $view_folder = strtr(
+            rtrim($view_folder, '/\\'),
+            '/\\',
+            DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR
+        );
+    }
+} elseif (is_dir(APPPATH . $view_folder . DIRECTORY_SEPARATOR)) {
+    $view_folder = APPPATH . strtr(
+        trim($view_folder, '/\\'),
+        '/\\',
+        DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR
+    );
+} else {
+    header('HTTP/1.1 503 Service Unavailable.', true, 503);
+    echo 'Your view folder path does not appear to be set correctly. Please open the following file and correct this: ' . self;
+    exit(3); // EXIT_CONFIG
+}
 
-	define('VIEWPATH', $view_folder.DIRECTORY_SEPARATOR);
+define('VIEWPATH', $view_folder . DIRECTORY_SEPARATOR);
 
 /*
  * --------------------------------------------------------------------
@@ -347,4 +332,4 @@ switch (ENVIRONMENT)
  *
  * And away we go...
  */
-require_once BASEPATH.'core/CodeIgniter.php';
+require_once BASEPATH . 'core/CodeIgniter.php';
