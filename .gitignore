@@ -7,6 +7,9 @@
 controle_ordem_serviço_4_33_2.zip
 backup/
 
+# Scripts locais do Windows
+*.bat
+
 # IDE e editores
 nbproject/
 .idea/
