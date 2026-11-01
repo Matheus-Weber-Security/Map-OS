@@ -29,7 +29,7 @@ $db['default'] = [
     'database' => $_ENV['DB_DATABASE'] ?? 'enter_database_name',
     'dbdriver' => $_ENV['DB_DRIVER'] ?? 'mysqli',
     'dbprefix' => $_ENV['DB_PREFIX'] ?? '',
-    'pconnect' => false,
+    'pconnect' => filter_var($_ENV['DB_PCONNECT'] ?? false, FILTER_VALIDATE_BOOLEAN),
     'db_debug' => (ENVIRONMENT !== 'production'),
     'cache_on' => false,
     'cachedir' => '',

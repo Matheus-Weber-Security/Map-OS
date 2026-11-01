@@ -325,11 +325,8 @@ class Mapos_model extends CI_Model
         );
         $this->db->from('os');
         $this->db->join('clientes', 'clientes.idClientes = os.clientes_id');
-        $this->db->join('produtos_os', 'produtos_os.os_id = os.idOs', 'left');
-        $this->db->join('servicos_os', 'servicos_os.os_id = os.idOs', 'left');
         $this->db->where('os.dataFinal >=', $start);
         $this->db->where('os.dataFinal <=', $end);
-        $this->db->group_by('os.idOs');
 
         if (! empty($status)) {
             $this->db->where('os.status', $status);

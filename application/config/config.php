@@ -404,7 +404,7 @@ $config['encryption_key'] = $_ENV['APP_ENCRYPTION_KEY'];
 $config['sess_driver'] = $_ENV['APP_SESS_DRIVER'] ?? 'database';
 $config['sess_cookie_name'] = $_ENV['APP_SESS_COOKIE_NAME'] ?? 'app_session';
 $config['sess_expiration'] = $_ENV['APP_SESS_EXPIRATION'] ?? 7200;
-$config['sess_save_path'] = $_ENV['APP_SESS_SAVE_PATH'] ?? 'ci_sessions';
+$config['sess_save_path'] = !empty($_ENV['APP_SESS_SAVE_PATH']) ? $_ENV['APP_SESS_SAVE_PATH'] : (($config['sess_driver'] === 'files') ? sys_get_temp_dir() : 'ci_sessions');
 $config['sess_match_ip'] = isset($_ENV['APP_SESS_MATCH_IP']) ? filter_var($_ENV['APP_SESS_MATCH_IP'], FILTER_VALIDATE_BOOLEAN) : false;
 $config['sess_time_to_update'] = $_ENV['APP_SESS_TIME_TO_UPDATE'] ?? 300;
 // Ao regenerar o ID, o anterior é apagado na hora: um ID vazado deixa de
