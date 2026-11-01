@@ -95,7 +95,7 @@ class Mapos extends CI_Controller {
             }
             else{
                 $this->session->set_flashdata('error','Os dados de acesso estão incorretos.');
-                redirect($this->login);
+                redirect('mapos/login');
             }
         } 
         else {
@@ -103,38 +103,48 @@ class Mapos extends CI_Controller {
             $email = $this->input->post('email');
             $senha = $this->input->post('senha');
 
-            $this->load->library('encrypt');   
-            $senha = $this->encrypt->sha1($senha);
-
-            $this->db->where('email',$email);
-            $this->db->where('senha',$senha);
-            $this->db->where('situacao',1);
+            $this->db->where('email', $email);
+            $this->db->where('situacao', 1);
             $this->db->limit(1);
             $usuario = $this->db->get('usuarios')->row();
-            if(count($usuario) > 0){
-                $dados = array('nome' => $usuario->nome, 'id' => $usuario->idUsuarios,'permissao' => $usuario->permissoes_id , 'logado' => TRUE);
+
+            $senha_valida = false;
+            if ($usuario) {
+                if (password_verify($senha, $usuario->senha)) {
+                    $senha_valida = true;
+                    if (password_needs_rehash($usuario->senha, PASSWORD_DEFAULT)) {
+                        $this->db->where('idUsuarios', $usuario->idUsuarios);
+                        $this->db->update('usuarios', array('senha' => password_hash($senha, PASSWORD_DEFAULT)));
+                    }
+                } elseif (sha1($senha) === $usuario->senha || $senha === $usuario->senha) {
+                    $senha_valida = true;
+                    $this->db->where('idUsuarios', $usuario->idUsuarios);
+                    $this->db->update('usuarios', array('senha' => password_hash($senha, PASSWORD_DEFAULT)));
+                }
+            }
+
+            if ($senha_valida && $usuario) {
+                $dados = array(
+                    'nome' => $usuario->nome,
+                    'id' => $usuario->idUsuarios,
+                    'permissao' => $usuario->permissoes_id,
+                    'logado' => TRUE
+                );
                 $this->session->set_userdata($dados);
 
-                if($ajax == true){
+                if ($ajax == true) {
                     $json = array('result' => true);
                     echo json_encode($json);
+                } else {
+                    redirect(base_url() . 'index.php/mapos');
                 }
-                else{
-                    redirect(base_url().'mapos');
-                }
-
-                
-            }
-            else{
-                
-                
-                if($ajax == true){
+            } else {
+                if ($ajax == true) {
                     $json = array('result' => false);
                     echo json_encode($json);
-                }
-                else{
-                    $this->session->set_flashdata('error','Os dados de acesso estão incorretos.');
-                    redirect($this->login);
+                } else {
+                    $this->session->set_flashdata('error', 'Os dados de acesso estão incorretos.');
+                    redirect('mapos/login');
                 }
             }
             

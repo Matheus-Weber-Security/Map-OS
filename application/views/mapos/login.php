@@ -81,6 +81,10 @@
                             else{
                                 $('#call-modal').trigger('click');
                             }
+                          },
+                          error: function()
+                          {
+                            $('#call-modal').trigger('click');
                           }
                           });
 
