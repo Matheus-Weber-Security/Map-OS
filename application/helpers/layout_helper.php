@@ -331,11 +331,21 @@ if (! function_exists('layoutAssets')) {
 
 if (! function_exists('layoutUrlAsset')) {
     /**
-     * URL final de um asset de layoutAssets().
+     * URL final de um asset de layoutAssets(), com timestamp de modificação
+     * para cache busting automático sempre que o arquivo for atualizado.
      */
     function layoutUrlAsset(string $caminho, string $baseUrl): string
     {
-        return preg_match('#^https?://#', $caminho) ? $caminho : $baseUrl . $caminho;
+        $url = preg_match('#^https?://#', $caminho) ? $caminho : $baseUrl . $caminho;
+        $caminhoRelativo = ltrim($caminho, '/');
+        $arquivoFisico = defined('FCPATH') ? FCPATH . $caminhoRelativo : $caminhoRelativo;
+
+        if (file_exists($arquivoFisico)) {
+            $separador = strpos($url, '?') !== false ? '&' : '?';
+            return $url . $separador . 'v=' . filemtime($arquivoFisico);
+        }
+
+        return $url;
     }
 }
 
