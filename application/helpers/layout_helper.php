@@ -97,6 +97,8 @@ if (! function_exists('layoutMenu')) {
                 ],
             ],
             ['grupo' => 'Sistema', 'label' => 'Arquivos', 'icon' => 'archive', 'url' => 'arquivos', 'rota' => ['Arquivos', 'index'], 'ativo' => ['Arquivos']],
+            ['grupo' => 'SaaS', 'label' => 'Assinatura', 'icon' => 'banknote', 'url' => 'assinatura', 'rota' => ['Assinatura', 'index'], 'ativo' => ['Assinatura']],
+            ['grupo' => 'SaaS', 'label' => 'Gerenciar SaaS', 'icon' => 'settings', 'url' => 'saas/gerenciar', 'rota' => ['Saas', 'gerenciar'], 'ativo' => ['Saas']],
             [
                 'grupo' => 'Sistema',
                 'label' => 'Configurações',
@@ -171,6 +173,13 @@ if (! function_exists('layoutMenuVisivel')) {
 
             if (! $permite($item['rota'][0], $item['rota'][1])) {
                 continue;
+            }
+
+            if ($item['rota'][0] === 'Saas') {
+                $ci = &get_instance();
+                if (! ($ci->session->userdata('is_superadmin') ?? false)) {
+                    continue;
+                }
             }
 
             $item['atual'] = layoutRotaAtiva($item['ativo'], $controller, $metodo);

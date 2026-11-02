@@ -28,8 +28,42 @@ class MY_Controller extends CI_Controller
         $this->validarSessaoDoUsuario();
         $this->exigirBancoAtualizado();
         $this->exigirDoisFatores();
+        $this->verificarAssinaturaDaEmpresa();
         $this->load_configuration();
         $this->verificarPermissaoDaRota();
+    }
+
+    /**
+     * Interceptador de expiração de assinatura do SaaS.
+     * Quando a assinatura da empresa vence (dias <= 0), restringe o acesso à tela de Assinatura.
+     */
+    protected function verificarAssinaturaDaEmpresa(): void
+    {
+        $controller = strtolower($this->router->class);
+        if (in_array($controller, ['assinatura', 'saas', 'login'], true)) {
+            return;
+        }
+
+        if ($this->session->userdata('is_superadmin')) {
+            return;
+        }
+
+        $empresaId = (int) ($this->session->userdata('empresa_id') ?: 1);
+        $this->load->model('saas_model');
+        $empresa = $this->saas_model->getEmpresaById($empresaId);
+
+        if (! $empresa) {
+            return;
+        }
+
+        $hoje = strtotime('today');
+        $vencimento = $empresa->data_vencimento ? strtotime($empresa->data_vencimento) : $hoje;
+        $diasRestantes = (int) ceil(($vencimento - $hoje) / 86400);
+
+        if ($diasRestantes <= 0 || $empresa->status !== 'ativa') {
+            $this->session->set_flashdata('error', 'A assinatura da empresa está vencida. Renove o plano via PIX para reativar o acesso.');
+            redirect('assinatura');
+        }
     }
 
     /**

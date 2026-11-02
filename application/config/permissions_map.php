@@ -32,6 +32,23 @@ defined('BASEPATH') or exit('No direct script access allowed');
 */
 
 $config['permissions_map'] = [
+    'Assinatura' => [
+        'index' => '*',
+        'gerarPix' => '*',
+        'verificarPix' => '*',
+        'confirmarPixTeste' => '*',
+    ],
+
+    'Saas' => [
+        'gerenciar' => '*',
+        'salvarPrecos' => '*',
+        'assinantes' => '*',
+        'adicionarDias' => '*',
+        'ajustarDesconto' => '*',
+        'alterarPlano' => '*',
+        'trocarEmpresa' => '*',
+    ],
+
     'Arquivos' => [
         'index' => 'vArquivo',
         'gerenciar' => 'vArquivo',

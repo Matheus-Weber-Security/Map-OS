@@ -54,6 +54,14 @@
           <?= component('button', $layout['acao'] + ['icon_only' => true, 'class' => 'sm:hidden']) ?>
         <?php } ?>
 
+        <div class="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface-subtle border border-border text-caption text-text">
+          <span class="size-2 rounded-full bg-emerald-500"></span>
+          <span class="font-bold max-w-32 truncate" title="<?= e($this->session->userdata('empresa_nome') ?: 'Empresa Principal') ?>"><?= e($this->session->userdata('empresa_nome') ?: 'Empresa Principal') ?></span>
+          <a href="<?= e(site_url('login/escolherEmpresa')) ?>" title="Trocar de Empresa" class="ml-1 text-primary hover:underline font-bold text-xs">
+            Trocar
+          </a>
+        </div>
+
         <details class="relative" data-menu-suspenso>
           <summary class="flex cursor-pointer list-none items-center gap-3 rounded-md p-1 hover:bg-surface-subtle focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
             <span class="sr-only">Menu do usuário</span>
@@ -94,6 +102,11 @@
               </div>
             </div>
             <div class="my-1 border-t border-border" role="separator"></div>
+            <?php if ($this->session->userdata('is_superadmin')) { ?>
+              <a href="<?= e(site_url('saas/gerenciar')) ?>" class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-primary font-bold hover:bg-surface-subtle focus-visible:outline-3 focus-visible:outline-ring"><?= icon('settings', ['class' => 'size-[18px] text-primary']) ?>Painel SaaS (Gerenciar)</a>
+            <?php } ?>
+            <a href="<?= e(site_url('assinatura')) ?>" class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-text hover:bg-surface-subtle focus-visible:outline-3 focus-visible:outline-ring"><?= icon('banknote', ['class' => 'size-[18px] text-muted']) ?>Minha Assinatura</a>
+            <a href="<?= e(site_url('login/escolherEmpresa')) ?>" class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-text hover:bg-surface-subtle focus-visible:outline-3 focus-visible:outline-ring"><?= icon('house', ['class' => 'size-[18px] text-muted']) ?>Trocar de Empresa</a>
             <a href="<?= e(site_url('mine')) ?>" target="_blank" rel="noopener" class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-text hover:bg-surface-subtle focus-visible:outline-3 focus-visible:outline-ring"><?= icon('circle-user', ['class' => 'size-[18px] text-muted']) ?>Área do Cliente</a>
             <a href="<?= e(site_url('mapos/minhaConta')) ?>" class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-text hover:bg-surface-subtle focus-visible:outline-3 focus-visible:outline-ring"><?= icon('id-card', ['class' => 'size-[18px] text-muted']) ?>Meu Perfil</a>
             <div class="my-1 border-t border-border" role="separator"></div>

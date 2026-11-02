@@ -91,6 +91,12 @@ class Login extends CI_Controller
 
         $this->limite_login->registrarSucesso('usuario', $email);
         $this->iniciarSessao($user);
+
+        if ($this->session->userdata('qtd_empresas') > 1) {
+            echo json_encode(['result' => true, 'destino' => site_url('login/escolherEmpresa')]);
+            exit();
+        }
+
         echo json_encode(['result' => true]);
         exit();
     }
@@ -194,7 +200,33 @@ class Login extends CI_Controller
         // fixado antes do login não continue válido depois dele.
         $this->session->sess_regenerate(true);
 
-        $this->session->set_userdata(['nome_admin' => $user->nome, 'email_admin' => $user->email, 'url_image_user_admin' => $user->url_image_user, 'id_admin' => $user->idUsuarios, 'permissao' => $user->permissoes_id, 'tema_modo_admin' => $user->tema_modo ?? null, 'tema_cor_admin' => $user->tema_cor ?? null, 'sessao_versao' => (int) ($user->sessao_versao ?? 0), 'logado' => true]);
+        $this->load->model('saas_model');
+        $empresas = $this->saas_model->getEmpresasDoUsuario((int) $user->idUsuarios);
+        $isSuperadmin = (bool) ($user->is_superadmin ?? false);
+
+        $empresaAtivaId = 1;
+        $empresaAtivaNome = 'Empresa Principal';
+
+        if (! empty($empresas)) {
+            $empresaAtivaId = (int) $empresas[0]->id;
+            $empresaAtivaNome = $empresas[0]->nome_fantasia ?: $empresas[0]->razao_social;
+        }
+
+        $this->session->set_userdata([
+            'nome_admin' => $user->nome,
+            'email_admin' => $user->email,
+            'url_image_user_admin' => $user->url_image_user,
+            'id_admin' => $user->idUsuarios,
+            'permissao' => $user->permissoes_id,
+            'tema_modo_admin' => $user->tema_modo ?? null,
+            'tema_cor_admin' => $user->tema_cor ?? null,
+            'sessao_versao' => (int) ($user->sessao_versao ?? 0),
+            'logado' => true,
+            'is_superadmin' => $isSuperadmin,
+            'empresa_id' => $empresaAtivaId,
+            'empresa_nome' => $empresaAtivaNome,
+            'qtd_empresas' => count($empresas),
+        ]);
 
         // Grupo que exige 2FA e usuário sem ele: entra, mas só alcança a tela de ativação (MY_Controller).
         if (! ($user->totp_ativado_em ?? null) && $this->mapos_model->grupoExige2fa((int) $user->permissoes_id)) {
@@ -202,6 +234,54 @@ class Login extends CI_Controller
         }
 
         log_info('Efetuou login no sistema');
+    }
+
+    /**
+     * Tela de Escolha de Empresa (Workspace Switcher) para usuários vinculados a mais de 1 empresa.
+     */
+    public function escolherEmpresa()
+    {
+        if (! $this->session->userdata('logado')) {
+            redirect('login');
+        }
+
+        $this->load->model('saas_model');
+        $empresas = $this->saas_model->getEmpresasDoUsuario((int) $this->session->userdata('id_admin'));
+
+        // Se for Superadmin e não tiver empresas explícitas vinculadas, lista todas
+        if (empty($empresas) && $this->session->userdata('is_superadmin')) {
+            $empresas = $this->saas_model->getEmpresas();
+        }
+
+        $this->load->view('mapos/escolher_empresa', [
+            'empresas' => $empresas,
+            'usuarioNome' => $this->session->userdata('nome_admin'),
+            'isSuperadmin' => $this->session->userdata('is_superadmin'),
+        ]);
+    }
+
+    /**
+     * Ação de seleção da empresa ativa.
+     */
+    public function selecionarEmpresa($id = null)
+    {
+        if (! $this->session->userdata('logado')) {
+            redirect('login');
+        }
+
+        $empresaId = (int) $id;
+        $this->load->model('saas_model');
+        $empresa = $this->saas_model->getEmpresaById($empresaId);
+
+        if ($empresa) {
+            $this->session->set_userdata([
+                'empresa_id' => $empresa->id,
+                'empresa_nome' => $empresa->nome_fantasia ?: $empresa->razao_social,
+            ]);
+            $this->session->set_flashdata('success', "Empresa selecionada: {$empresa->nome_fantasia}");
+        }
+
+        redirect('mapos');
     }
 
     /**
