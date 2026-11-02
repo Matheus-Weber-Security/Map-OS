@@ -34,7 +34,7 @@ class Produtos_model extends CI_Model
     {
         $this->aplicarFiltros($filtros);
 
-        return $this->db->order_by('idProdutos', 'desc')->limit($limite, max(0, $offset))->get('produtos')->result();
+        return $this->db->order_by('codigo', 'desc')->order_by('idProdutos', 'desc')->limit($limite, max(0, $offset))->get('produtos')->result();
     }
 
     public function contar(array $filtros): int
@@ -45,13 +45,38 @@ class Produtos_model extends CI_Model
     }
 
     /**
-     * pesquisa procura na descrição e no código de barras; estoque=baixo
+     * Gera o próximo código sequencial de produto para a empresa (1, 2, 3...).
+     */
+    public function gerarProximoCodigo(int $empresaId): int
+    {
+        $ultimo = $this->db->select_max('codigo')
+            ->where('empresa_id', $empresaId)
+            ->get('produtos')
+            ->row();
+
+        return ($ultimo && (int) $ultimo->codigo > 0) ? ((int) $ultimo->codigo + 1) : 1;
+    }
+
+    /**
+     * pesquisa procura na descrição, código de barras e código interno; estoque=baixo
      * mostra quem está no mínimo ou abaixo dele (com mínimo definido).
+     * Filtra sempre pela empresa ativa do usuário.
      */
     private function aplicarFiltros(array $filtros): void
     {
+        $ci = &get_instance();
+        $empresaId = (int) ($ci->session->userdata('empresa_id') ?: 1);
+        $this->db->where('empresa_id', $empresaId);
+
         if (($filtros['pesquisa'] ?? '') !== '') {
-            $this->db->group_start()->like('descricao', $filtros['pesquisa'])->or_like('codDeBarra', $filtros['pesquisa'])->group_end();
+            $termo = $filtros['pesquisa'];
+            $this->db->group_start()
+                ->like('descricao', $termo)
+                ->or_like('codDeBarra', $termo);
+            if (is_numeric($termo)) {
+                $this->db->or_where('codigo', (int) $termo);
+            }
+            $this->db->group_end();
         }
 
         if (($filtros['estoque'] ?? '') === 'baixo') {
@@ -62,6 +87,11 @@ class Produtos_model extends CI_Model
     public function getById($id)
     {
         $this->db->where('idProdutos', $id);
+        $ci = &get_instance();
+        if (! ($ci->session->userdata('is_superadmin') ?? false)) {
+            $empresaId = (int) ($ci->session->userdata('empresa_id') ?: 1);
+            $this->db->where('empresa_id', $empresaId);
+        }
         $this->db->limit(1);
 
         return $this->db->get('produtos')->row();

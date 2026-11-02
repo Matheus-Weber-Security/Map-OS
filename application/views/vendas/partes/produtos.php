@@ -45,7 +45,4 @@ if ($pode['itens']) {
             'class' => 'border-0',
         ]),
     ]) ?>
-    <?php if ($produtos !== []) { ?>
-        <p class="text-right text-body-md text-text">Total de produtos: <span class="font-medium tabular-nums"><?= e(dinheiro($totais['produtos'])) ?></span></p>
-    <?php } ?>
 </div>

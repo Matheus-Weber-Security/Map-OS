@@ -19,7 +19,7 @@
                 <tr>
                     <td class="rel-td"><?= e($r->idClientes) ?></td>
                     <td class="rel-td"><?= e($r->nomeCliente) ?></td>
-                    <td class="rel-td"><?= e($r->idProdutos) ?></td>
+                    <td class="rel-td"><?= e($r->codigo ?? $r->idProdutos) ?></td>
                     <td class="rel-td"><?= e($r->descricao) ?></td>
                     <td class="rel-td"><?= e($r->quantidade) ?></td>
                     <td class="rel-td"><?= e($r->idRelacionado) ?></td>

@@ -730,8 +730,8 @@ class Vendas extends MY_Controller
     private function responderTrechos(int $idVenda, string $tipo, string $mensagem, int $status = 200, array $extras = []): void
     {
         $partes = match ($tipo) {
-            'produto' => ['produtos', 'totais', 'desconto', 'pix'],
-            'desconto' => ['totais', 'desconto', 'pix'],
+            'produto' => ['produtos', 'totais', 'desconto', 'valores', 'pix'],
+            'desconto' => ['totais', 'desconto', 'valores', 'pix'],
             default => throw new InvalidArgumentException("Tipo de trecho desconhecido: {$tipo}"),
         };
 

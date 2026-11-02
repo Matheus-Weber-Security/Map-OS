@@ -19,7 +19,7 @@ $temFiltro = $filtros !== [];
 $csrf = [$this->security->get_csrf_token_name(), $this->security->get_csrf_hash()];
 
 $colunas = [
-    ['key' => 'idProdutos', 'label' => 'Cód.', 'align' => 'right', 'nowrap' => true],
+    ['label' => 'Cód.', 'align' => 'right', 'nowrap' => true, 'render' => fn ($p) => (string) ($p->codigo ?? $p->idProdutos)],
     ['key' => 'codDeBarra', 'label' => 'Cód. de barras', 'nowrap' => true, 'truncate' => true, 'hide_until' => 'xl'],
     ['label' => 'Descrição', 'class' => 'min-w-32 [overflow-wrap:anywhere]', 'render' => fn ($p) => component('link', ['label' => $p->descricao, 'href' => site_url('produtos/visualizar/' . $p->idProdutos), 'class' => 'font-medium'])],
     ['label' => 'Estoque', 'align' => 'right', 'nowrap' => true, 'render' => fn ($p) => produtoEstoqueBaixo($p)

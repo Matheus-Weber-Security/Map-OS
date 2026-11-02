@@ -52,7 +52,7 @@ $grupos = [
         'vazio' => 'Nenhum produto encontrado.',
         'linhas' => $produtos,
         'colunas' => [
-            ['key' => 'idProdutos', 'label' => 'Cód.', 'align' => 'right', 'nowrap' => true],
+            ['label' => 'Cód.', 'align' => 'right', 'nowrap' => true, 'render' => fn ($p) => (string) ($p->codigo ?? $p->idProdutos)],
             ['label' => 'Descrição', 'class' => 'min-w-32 [overflow-wrap:anywhere]', 'render' => fn ($p) => component('link', ['label' => (string) $p->descricao, 'href' => site_url('produtos/visualizar/' . (int) $p->idProdutos), 'class' => 'font-medium'])],
             ['label' => 'Preço', 'align' => 'right', 'nowrap' => true, 'render' => fn ($p) => dinheiro($p->precoVenda)],
             ['label' => 'Estoque', 'align' => 'right', 'nowrap' => true, 'hide_until' => 'md', 'render' => fn ($p) => (string) $p->estoque],

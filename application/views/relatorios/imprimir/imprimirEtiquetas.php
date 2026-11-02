@@ -27,7 +27,7 @@ $repetir = isset($_GET['qtdEtiqueta']);
                     <strong><?= e(limitarTexto(strtoupper($p->descricao), 23)) ?></strong>
                 </div>
                 <div class="etiqueta-texto">
-                    Cod: <b><?= e($p->idProdutos) ?></b><br />
+                    Cod: <b><?= e($p->codigo ?? $p->idProdutos) ?></b><br />
                     Preço: R$ <b><?= e(str_replace('.', ',', $p->precoVenda)) ?></b>
                 </div>
                 <div class="barcodecell">

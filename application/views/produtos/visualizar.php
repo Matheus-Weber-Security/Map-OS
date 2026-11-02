@@ -8,6 +8,7 @@
  * @var array<string, bool> $pode
  */
 $id = (int) $produto->idProdutos;
+$codExibicao = (int) ($produto->codigo ?? $produto->idProdutos);
 $compra = (float) $produto->precoCompra;
 $venda = (float) $produto->precoVenda;
 // Markup sobre a compra e margem sobre a venda, como o cálculo do formulário.
@@ -20,7 +21,7 @@ $unidade = (string) $produto->unidade;
 $movimento = array_filter([$produto->entrada ? 'Entrada' : null, $produto->saida ? 'Saída' : null]);
 $secoes = [
     'Produto' => array_filter([
-        'Código' => (string) $id,
+        'Código' => (string) $codExibicao,
         'Código de barras' => (string) $produto->codDeBarra,
         'Unidade' => unidadesDeMedida()[$unidade] ?? $unidade,
         'Movimenta o estoque' => $movimento === [] ? 'Não' : implode(' e ', $movimento),
@@ -40,7 +41,7 @@ $secoes = [
                 <h1 class="font-display text-heading-xl [overflow-wrap:anywhere] text-text"><?= e($produto->descricao) ?></h1>
                 <?php if ($baixo) { ?><?= component('pill-status', ['label' => 'Estoque baixo', 'variant' => 'warning']) ?><?php } ?>
             </div>
-            <p class="text-caption [overflow-wrap:anywhere] text-muted"><?= e('Produto nº ' . $id . ($produto->codDeBarra ? ' · ' . $produto->codDeBarra : '')) ?></p>
+            <p class="text-caption [overflow-wrap:anywhere] text-muted"><?= e('Produto nº ' . $codExibicao . ($produto->codDeBarra ? ' · ' . $produto->codDeBarra : '')) ?></p>
         </div>
         <?php if ($pode['excluir']) { ?>
             <?= component('button', ['label' => 'Excluir', 'icon' => 'trash-2', 'variant' => 'ghost', 'class' => 'hover:text-danger-ink', 'attrs' => ['data-modal-abrir' => 'excluir-produto']]) ?>

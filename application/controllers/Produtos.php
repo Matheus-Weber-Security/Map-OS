@@ -105,9 +105,14 @@ class Produtos extends MY_Controller
             if ($erros === []) {
                 $dados = produtoDadosDoFormulario($this->input->post(), $precos['precoCompra'], $precos['precoVenda']);
 
-                $salvou = $produto === null
-                    ? $this->produtos_model->add('produtos', $dados)
-                    : $this->produtos_model->edit('produtos', $dados, 'idProdutos', (int) $produto->idProdutos);
+                if ($produto === null) {
+                    $empresaId = (int) ($this->session->userdata('empresa_id') ?: 1);
+                    $dados['empresa_id'] = $empresaId;
+                    $dados['codigo'] = $this->produtos_model->gerarProximoCodigo($empresaId);
+                    $salvou = $this->produtos_model->add('produtos', $dados);
+                } else {
+                    $salvou = $this->produtos_model->edit('produtos', $dados, 'idProdutos', (int) $produto->idProdutos);
+                }
 
                 if ($salvou) {
                     log_info($produto === null ? 'Adicionou um produto' : 'Alterou um produto. ID: ' . (int) $produto->idProdutos);

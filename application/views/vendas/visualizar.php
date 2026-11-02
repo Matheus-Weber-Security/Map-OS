@@ -183,7 +183,10 @@ $textos = $campos([
         <div data-os-parte="produtos"><?php $this->load->view('vendas/partes/produtos'); ?></div>
     </section>
 
-    <div data-os-parte="desconto"><?php $this->load->view('vendas/partes/desconto'); ?></div>
+    <div class="grid gap-4 <?= $pode['editar'] ? 'lg:grid-cols-2' : '' ?> lg:items-stretch">
+        <div data-os-parte="desconto" class="<?= ! $pode['editar'] ? 'hidden' : 'flex flex-col' ?>"><?php $this->load->view('vendas/partes/desconto'); ?></div>
+        <div data-os-parte="valores" class="<?= ! $pode['editar'] ? 'lg:col-span-2' : 'flex flex-col' ?>"><?php $this->load->view('vendas/partes/valores'); ?></div>
+    </div>
     <div data-os-parte="pix"><?php $this->load->view('vendas/partes/pix'); ?></div>
 </div>
 
