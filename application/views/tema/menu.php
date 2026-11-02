@@ -31,10 +31,10 @@ $classeSublink = 'relative flex min-h-9 items-center rounded-md py-1.5 pr-2.5 pl
 
   <aside id="v5-sidebar" class="v5-sidebar fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border bg-surface" data-sidebar aria-label="Menu principal">
     <div class="v5-sidebar-topo flex h-topbar shrink-0 items-center gap-3 border-b border-border px-4">
-      <a href="<?= e(base_url()) ?>" class="flex min-w-0 items-center gap-2.5 rounded-md <?= e($foco) ?>" title="Início">
+      <a href="<?= e(base_url()) ?>" class="flex min-w-0 items-center gap-2 rounded-md <?= e($foco) ?>" title="Início">
         <img src="<?= e(base_url('assets/img/logo-sistema.png')) ?>" alt="<?= e($layout['nome_sistema']) ?>" class="size-[34px] shrink-0 rounded-lg object-contain shadow-xs">
-        <span class="v5-rotulo flex min-w-0 items-center gap-2">
-          <span class="truncate font-display text-[1.3125rem] leading-none font-bold tracking-[-0.2px] text-text"><?= e($layout['nome_sistema']) ?></span>
+        <span class="v5-rotulo flex min-w-0 items-center gap-1.5">
+          <span class="truncate font-display text-lg leading-none font-bold tracking-[-0.2px] text-text"><?= e($layout['nome_sistema']) ?></span>
           <?php if ($layout['versao'] !== '') { ?>
             <span class="shrink-0 rounded-xs bg-surface-subtle px-1.5 text-micro-cap text-muted max-lg:hidden">v<?= e($layout['versao']) ?></span>
           <?php } ?>
@@ -49,11 +49,20 @@ $classeSublink = 'relative flex min-h-9 items-center rounded-md py-1.5 pr-2.5 pl
 
     <nav class="flex-1 overflow-y-auto overscroll-contain px-3 py-4 [scrollbar-color:var(--color-input)_transparent] [scrollbar-width:thin]" aria-label="Navegação">
       <?php foreach ($layout['grupos'] as $grupo) { ?>
-        <div class="v5-grupo mt-4.5 first:mt-0">
+        <?php $grupoAberto = ! empty($grupo['atual']); ?>
+        <details class="v5-grupo v5-grupo-categoria group/secao mt-3 first:mt-0" data-grupo="<?= e($grupo['label']) ?>" <?= $grupoAberto ? 'open data-aberto-inicial="1"' : '' ?>>
           <?php if ($grupo['label'] !== '') { ?>
-            <p class="v5-rotulo px-2.5 pb-1.5 text-[0.6875rem] leading-[1.8] font-semibold tracking-[0.4px] text-muted uppercase"><?= e($grupo['label']) ?></p>
+            <summary class="v5-grupo-cabecalho flex h-9 w-full cursor-pointer list-none items-center gap-2.5 rounded-md px-2.5 text-[0.75rem] font-semibold tracking-[0.4px] text-muted uppercase transition-colors hover:bg-surface-subtle hover:text-text <?= e($foco) ?> [&::-webkit-details-marker]:hidden" title="<?= e($grupo['label']) ?>">
+              <span class="v5-grupo-icone inline-flex size-5 shrink-0 items-center justify-center text-muted" aria-hidden="true">
+                <?= icon($grupo['icon'] ?? 'folder-open', ['class' => 'size-4.5']) ?>
+              </span>
+              <span class="v5-rotulo flex-1 truncate text-left"><?= e($grupo['label']) ?></span>
+              <span class="v5-rotulo inline-flex shrink-0 items-center">
+                <?= icon('chevron-down', ['class' => 'size-3.5 text-muted transition-transform duration-200 group-open/secao:rotate-180']) ?>
+              </span>
+            </summary>
           <?php } ?>
-          <ul class="flex flex-col gap-0.5">
+          <ul class="v5-grupo-itens mt-0.5 flex flex-col gap-0.5">
             <?php foreach ($grupo['itens'] as $item) { ?>
               <?php if (isset($item['itens'])) { ?>
                 <li>
@@ -84,7 +93,7 @@ $classeSublink = 'relative flex min-h-9 items-center rounded-md py-1.5 pr-2.5 pl
               <?php } ?>
             <?php } ?>
           </ul>
-        </div>
+        </details>
       <?php } ?>
     </nav>
 

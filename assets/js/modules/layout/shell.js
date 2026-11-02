@@ -9,6 +9,24 @@ import { post } from '../../lib/http.js';
 import { aplicarCor, aplicarModo, CORES, salvarCor, salvarModo } from '../../lib/tema.js';
 
 export const CHAVE_SIDEBAR = 'mapos:sidebar';
+export const CHAVE_SECOES = 'mapos:menu-secoes';
+
+export function lerSecoesAbertas() {
+    try {
+        const val = globalThis.localStorage?.getItem(CHAVE_SECOES);
+        return val ? JSON.parse(val) : null;
+    } catch {
+        return null;
+    }
+}
+
+export function gravarSecoesAbertas(secoes) {
+    try {
+        globalThis.localStorage?.setItem(CHAVE_SECOES, JSON.stringify(secoes));
+    } catch {
+        // localStorage indisponível
+    }
+}
 
 // Mesmo ponto de quebra do layout.css (lg do Tailwind, 64rem).
 export const CONSULTA_DESKTOP = '(min-width: 64rem)';
@@ -126,6 +144,47 @@ export default function iniciar(corpo) {
         }
     };
 
+    const categorias = sidebar?.querySelectorAll('.v5-grupo-categoria');
+
+    const sincronizarCategorias = (recolhida) => {
+        if (!categorias || categorias.length === 0) return;
+        if (recolhida) {
+            for (const cat of categorias) {
+                cat.open = true;
+            }
+        } else {
+            const abertas = lerSecoesAbertas();
+            for (const cat of categorias) {
+                const grupo = cat.dataset.grupo;
+                if (abertas !== null) {
+                    cat.open = abertas.includes(grupo);
+                } else {
+                    cat.open = cat.hasAttribute('data-aberto-inicial');
+                }
+            }
+        }
+    };
+
+    const salvarEstadoCategorias = () => {
+        if (!categorias || html.dataset.sidebar === 'recolhida') return;
+        const abertas = [];
+        for (const cat of categorias) {
+            if (cat.open && cat.dataset.grupo) {
+                abertas.push(cat.dataset.grupo);
+            }
+        }
+        gravarSecoesAbertas(abertas);
+    };
+
+    sincronizarCategorias(html.dataset.sidebar === 'recolhida');
+
+    sidebar?.addEventListener('toggle', (evento) => {
+        if (html.dataset.sidebar === 'recolhida') return;
+        if (evento.target.classList?.contains('v5-grupo-categoria')) {
+            salvarEstadoCategorias();
+        }
+    }, true);
+
     const aplicar = (novo, origem = null) => {
         if (novo.recolhida) {
             html.dataset.sidebar = 'recolhida';
@@ -133,6 +192,7 @@ export default function iniciar(corpo) {
             delete html.dataset.sidebar;
         }
         gravar(CHAVE_SIDEBAR, novo.recolhida ? 'recolhida' : null);
+        sincronizarCategorias(novo.recolhida);
 
         const estavaAberta = html.dataset.gaveta === 'aberta';
         if (novo.gavetaAberta) {
@@ -171,10 +231,10 @@ export default function iniciar(corpo) {
             return;
         }
 
-        // Com a sidebar recolhida, abrir um grupo (Relatórios, Configurações)
+        // Com a sidebar recolhida, abrir um subgrupo interno (Configurações)
         // expande a sidebar para os itens aparecerem com o nome.
         const grupo = grupoDaSidebar(alvo, sidebar);
-        if (grupo && estado().desktop && estado().recolhida) {
+        if (grupo && !grupo.classList.contains('v5-grupo-cabecalho') && estado().desktop && estado().recolhida) {
             aplicar({ ...estado(), recolhida: false });
         }
 

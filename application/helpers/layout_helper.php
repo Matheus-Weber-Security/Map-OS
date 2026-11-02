@@ -81,24 +81,17 @@ if (! function_exists('layoutMenu')) {
             ['grupo' => 'Operação', 'label' => 'Termos de Garantias', 'icon' => 'receipt', 'url' => 'garantias', 'rota' => ['Garantias', 'index'], 'ativo' => ['Garantias']],
             ['grupo' => 'Financeiro', 'label' => 'Lançamentos', 'icon' => 'chart-column', 'url' => 'financeiro/lancamentos', 'rota' => ['Financeiro', 'lancamentos'], 'ativo' => ['Financeiro']],
             ['grupo' => 'Financeiro', 'label' => 'Cobranças', 'icon' => 'circle-dollar-sign', 'url' => 'cobrancas/cobrancas', 'rota' => ['Cobrancas', 'cobrancas'], 'ativo' => ['Cobrancas']],
-            [
-                'grupo' => 'Financeiro',
-                'label' => 'Relatórios',
-                'icon' => 'chart-pie',
-                'itens' => [
-                    ['label' => 'Clientes', 'url' => 'relatorios/clientes', 'rota' => ['Relatorios', 'clientes'], 'ativo' => ['Relatorios/clientes', 'Relatorios/clientesCustom', 'Relatorios/clientesRapid']],
-                    ['label' => 'Produtos', 'url' => 'relatorios/produtos', 'rota' => ['Relatorios', 'produtos'], 'ativo' => ['Relatorios/produtos', 'Relatorios/produtosCustom', 'Relatorios/produtosRapid', 'Relatorios/produtosRapidMin', 'Relatorios/produtosEtiquetas']],
-                    ['label' => 'Serviços', 'url' => 'relatorios/servicos', 'rota' => ['Relatorios', 'servicos'], 'ativo' => ['Relatorios/servicos', 'Relatorios/servicosCustom', 'Relatorios/servicosRapid']],
-                    ['label' => 'Ordens de Serviço', 'url' => 'relatorios/os', 'rota' => ['Relatorios', 'os'], 'ativo' => ['Relatorios/os', 'Relatorios/osCustom', 'Relatorios/osRapid']],
-                    ['label' => 'Vendas', 'url' => 'relatorios/vendas', 'rota' => ['Relatorios', 'vendas'], 'ativo' => ['Relatorios/vendas', 'Relatorios/vendasCustom', 'Relatorios/vendasRapid']],
-                    ['label' => 'Financeiro', 'url' => 'relatorios/financeiro', 'rota' => ['Relatorios', 'financeiro'], 'ativo' => ['Relatorios/financeiro', 'Relatorios/financeiroCustom', 'Relatorios/financeiroRapid']],
-                    ['label' => 'SKU', 'url' => 'relatorios/sku', 'rota' => ['Relatorios', 'sku'], 'ativo' => ['Relatorios/sku', 'Relatorios/skuCustom', 'Relatorios/skuRapid']],
-                    ['label' => 'Receitas Brutas - MEI', 'url' => 'relatorios/receitasBrutasMei', 'rota' => ['Relatorios', 'receitasBrutasMei'], 'ativo' => ['Relatorios/receitasBrutasMei', 'Relatorios/receitasBrutasCustom', 'Relatorios/receitasBrutasRapid']],
-                ],
-            ],
-            ['grupo' => 'Sistema', 'label' => 'Arquivos', 'icon' => 'archive', 'url' => 'arquivos', 'rota' => ['Arquivos', 'index'], 'ativo' => ['Arquivos']],
+            ['grupo' => 'Relatórios', 'label' => 'Clientes', 'icon' => 'users', 'url' => 'relatorios/clientes', 'rota' => ['Relatorios', 'clientes'], 'ativo' => ['Relatorios/clientes', 'Relatorios/clientesCustom', 'Relatorios/clientesRapid']],
+            ['grupo' => 'Relatórios', 'label' => 'Produtos', 'icon' => 'package', 'url' => 'relatorios/produtos', 'rota' => ['Relatorios', 'produtos'], 'ativo' => ['Relatorios/produtos', 'Relatorios/produtosCustom', 'Relatorios/produtosRapid', 'Relatorios/produtosRapidMin', 'Relatorios/produtosEtiquetas']],
+            ['grupo' => 'Relatórios', 'label' => 'Serviços', 'icon' => 'wrench', 'url' => 'relatorios/servicos', 'rota' => ['Relatorios', 'servicos'], 'ativo' => ['Relatorios/servicos', 'Relatorios/servicosCustom', 'Relatorios/servicosRapid']],
+            ['grupo' => 'Relatórios', 'label' => 'Ordens de Serviço', 'icon' => 'file-text', 'url' => 'relatorios/os', 'rota' => ['Relatorios', 'os'], 'ativo' => ['Relatorios/os', 'Relatorios/osCustom', 'Relatorios/osRapid']],
+            ['grupo' => 'Relatórios', 'label' => 'Vendas', 'icon' => 'shopping-cart', 'url' => 'relatorios/vendas', 'rota' => ['Relatorios', 'vendas'], 'ativo' => ['Relatorios/vendas', 'Relatorios/vendasCustom', 'Relatorios/vendasRapid']],
+            ['grupo' => 'Relatórios', 'label' => 'Financeiro', 'icon' => 'circle-dollar-sign', 'url' => 'relatorios/financeiro', 'rota' => ['Relatorios', 'financeiro'], 'ativo' => ['Relatorios/financeiro', 'Relatorios/financeiroCustom', 'Relatorios/financeiroRapid']],
+            ['grupo' => 'Relatórios', 'label' => 'SKU', 'icon' => 'barcode', 'url' => 'relatorios/sku', 'rota' => ['Relatorios', 'sku'], 'ativo' => ['Relatorios/sku', 'Relatorios/skuCustom', 'Relatorios/skuRapid']],
+            ['grupo' => 'Relatórios', 'label' => 'Receitas Brutas - MEI', 'icon' => 'receipt', 'url' => 'relatorios/receitasBrutasMei', 'rota' => ['Relatorios', 'receitasBrutasMei'], 'ativo' => ['Relatorios/receitasBrutasMei', 'Relatorios/receitasBrutasCustom', 'Relatorios/receitasBrutasRapid']],
             ['grupo' => 'SaaS', 'label' => 'Assinatura', 'icon' => 'banknote', 'url' => 'assinatura', 'rota' => ['Assinatura', 'index'], 'ativo' => ['Assinatura']],
             ['grupo' => 'SaaS', 'label' => 'Gerenciar SaaS', 'icon' => 'settings', 'url' => 'saas/gerenciar', 'rota' => ['Saas', 'gerenciar'], 'ativo' => ['Saas']],
+            ['grupo' => 'Sistema', 'label' => 'Arquivos', 'icon' => 'archive', 'url' => 'arquivos', 'rota' => ['Arquivos', 'index'], 'ativo' => ['Arquivos']],
             [
                 'grupo' => 'Sistema',
                 'label' => 'Configurações',
@@ -190,14 +183,31 @@ if (! function_exists('layoutMenuVisivel')) {
     }
 }
 
+if (! function_exists('layoutIconeGrupo')) {
+    /**
+     * Ícone de cada categoria/grupo do menu.
+     */
+    function layoutIconeGrupo(string $grupo): string
+    {
+        return match ($grupo) {
+            'Operação' => 'folder-open',
+            'Financeiro' => 'banknote',
+            'Relatórios' => 'chart-pie',
+            'SaaS' => 'shield-check',
+            'Sistema' => 'settings',
+            default => 'folder-open',
+        };
+    }
+}
+
 if (! function_exists('layoutMenuGrupos')) {
     /**
      * Separa o menu já filtrado (layoutMenuVisivel()) nas seções da sidebar
-     * (DESIGN.md: Operação, Financeiro, Sistema), na ordem em que aparecem.
+     * (DESIGN.md: Operação, Financeiro, Relatórios, Sistema), na ordem em que aparecem.
      * Seção sem item visível não aparece.
      *
      * @param  list<array<string, mixed>>  $menu
-     * @return list<array{label: string, itens: list<array<string, mixed>>}>
+     * @return list<array{label: string, icon: string, atual: bool, itens: list<array<string, mixed>>}>
      */
     function layoutMenuGrupos(array $menu): array
     {
@@ -205,7 +215,17 @@ if (! function_exists('layoutMenuGrupos')) {
 
         foreach ($menu as $item) {
             $grupo = (string) ($item['grupo'] ?? '');
-            $grupos[$grupo] ??= ['label' => $grupo, 'itens' => []];
+            if (! isset($grupos[$grupo])) {
+                $grupos[$grupo] = [
+                    'label' => $grupo,
+                    'icon' => layoutIconeGrupo($grupo),
+                    'atual' => false,
+                    'itens' => [],
+                ];
+            }
+            if (! empty($item['atual'])) {
+                $grupos[$grupo]['atual'] = true;
+            }
             $grupos[$grupo]['itens'][] = $item;
         }
 
