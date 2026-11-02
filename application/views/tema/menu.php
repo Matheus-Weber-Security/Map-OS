@@ -50,7 +50,7 @@ $classeSublink = 'relative flex min-h-9 items-center rounded-md py-1.5 pr-2.5 pl
     <nav class="flex-1 overflow-y-auto overscroll-contain px-3 py-4 [scrollbar-color:var(--color-input)_transparent] [scrollbar-width:thin]" aria-label="Navegação">
       <?php foreach ($layout['grupos'] as $grupo) { ?>
         <?php $grupoAberto = ! empty($grupo['atual']); ?>
-        <details class="v5-grupo v5-grupo-categoria group/secao mt-3 first:mt-0" data-grupo="<?= e($grupo['label']) ?>" <?= $grupoAberto ? 'open data-aberto-inicial="1"' : '' ?>>
+        <details class="v5-grupo v5-grupo-categoria group/grupo mt-3.5 first:mt-0" data-grupo="<?= e($grupo['label']) ?>" <?= $grupoAberto ? 'open data-aberto-inicial="1"' : '' ?>>
           <?php if ($grupo['label'] !== '') { ?>
             <summary class="v5-grupo-cabecalho flex h-9 w-full cursor-pointer list-none items-center gap-2.5 rounded-md px-2.5 text-[0.75rem] font-semibold tracking-[0.4px] text-muted uppercase transition-colors hover:bg-surface-subtle hover:text-text <?= e($foco) ?> [&::-webkit-details-marker]:hidden" title="<?= e($grupo['label']) ?>">
               <span class="v5-grupo-icone inline-flex size-5 shrink-0 items-center justify-center text-muted" aria-hidden="true">
@@ -58,7 +58,7 @@ $classeSublink = 'relative flex min-h-9 items-center rounded-md py-1.5 pr-2.5 pl
               </span>
               <span class="v5-rotulo flex-1 truncate text-left"><?= e($grupo['label']) ?></span>
               <span class="v5-rotulo inline-flex shrink-0 items-center">
-                <?= icon('chevron-down', ['class' => 'size-3.5 text-muted transition-transform duration-200 group-open/secao:rotate-180']) ?>
+                <?= icon('chevron-down', ['class' => 'size-3.5 text-muted transition-transform duration-200 group-open/grupo:rotate-180']) ?>
               </span>
             </summary>
           <?php } ?>
