@@ -22,7 +22,9 @@ $titulo = 'Banco de dados desatualizado';
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex">
     <title><?= e($titulo) ?> — Nexus Ticket</title>
-    <link rel="icon" type="image/png" href="<?= e($raiz . 'assets/img/favicon.png') ?>">
+    <link rel="icon" type="image/png" sizes="32x32" href="<?= e($raiz . 'assets/img/favicon-32x32.png?v=2') ?>">
+    <link rel="icon" type="image/png" sizes="16x16" href="<?= e($raiz . 'assets/img/favicon-16x16.png?v=2') ?>">
+    <link rel="apple-touch-icon" sizes="180x180" href="<?= e($raiz . 'assets/img/apple-touch-icon.png?v=2') ?>">
     <script src="<?= e($raiz . 'assets/js/tema.js') ?>"></script>
     <link rel="stylesheet" href="<?= e($raiz . 'assets/dist/app.css') ?>">
 </head>

@@ -26,7 +26,9 @@ $detalhes = $desenvolvimento ? ($detalhes ?? null) : null;
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex">
     <title><?= htmlspecialchars($titulo . ' — Nexus Ticket', ENT_QUOTES, 'UTF-8') ?></title>
-    <link rel="icon" type="image/png" href="<?= htmlspecialchars($raiz . 'assets/img/favicon.png', ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="icon" type="image/png" sizes="32x32" href="<?= htmlspecialchars($raiz . 'assets/img/favicon-32x32.png?v=2', ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="icon" type="image/png" sizes="16x16" href="<?= htmlspecialchars($raiz . 'assets/img/favicon-16x16.png?v=2', ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="apple-touch-icon" sizes="180x180" href="<?= htmlspecialchars($raiz . 'assets/img/apple-touch-icon.png?v=2', ENT_QUOTES, 'UTF-8') ?>">
     <script src="<?= htmlspecialchars($raiz . 'assets/js/tema.js', ENT_QUOTES, 'UTF-8') ?>"></script>
     <link rel="stylesheet" href="<?= htmlspecialchars($raiz . 'assets/dist/app.css', ENT_QUOTES, 'UTF-8') ?>">
 </head>
