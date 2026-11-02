@@ -24,7 +24,11 @@
   <?php if (function_exists('segurancaNonceAtual') && segurancaNonceAtual() !== '') { ?>
   <meta name="csp-nonce" content="<?= e(segurancaNonceAtual()) ?>">
   <?php } ?>
-  <link rel="shortcut icon" type="image/png" href="<?= e(base_url('assets/img/favicon.png')) ?>">
+  <link rel="icon" type="image/png" sizes="32x32" href="<?= e(base_url('assets/img/favicon-32x32.png?v=2')) ?>">
+  <link rel="icon" type="image/png" sizes="16x16" href="<?= e(base_url('assets/img/favicon-16x16.png?v=2')) ?>">
+  <link rel="apple-touch-icon" sizes="180x180" href="<?= e(base_url('assets/img/apple-touch-icon.png?v=2')) ?>">
+  <link rel="manifest" href="<?= e(base_url('assets/manifest.json')) ?>">
+  <meta name="theme-color" content="#7c3aed">
   <script src="<?= e(base_url('assets/js/tema.js')) ?>"></script>
   <?php foreach ($layout['assets']['css'] as $arquivo) { ?>
   <link rel="stylesheet" href="<?= e(layoutUrlAsset($arquivo, base_url())) ?>">
