@@ -72,7 +72,7 @@ if (! function_exists('layoutMenu')) {
     function layoutMenu(): array
     {
         return [
-            ['grupo' => 'Operação', 'label' => 'Início', 'icon' => 'house', 'url' => '', 'rota' => ['Mapos', 'index'], 'ativo' => ['Mapos/index']],
+            ['grupo' => 'Operação', 'label' => 'Painel', 'icon' => 'house', 'url' => '', 'rota' => ['Mapos', 'index'], 'ativo' => ['Mapos/index']],
             ['grupo' => 'Operação', 'label' => 'Cliente / Fornecedor', 'icon' => 'user', 'url' => 'clientes', 'rota' => ['Clientes', 'index'], 'ativo' => ['Clientes']],
             ['grupo' => 'Operação', 'label' => 'Produtos', 'icon' => 'shopping-basket', 'url' => 'produtos', 'rota' => ['Produtos', 'index'], 'ativo' => ['Produtos']],
             ['grupo' => 'Operação', 'label' => 'Serviços', 'icon' => 'wrench', 'url' => 'servicos', 'rota' => ['Servicos', 'index'], 'ativo' => ['Servicos']],

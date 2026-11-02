@@ -21,10 +21,10 @@
  * @var array $configuration
  */
 $ativo = 'aria-[current=page]:bg-primary-tint aria-[current=page]:font-semibold aria-[current=page]:text-text'
-    . ' aria-[current=page]:before:absolute aria-[current=page]:before:inset-y-2 aria-[current=page]:before:-left-3 aria-[current=page]:before:w-[3px] aria-[current=page]:before:rounded-r-[3px] aria-[current=page]:before:bg-primary';
+    . ' aria-[current=page]:before:absolute aria-[current=page]:before:inset-y-1.5 aria-[current=page]:before:-left-2 aria-[current=page]:before:w-[3px] aria-[current=page]:before:rounded-r-[3px] aria-[current=page]:before:bg-primary';
 $foco = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring';
-$classeLink = 'relative flex h-10 items-center gap-3 rounded-md px-2.5 text-[0.9375rem] font-medium text-muted transition-colors hover:bg-surface-subtle hover:text-text ' . $foco . ' ' . $ativo;
-$classeSublink = 'relative flex min-h-9 items-center rounded-md py-1.5 pr-2.5 pl-10.5 text-sm text-muted transition-colors hover:bg-surface-subtle hover:text-text ' . $foco . ' ' . $ativo;
+$classeLink = 'relative flex h-9 items-center gap-2.5 rounded-md px-2 text-[0.8125rem] font-medium text-muted transition-colors hover:bg-surface-subtle hover:text-text ' . $foco . ' ' . $ativo;
+$classeSublink = 'relative flex min-h-8.5 items-center rounded-md py-1 pr-2 pl-7 text-[0.78125rem] text-muted transition-colors hover:bg-surface-subtle hover:text-text ' . $foco . ' ' . $ativo;
 ?>
 <div class="v5-shell">
   <div class="v5-gaveta-fundo fixed inset-0 z-40 bg-backdrop lg:hidden" data-gaveta-fechar aria-hidden="true"></div>
@@ -52,7 +52,7 @@ $classeSublink = 'relative flex min-h-9 items-center rounded-md py-1.5 pr-2.5 pl
         <?php $grupoAberto = ! empty($grupo['atual']); ?>
         <details class="v5-grupo v5-grupo-categoria group/grupo mt-3.5 first:mt-0" data-grupo="<?= e($grupo['label']) ?>" <?= $grupoAberto ? 'open data-aberto-inicial="1"' : '' ?>>
           <?php if ($grupo['label'] !== '') { ?>
-            <summary class="v5-grupo-cabecalho flex h-9 w-full cursor-pointer list-none items-center gap-2.5 rounded-md px-2.5 text-[0.75rem] font-semibold tracking-[0.4px] text-muted uppercase transition-colors hover:bg-surface-subtle hover:text-text <?= e($foco) ?> [&::-webkit-details-marker]:hidden" title="<?= e($grupo['label']) ?>">
+            <summary class="v5-grupo-cabecalho flex h-9 w-full cursor-pointer list-none items-center gap-2.5 rounded-md px-2 text-[0.8125rem] font-semibold tracking-normal text-muted transition-colors hover:bg-surface-subtle hover:text-text <?= e($foco) ?> [&::-webkit-details-marker]:hidden" title="<?= e($grupo['label']) ?>">
               <span class="v5-grupo-icone inline-flex size-5 shrink-0 items-center justify-center text-muted" aria-hidden="true">
                 <?= icon($grupo['icon'] ?? 'folder-open', ['class' => 'size-4.5']) ?>
               </span>
@@ -62,15 +62,15 @@ $classeSublink = 'relative flex min-h-9 items-center rounded-md py-1.5 pr-2.5 pl
               </span>
             </summary>
           <?php } ?>
-          <ul class="v5-grupo-itens mt-0.5 flex flex-col gap-0.5">
+          <ul class="v5-grupo-itens mt-0.5 flex flex-col gap-0.5 pl-3.5">
             <?php foreach ($grupo['itens'] as $item) { ?>
               <?php if (isset($item['itens'])) { ?>
                 <li>
                   <details class="group/grupo" <?= $item['atual'] ? 'open' : '' ?>>
                     <summary class="<?= e($classeLink) ?> cursor-pointer list-none [&::-webkit-details-marker]:hidden" title="<?= e($item['label']) ?>"<?= $item['atual'] ? ' data-atual' : '' ?>>
-                      <?= icon($item['icon'], ['class' => 'size-5']) ?>
+                      <?= icon($item['icon'], ['class' => 'size-4.5']) ?>
                       <span class="v5-rotulo flex-1 truncate"><?= e($item['label']) ?></span>
-                      <?= icon('chevron-down', ['class' => 'v5-rotulo size-4 transition-transform group-open/grupo:rotate-180']) ?>
+                      <?= icon('chevron-down', ['class' => 'v5-rotulo size-3.5 transition-transform group-open/grupo:rotate-180']) ?>
                     </summary>
                     <div class="v5-subitens">
                       <ul class="mt-0.5 flex flex-col gap-0.5">
@@ -86,7 +86,7 @@ $classeSublink = 'relative flex min-h-9 items-center rounded-md py-1.5 pr-2.5 pl
               <?php } else { ?>
                 <li>
                   <a href="<?= e(site_url($item['url'])) ?>" class="<?= e($classeLink) ?>" title="<?= e($item['label']) ?>"<?= $item['atual'] ? ' aria-current="page"' : '' ?>>
-                    <?= icon($item['icon'], ['class' => 'size-5']) ?>
+                    <?= icon($item['icon'], ['class' => 'size-4.5']) ?>
                     <span class="v5-rotulo truncate"><?= e($item['label']) ?></span>
                   </a>
                 </li>
