@@ -64,6 +64,11 @@ $vazio = $temFiltro
         </p>
     </header>
 
+    <?= component('alert', [
+        'variant' => 'info',
+        'message' => 'O envio de novos arquivos está temporariamente desativado.',
+    ]) ?>
+
     <form method="get" action="<?= e(site_url('arquivos')) ?>" role="search" aria-label="Filtrar arquivos" class="grid items-end gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-[minmax(0,1fr)_11.5rem_11.5rem_auto]">
         <?= component('input', [
             'name' => 'pesquisa',

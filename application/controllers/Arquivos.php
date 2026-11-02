@@ -51,7 +51,7 @@ class Arquivos extends MY_Controller
         $this->data['results'] = $this->arquivos_model->listar($filtros, (int) $this->data['configuration']['per_page'], $offset);
         $this->data['paginacao'] = $this->paginacao(site_url('arquivos/gerenciar'), $total, $offset, null, $filtros);
         $this->data['pode'] = [
-            'adicionar' => $this->permite('aArquivo'),
+            'adicionar' => false,
             'editar' => $this->permite('eArquivo'),
             'excluir' => $this->permite('dArquivo'),
         ];
@@ -67,12 +67,8 @@ class Arquivos extends MY_Controller
 
     public function adicionar()
     {
-        if (! $this->permission->checkPermission($this->session->userdata('permissao'), 'aArquivo')) {
-            $this->session->set_flashdata('error', 'Você não tem permissão para adicionar arquivos.');
-            redirect(base_url());
-        }
-
-        return $this->formulario(null);
+        $this->session->set_flashdata('error', 'O envio de novos arquivos está temporariamente desativado.');
+        redirect('arquivos');
     }
 
     public function editar()
@@ -99,6 +95,11 @@ class Arquivos extends MY_Controller
      */
     private function formulario(?object $arquivo)
     {
+        if ($arquivo === null) {
+            $this->session->set_flashdata('error', 'O envio de novos arquivos está temporariamente desativado.');
+            redirect('arquivos');
+        }
+
         $erros = [];
 
         if ($this->input->method() === 'post') {
