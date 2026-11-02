@@ -21,10 +21,10 @@
  * @var array $configuration
  */
 $ativo = 'aria-[current=page]:bg-primary-tint aria-[current=page]:font-semibold aria-[current=page]:text-text'
-    . ' aria-[current=page]:before:absolute aria-[current=page]:before:inset-y-1.5 aria-[current=page]:before:-left-2 aria-[current=page]:before:w-[3px] aria-[current=page]:before:rounded-r-[3px] aria-[current=page]:before:bg-primary';
+    . ' aria-[current=page]:before:absolute aria-[current=page]:before:inset-y-1.5 aria-[current=page]:before:left-0 aria-[current=page]:before:w-[3px] aria-[current=page]:before:rounded-r-[3px] aria-[current=page]:before:bg-primary';
 $foco = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring';
-$classeLink = 'relative flex h-9 items-center gap-2.5 rounded-md px-2 text-[0.8125rem] font-medium text-muted transition-colors hover:bg-surface-subtle hover:text-text ' . $foco . ' ' . $ativo;
-$classeSublink = 'relative flex min-h-8.5 items-center rounded-md py-1 pr-2 pl-7 text-[0.78125rem] text-muted transition-colors hover:bg-surface-subtle hover:text-text ' . $foco . ' ' . $ativo;
+$classeLink = 'relative flex h-9 items-center gap-2 rounded-md px-2 text-[0.8125rem] font-medium text-muted transition-colors hover:bg-surface-subtle hover:text-text ' . $foco . ' ' . $ativo;
+$classeSublink = 'relative flex min-h-8.5 items-center rounded-md py-1 pr-2 pl-3 text-[0.78125rem] text-muted transition-colors hover:bg-surface-subtle hover:text-text ' . $foco . ' ' . $ativo;
 ?>
 <div class="v5-shell">
   <div class="v5-gaveta-fundo fixed inset-0 z-40 bg-backdrop lg:hidden" data-gaveta-fechar aria-hidden="true"></div>
@@ -52,7 +52,7 @@ $classeSublink = 'relative flex min-h-8.5 items-center rounded-md py-1 pr-2 pl-7
         <?php $grupoAberto = ! empty($grupo['atual']); ?>
         <details class="v5-grupo v5-grupo-categoria group/grupo mt-3.5 first:mt-0" data-grupo="<?= e($grupo['label']) ?>" <?= $grupoAberto ? 'open data-aberto-inicial="1"' : '' ?>>
           <?php if ($grupo['label'] !== '') { ?>
-            <summary class="v5-grupo-cabecalho flex h-9 w-full cursor-pointer list-none items-center gap-2.5 rounded-md px-2 text-[0.8125rem] font-semibold tracking-normal text-muted transition-colors hover:bg-surface-subtle hover:text-text <?= e($foco) ?> [&::-webkit-details-marker]:hidden" title="<?= e($grupo['label']) ?>">
+            <summary class="v5-grupo-cabecalho flex h-9 w-full cursor-pointer list-none items-center gap-2 rounded-md px-2 text-[0.8125rem] font-semibold tracking-normal text-muted transition-colors hover:bg-surface-subtle hover:text-text <?= e($foco) ?> [&::-webkit-details-marker]:hidden" title="<?= e($grupo['label']) ?>">
               <span class="v5-grupo-icone inline-flex size-5 shrink-0 items-center justify-center text-muted" aria-hidden="true">
                 <?= icon($grupo['icon'] ?? 'folder-open', ['class' => 'size-4.5']) ?>
               </span>
@@ -62,7 +62,7 @@ $classeSublink = 'relative flex min-h-8.5 items-center rounded-md py-1 pr-2 pl-7
               </span>
             </summary>
           <?php } ?>
-          <ul class="v5-grupo-itens mt-0.5 flex flex-col gap-0.5 pl-3.5">
+          <ul class="v5-grupo-itens mt-0.5 flex flex-col gap-0.5">
             <?php foreach ($grupo['itens'] as $item) { ?>
               <?php if (isset($item['itens'])) { ?>
                 <li>
