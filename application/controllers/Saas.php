@@ -64,6 +64,8 @@ class Saas extends MY_Controller
         $planos = $this->saas_model->getPlanos(false);
 
         $this->data['empresas'] = $empresas;
+        $this->data['total'] = count($empresas);
+        $this->data['filtros'] = $filtros;
         $this->data['planos'] = $planos;
         $this->data['statusAtual'] = $status;
         $this->data['buscaAtual'] = $busca;

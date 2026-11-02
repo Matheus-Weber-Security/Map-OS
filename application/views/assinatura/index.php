@@ -1,51 +1,52 @@
-<div class="bg-[#070d18] text-[#f1f5f9] min-h-screen -m-4 sm:-m-6 p-6 sm:p-10 flex flex-col gap-6 font-sans">
-    <!-- Cabeçalho da Página -->
-    <div>
-        <h1 class="font-display text-3xl sm:text-4xl font-extrabold text-[#00d2ff] tracking-tight">Assinatura</h1>
-        <p class="text-sm text-[#64748b] mt-1 font-medium">Gerencie seu plano, tipo de assinatura, forma de pagamento e renovação</p>
-    </div>
+<div class="flex flex-col gap-6 pt-2 pb-8 max-w-4xl mx-auto">
+    <!-- Cabeçalho -->
+    <header class="flex flex-wrap items-end justify-between gap-3">
+        <div>
+            <h1 class="font-display text-heading-xl text-text">Assinatura</h1>
+            <p class="text-caption text-muted">Gerencie seu plano, tipo de assinatura, forma de pagamento e renovação.</p>
+        </div>
+    </header>
 
-    <!-- Card Principal: Status do Plano (Fiel à Imagem 1 do Finance) -->
-    <div class="rounded-2xl border border-[#1e293b] bg-[#0c1527] p-6 sm:p-8 shadow-2xl flex flex-col gap-6 max-w-4xl">
-        <div class="flex items-center gap-2.5 pb-4 border-b border-[#1e293b]">
-            <svg class="size-5 text-[#00d2ff]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
-            <h2 class="font-display text-lg font-bold text-[#f1f5f9]">Status do Plano</h2>
+    <!-- Card Principal: Status do Plano -->
+    <div class="rounded-xl border border-border bg-surface p-6 sm:p-8 shadow-2xs flex flex-col gap-6">
+        <div class="flex items-center gap-2 pb-4 border-b border-border">
+            <?= icon('banknote', ['class' => 'size-5 text-primary']) ?>
+            <h2 class="font-display text-heading-sm font-semibold text-text">Status do Plano</h2>
         </div>
 
         <!-- Grade de Indicadores (Topo - 3 Cards) -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <!-- 1. Status -->
-            <div class="rounded-xl border border-[#1e293b] bg-[#070d18] p-5 flex flex-col justify-between">
-                <span class="text-[11px] font-bold uppercase tracking-wider text-[#64748b]">STATUS</span>
-                <div class="mt-3">
+            <div class="rounded-lg border border-border bg-surface-subtle p-4 flex flex-col justify-between">
+                <span class="text-caption font-bold uppercase tracking-wider text-muted">Status</span>
+                <div class="mt-2">
                     <?php if ($diasRestantes > 0) { ?>
-                        <span class="font-display text-xl font-extrabold text-[#34d399]">Ativa</span>
+                        <?= component('pill-status', ['label' => 'Ativa', 'variant' => 'success']) ?>
                     <?php } else { ?>
-                        <span class="font-display text-xl font-extrabold text-[#f43f5e]">Vencida</span>
+                        <?= component('pill-status', ['label' => 'Vencida', 'variant' => 'danger']) ?>
                     <?php } ?>
                 </div>
             </div>
 
             <!-- 2. Tipo de Assinatura -->
-            <div class="rounded-xl border border-[#1e293b] bg-[#070d18] p-5 flex flex-col justify-between">
-                <span class="text-[11px] font-bold uppercase tracking-wider text-[#64748b]">TIPO DE ASSINATURA</span>
-                <div class="mt-2 relative">
-                    <select id="select-plano" class="w-full appearance-none rounded-lg border border-[#1e293b] bg-[#0c1527] px-3.5 py-2 text-xs font-bold text-[#f1f5f9] focus:outline-none focus:border-[#00d2ff] cursor-pointer">
+            <div class="rounded-lg border border-border bg-surface-subtle p-4 flex flex-col justify-between">
+                <span class="text-caption font-bold uppercase tracking-wider text-muted">Tipo de Assinatura</span>
+                <div class="mt-2">
+                    <select id="select-plano" class="w-full rounded-md border border-input bg-surface px-3 py-1.5 text-label-md font-semibold text-text focus:outline-none focus:ring-2 focus:ring-primary">
                         <?php foreach ($planos as $p) { ?>
                             <option value="<?= (int) $p->id ?>" data-valor="<?= number_format((float) $p->valor, 2, '.', '') ?>" data-nome="<?= e($p->nome) ?>" <?= ((int) $p->id === (int) ($planoAtual->id ?? 0)) ? 'selected' : '' ?>>
                                 ⭐ <?= e($p->nome) ?> (R$ <?= number_format((float) $p->valor, 2, ',', '.') ?>/mês)
                             </option>
                         <?php } ?>
                     </select>
-                    <svg class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 size-4 text-[#64748b]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </div>
             </div>
 
             <!-- 3. Dias Restantes -->
-            <div class="rounded-xl border border-[#1e293b] bg-[#070d18] p-5 flex flex-col justify-between">
-                <span class="text-[11px] font-bold uppercase tracking-wider text-[#64748b]">DIAS RESTANTES</span>
-                <div class="mt-3">
-                    <span class="font-display text-xl font-extrabold <?= $diasRestantes > 0 ? 'text-[#34d399]' : 'text-[#f43f5e]' ?>">
+            <div class="rounded-lg border border-border bg-surface-subtle p-4 flex flex-col justify-between">
+                <span class="text-caption font-bold uppercase tracking-wider text-muted">Dias Restantes</span>
+                <div class="mt-2">
+                    <span class="font-display text-display-small font-bold <?= $diasRestantes > 0 ? 'text-success-ink' : 'text-danger-ink' ?>">
                         <?= (int) $diasRestantes ?> dias
                     </span>
                 </div>
@@ -55,104 +56,112 @@
         <!-- Grade Secundária (Meio - 2 Cards) -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Forma de Pagamento -->
-            <div class="rounded-xl border border-[#1e293b] bg-[#070d18] p-5 flex flex-col justify-between gap-4">
+            <div class="rounded-lg border border-border bg-surface-subtle p-4 flex flex-col justify-between gap-3">
                 <div>
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-[#64748b]">FORMA DE PAGAMENTO</span>
-                    <div class="mt-3">
-                        <span class="font-display text-lg font-bold text-[#00d2ff]">PIX</span>
+                    <span class="text-caption font-bold uppercase tracking-wider text-muted">Forma de Pagamento</span>
+                    <div class="mt-2 flex items-center gap-2">
+                        <?= icon('qr-code', ['class' => 'size-5 text-success-ink']) ?>
+                        <span class="font-display text-heading-sm font-bold text-text">PIX</span>
                     </div>
                 </div>
                 <div>
-                    <button type="button" class="text-xs font-bold text-[#94a3b8] hover:text-[#00d2ff] border border-[#1e293b] bg-[#0c1527] px-3.5 py-1.5 rounded-lg transition-colors">
-                        Alterar Forma de Pagamento
-                    </button>
+                    <span class="inline-block text-caption text-muted bg-surface px-2.5 py-1 rounded border border-border">
+                        Compensação automática e imediata
+                    </span>
                 </div>
             </div>
 
             <!-- Vencimento da Assinatura -->
-            <div class="rounded-xl border border-[#1e293b] bg-[#070d18] p-5 flex flex-col justify-between gap-4">
+            <div class="rounded-lg border border-border bg-surface-subtle p-4 flex flex-col justify-between gap-3">
                 <div>
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-[#64748b]">VENCIMENTO DA ASSINATURA</span>
-                    <div class="mt-3">
-                        <span class="font-display text-lg font-bold text-[#00d2ff]">
+                    <span class="text-caption font-bold uppercase tracking-wider text-muted">Vencimento da Assinatura</span>
+                    <div class="mt-2">
+                        <span class="font-display text-heading-sm font-bold text-text">
                             <?= ! empty($empresa->data_vencimento) ? e(date('d/m/Y', strtotime($empresa->data_vencimento))) : 'Não definido' ?>
                         </span>
                     </div>
                 </div>
-                <div class="flex items-center justify-between text-xs pt-2 border-t border-[#1e293b]">
-                    <span class="text-[#64748b]">Valor do Plano (<?= e($planoAtual->nome ?? 'Essencial') ?>):</span>
-                    <span class="font-bold text-[#00d2ff]">
-                        R$ <?= number_format($valorFinal, 2, ',', '.') ?>/mês
+                <div class="flex items-center justify-between text-body-md border-t border-border pt-2">
+                    <span class="text-caption text-muted">Valor do Plano (<?= e($planoAtual->nome ?? 'Essencial') ?>):</span>
+                    <span class="font-bold text-text">
+                        <?php if ($descontoPercentual > 0) { ?>
+                            <span class="line-through text-muted text-caption mr-1">R$ <?= number_format($valorOriginal, 2, ',', '.') ?></span>
+                            <span class="text-success-ink font-bold">R$ <?= number_format($valorFinal, 2, ',', '.') ?>/mês</span>
+                            <?= component('pill-status', ['label' => $descontoPercentual . '% OFF', 'variant' => 'warning']) ?>
+                        <?php } else { ?>
+                            <span class="text-success-ink font-bold">R$ <?= number_format($valorFinal, 2, ',', '.') ?>/mês</span>
+                        <?php } ?>
                     </span>
                 </div>
             </div>
         </div>
 
         <!-- Checkbox de Cobrança Automática -->
-        <div class="pt-2">
+        <div class="pt-1">
             <label class="flex items-start gap-3 cursor-pointer">
-                <input type="checkbox" checked class="mt-0.5 size-4 rounded border-[#1e293b] bg-[#070d18] text-[#1d4ed8] focus:ring-0">
+                <input type="checkbox" checked class="mt-0.5 size-4 rounded border-input text-primary focus:ring-primary">
                 <div class="flex flex-col">
-                    <span class="text-xs font-bold text-[#f1f5f9]">Cobrança automática</span>
-                    <span class="text-xs text-[#64748b]">Você receberá um lembrete por email 1 dia antes do vencimento da sua assinatura.</span>
+                    <span class="text-label-md font-semibold text-text">Cobrança e lembrete</span>
+                    <span class="text-caption text-muted">Você receberá um lembrete no sistema e por e-mail 3 dias e 1 dia antes do vencimento da sua assinatura.</span>
                 </div>
             </label>
         </div>
 
-        <!-- Botão Verde Largo (Fiel à Imagem 1 do Finance) -->
+        <!-- Botão Principal de Renovação -->
         <div class="pt-2">
-            <button id="btn-pagar-assinatura" type="button" class="w-full flex items-center justify-center gap-2.5 rounded-xl bg-[#10b981] hover:bg-[#059669] active:bg-[#047857] text-white font-bold py-4 px-6 shadow-xl transition-all text-sm tracking-wide">
-                <svg class="size-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+            <button id="btn-pagar-assinatura" type="button" class="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary-hover active:bg-primary-hover text-on-primary font-bold py-3.5 px-6 shadow-sm transition-all text-body-lg">
+                <?= icon('credit-card', ['class' => 'size-5']) ?>
                 <span id="btn-label">Pagar assinatura (<?= e($planoAtual->nome ?? 'Essencial') ?>) - R$ <?= number_format($valorFinal, 2, ',', '.') ?>/mês</span>
             </button>
         </div>
     </div>
 </div>
 
-<!-- Modal PIX de Pagamento (Fiel ao Finance Dark) -->
-<div id="modal-pix" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xs p-4 hidden">
-    <div class="relative w-full max-w-md rounded-2xl border border-[#1e293b] bg-[#0c1527] p-6 sm:p-8 shadow-2xl flex flex-col gap-6 text-white">
-        <button id="btn-fechar-modal" class="absolute top-4 right-4 text-[#64748b] hover:text-white">
-            <svg class="size-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+<!-- Modal PIX de Pagamento -->
+<div id="modal-pix" class="fixed inset-0 z-50 flex items-center justify-center bg-backdrop/80 backdrop-blur-xs p-4 hidden">
+    <div class="relative w-full max-w-md rounded-2xl border border-border bg-surface p-6 sm:p-8 shadow-overlay flex flex-col gap-6 text-text">
+        <button id="btn-fechar-modal" class="absolute top-4 right-4 text-muted hover:text-text p-1 rounded-md">
+            <?= icon('x', ['class' => 'size-5']) ?>
         </button>
 
         <div class="text-center">
-            <div class="mx-auto flex size-12 items-center justify-center rounded-full bg-[#10b981]/15 text-[#10b981] mb-3">
-                <svg class="size-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            <div class="mx-auto flex size-12 items-center justify-center rounded-full bg-success-soft text-success-ink mb-3">
+                <?= icon('qr-code', ['class' => 'size-6']) ?>
             </div>
-            <h3 class="font-display text-2xl font-bold text-[#00d2ff]">Pagamento via PIX</h3>
-            <p class="text-xs text-[#94a3b8] mt-1">Escaneie o QR Code ou copie o código para liberar <strong class="text-white">+30 dias</strong> imediatamente.</p>
+            <h3 class="font-display text-heading-md font-bold text-text">Pagamento via PIX</h3>
+            <p class="text-caption text-muted mt-1">Escaneie o QR Code ou copie o código para liberar <strong class="text-text">+30 dias</strong> imediatamente.</p>
         </div>
 
-        <div class="flex flex-col items-center justify-center p-4 bg-[#070d18] rounded-xl border border-[#1e293b]">
+        <div class="flex flex-col items-center justify-center p-4 bg-surface-subtle rounded-xl border border-border">
             <div class="size-48 bg-white p-2 rounded-lg flex items-center justify-center shadow-inner">
                 <img id="pix-qrcode-img" src="" alt="QR Code PIX" class="size-full object-contain">
             </div>
-            <span class="text-xs text-[#94a3b8] mt-3">Valor da Renovação: <strong id="pix-valor" class="text-[#34d399] font-bold text-base">R$ 0,00</strong></span>
+            <span class="text-caption text-muted mt-3">Valor da Renovação: <strong id="pix-valor" class="text-success-ink font-bold text-body-md">R$ 0,00</strong></span>
         </div>
 
         <!-- Chave Copia e Cola -->
         <div class="flex flex-col gap-2">
-            <label class="text-[11px] font-bold text-[#64748b] uppercase">Código Copia e Cola</label>
+            <label class="text-caption font-bold text-muted uppercase">Código Copia e Cola</label>
             <div class="flex gap-2">
-                <input id="pix-copia-cola" type="text" readonly class="w-full text-xs font-mono bg-[#070d18] border border-[#1e293b] rounded-lg px-3.5 py-2.5 text-[#cbd5e1] select-all">
-                <button id="btn-copiar-pix" type="button" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#1e293b] hover:bg-[#334155] text-white font-bold text-xs transition-colors shrink-0">
+                <input id="pix-copia-cola" type="text" readonly class="w-full text-xs font-mono bg-surface-subtle border border-input rounded-md px-3 py-2 text-text select-all">
+                <button id="btn-copiar-pix" type="button" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-surface-subtle hover:bg-border text-text font-semibold border border-border text-label-md shrink-0">
+                    <?= icon('copy', ['class' => 'size-4']) ?>
                     <span>Copiar</span>
                 </button>
             </div>
-            <span id="msg-copiado" class="text-xs text-[#34d399] font-semibold hidden">Código PIX copiado com sucesso!</span>
+            <span id="msg-copiado" class="text-xs text-success-ink font-semibold hidden">Código PIX copiado com sucesso!</span>
         </div>
 
         <!-- Status do Pagamento (Aguardando) -->
-        <div class="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-[#00d2ff]/10 border border-[#00d2ff]/20 text-[#00d2ff] text-xs font-semibold">
-            <span class="size-2 rounded-full bg-[#00d2ff] animate-ping"></span>
+        <div class="flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-primary/10 border border-primary/20 text-primary text-caption font-semibold">
+            <span class="size-2 rounded-full bg-primary animate-ping"></span>
             <span>Aguardando compensação do banco…</span>
         </div>
 
         <!-- Botão de Simulação Instantânea em Testes -->
-        <div class="border-t border-[#1e293b] pt-4">
-            <button id="btn-confirmar-teste" type="button" class="w-full py-2.5 px-4 rounded-xl bg-[#070d18] hover:bg-[#1e293b] border border-[#1e293b] text-xs font-bold text-[#cbd5e1] transition-colors flex items-center justify-center gap-2">
-                <svg class="size-4 text-[#34d399]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <div class="border-t border-border pt-4">
+            <button id="btn-confirmar-teste" type="button" class="w-full py-2.5 px-4 rounded-lg bg-surface-subtle hover:bg-border border border-border text-caption font-bold text-text transition-colors flex items-center justify-center gap-2">
+                <?= icon('check', ['class' => 'size-4 text-success-ink']) ?>
                 <span>Simular Confirmação Instantânea (Ambiente de Testes)</span>
             </button>
         </div>
