@@ -61,7 +61,7 @@ if (file_exists($composerAutoloadFile)) {
 } else {
     // Sem as dependências nada sobe. Mensagem curta e sem caminhos do servidor (no navegador, só o
     // que o administrador precisa para corrigir); no terminal sai no stderr com código de erro.
-    $mensagem = 'O Map-OS não encontrou as dependências (pasta application/vendor). Instale a versão completa da release '
+    $mensagem = 'O Nexus Ticket não encontrou as dependências (pasta application/vendor). Instale a versão completa da release '
         . 'ou, a partir do código-fonte, execute "composer install --no-dev" na pasta do projeto.';
     if (PHP_SAPI === 'cli') {
         fwrite(STDERR, $mensagem . PHP_EOL);
@@ -70,7 +70,7 @@ if (file_exists($composerAutoloadFile)) {
     http_response_code(503);
     header('Content-Type: text/html; charset=utf-8');
     header('Cache-Control: no-store');
-    exit('<!DOCTYPE html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Map-OS: dependências ausentes</title></head>'
+    exit('<!DOCTYPE html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Nexus Ticket: dependências ausentes</title></head>'
         . '<body style="font-family:sans-serif;max-width:36rem;margin:4rem auto;padding:0 1rem;line-height:1.5">'
         . '<h1 style="font-size:1.25rem">Dependências ausentes</h1><p>' . htmlspecialchars($mensagem, ENT_QUOTES) . '</p></body></html>');
 }

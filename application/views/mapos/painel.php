@@ -310,7 +310,7 @@ if ($pode['os']) {
     </div>
 
     <?php if ($pode === array_fill_keys(array_keys($pode), false)) { ?>
-        <?= component('empty-state', ['title' => 'Bem-vindo ao Map-OS', 'message' => 'Seu usuário ainda não tem permissão para ver os módulos do painel. Fale com o administrador.', 'icon' => 'house']) ?>
+        <?= component('empty-state', ['title' => 'Bem-vindo ao Nexus Ticket', 'message' => 'Seu usuário ainda não tem permissão para ver os módulos do painel. Fale com o administrador.', 'icon' => 'house']) ?>
     <?php } ?>
 </div>
 

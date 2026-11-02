@@ -8,7 +8,7 @@ class MY_Controller extends CI_Controller
             // pagination via paginacao(); o application/config/pagination.php
             // só continua para a API do app.
             'per_page' => 10,
-            'app_name' => 'Map-OS',
+            'app_name' => 'Nexus Ticket',
             'os_notification' => 'cliente',
             'control_estoque' => '1',
             'notifica_whats' => '',
@@ -507,7 +507,7 @@ class MY_Controller extends CI_Controller
             'iniciais' => layoutIniciais($usuario),
             'avatar' => $avatar,
             'tem_foto' => $avatar !== base_url() . 'assets/img/User.png',
-            'nome_sistema' => (string) (($configuracao['app_name'] ?? '') ?: 'Map-OS'),
+            'nome_sistema' => (string) (($configuracao['app_name'] ?? '') ?: 'Nexus Ticket'),
             'versao' => (string) $this->config->item('app_version'),
             'acao' => is_array($acao) ? $acao : null,
             'atalhos' => layoutAtalhos($menu, $siteUrl),

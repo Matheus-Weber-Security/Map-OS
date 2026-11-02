@@ -51,7 +51,7 @@ class Totp
         }
 
         $this->chave = hash_hkdf('sha256', $segredoDaInstalacao, 32, 'mapos-totp-v1');
-        $this->emissor = (string) ($opcoes['emissor'] ?? (config_item('app_name') ?: 'Map-OS'));
+        $this->emissor = (string) ($opcoes['emissor'] ?? (config_item('app_name') ?: 'Nexus Ticket'));
     }
 
     public function criarSegredo(): string

@@ -20,7 +20,7 @@
  *
  * @var array{titulo: string, secundaria?: array} $entrada
  */
-$nomeSistema = (string) ($this->config->item('app_name') ?: 'Map-OS');
+$nomeSistema = (string) ($this->config->item('app_name') ?: 'Nexus Ticket');
 ?><!doctype html>
 <html lang="pt-br" class="scheme-dark">
 <head>

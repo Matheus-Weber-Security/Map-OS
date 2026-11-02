@@ -134,7 +134,7 @@ $dados = $campos([
     <?= component('modal-confirm', [
         'id' => 'excluir-cobranca',
         'title' => 'Excluir cobrança #' . $id . '?',
-        'message' => 'A cobrança será cancelada no gateway e removida do Map-OS. Essa ação não pode ser desfeita.',
+        'message' => 'A cobrança será cancelada no gateway e removida do Nexus Ticket. Essa ação não pode ser desfeita.',
         'confirm_label' => 'Excluir',
         'confirm_attrs' => ['form' => 'form-excluir-cobranca'],
     ]) ?>

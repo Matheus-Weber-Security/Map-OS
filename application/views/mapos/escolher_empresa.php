@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Selecionar Empresa - Map-OS</title>
+    <title>Selecionar Empresa - Nexus Ticket</title>
     <link rel="stylesheet" href="<?= base_url('assets/dist/app.css') ?>">
 </head>
 <body class="h-full bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-4 sm:p-6 antialiased">

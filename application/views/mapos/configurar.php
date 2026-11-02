@@ -65,7 +65,7 @@ foreach ($campos as $nome => $def) {
 <div class="flex max-w-4xl flex-col gap-4 pt-2 pb-8" <?= js_module('configuracoes/configurar') ?>>
     <header>
         <h1 class="font-display text-heading-xl text-text">Configurações</h1>
-        <p class="text-caption text-muted">Preferências do Map-OS para todos os usuários.</p>
+        <p class="text-caption text-muted">Preferências do Nexus Ticket para todos os usuários.</p>
     </header>
 
     <?= component('tabs', ['label' => 'Seções das configurações', 'items' => $abas]) ?>
@@ -88,7 +88,7 @@ foreach ($campos as $nome => $def) {
             </div>
         </section>
         <section class="<?= e($caixa) ?>" aria-labelledby="secao-mapos">
-            <h2 id="secao-mapos" class="text-heading-sm text-text">Map-OS</h2>
+            <h2 id="secao-mapos" class="text-heading-sm text-text">Nexus Ticket</h2>
             <p class="mt-1 text-caption text-muted">Consulta a última release do GitHub, mostra o que mudou e, se você confirmar, substitui os arquivos depois de conferir o SHA256 do zip. O <code>.env</code> e os uploads não são alterados.</p>
             <div class="mt-4">
                 <?= component('button', ['label' => 'Verificar atualização', 'icon' => 'download', 'variant' => 'outline', 'href' => site_url('mapos/atualizacao')]) ?>

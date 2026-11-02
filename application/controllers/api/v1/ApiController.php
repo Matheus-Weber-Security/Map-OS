@@ -134,7 +134,7 @@ class ApiController extends REST_Controller
 
         $this->response([
             'status' => true,
-            'message' => 'Dados do Map-OS',
+            'message' => 'Dados do Nexus Ticket',
             'result' => $result,
         ], REST_Controller::HTTP_OK);
     }

@@ -10,7 +10,7 @@
             <path d="M0 6 Q 7.5 0 15 6 T 30 6 T 45 6 T 60 6 T 75 6 T 90 6 T 105 6 T 120 6 T 135 6 T 150 6 T 165 6 T 180 6 T 195 6 T 210 6 T 225 6 T 240 6" stroke="currentColor" stroke-width="3" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
         </svg>
         <p class="mt-4 text-center text-caption text-on-dark-muted">
-            <?= e(date('Y') . ' © Matheus Weber · Map-OS') ?>
+            <?= e(date('Y') . ' © Matheus Weber · Nexus Ticket') ?>
         </p>
     </footer>
 </body>

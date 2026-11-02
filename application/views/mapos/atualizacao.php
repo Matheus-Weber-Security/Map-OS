@@ -15,7 +15,7 @@ $notas = $release !== null ? trim($release['notas']) : '';
 ?>
 <div class="flex max-w-3xl flex-col gap-4 pt-2 pb-8">
     <header>
-        <h1 class="font-display text-heading-xl text-text">Atualizar o Map-OS</h1>
+        <h1 class="font-display text-heading-xl text-text">Atualizar o Nexus Ticket</h1>
         <p class="text-caption text-muted">Versão instalada: <?= e($versao_atual) ?></p>
     </header>
 
@@ -24,7 +24,7 @@ $notas = $release !== null ? trim($release['notas']) : '';
     <?php } elseif ($release === null) { ?>
         <?= component('empty-state', ['icon' => 'package', 'title' => 'Nenhuma versão publicada', 'message' => 'O GitHub ainda não tem uma release com tag para atualizar.']) ?>
     <?php } elseif (! $tem_atualizacao) { ?>
-        <?= component('empty-state', ['icon' => 'circle-check', 'title' => 'O Map-OS está atualizado', 'message' => 'A versão mais recente publicada é a ' . $release['versao'] . '.']) ?>
+        <?= component('empty-state', ['icon' => 'circle-check', 'title' => 'O Nexus Ticket está atualizado', 'message' => 'A versão mais recente publicada é a ' . $release['versao'] . '.']) ?>
     <?php } else { ?>
         <section class="<?= e($caixa) ?>" aria-labelledby="secao-versao">
             <div class="flex flex-wrap items-center gap-2">

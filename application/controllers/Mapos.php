@@ -825,13 +825,13 @@ class Mapos extends MY_Controller
 
         try {
             $resultado = $this->github_updater->atualizar((string) $this->input->post('versao'));
-            log_info('Atualizou o Map-OS para a versão ' . $resultado['versao'] . '.');
-            $this->session->set_flashdata('success', 'Map-OS atualizado para a versão ' . $resultado['versao'] . '. Agora clique em "Atualizar banco de dados" para aplicar as mudanças das tabelas.');
+            log_info('Atualizou o Nexus Ticket para a versão ' . $resultado['versao'] . '.');
+            $this->session->set_flashdata('success', 'Nexus Ticket atualizado para a versão ' . $resultado['versao'] . '. Agora clique em "Atualizar banco de dados" para aplicar as mudanças das tabelas.');
 
             return redirect(site_url('mapos/configurar?aba=sistema'));
         } catch (Throwable $e) {
-            log_message('error', 'Atualização do Map-OS: ' . $e->getMessage());
-            $this->session->set_flashdata('error', $e instanceof RuntimeException ? $e->getMessage() : 'Erro ao atualizar o Map-OS. Veja o log da aplicação.');
+            log_message('error', 'Atualização do Nexus Ticket: ' . $e->getMessage());
+            $this->session->set_flashdata('error', $e instanceof RuntimeException ? $e->getMessage() : 'Erro ao atualizar o Nexus Ticket. Veja o log da aplicação.');
 
             return redirect(site_url('mapos/atualizacao'));
         }

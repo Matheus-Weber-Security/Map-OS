@@ -39,7 +39,7 @@ $statusOs = [
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Componentes — Map-OS</title>
+    <title>Componentes — Nexus Ticket</title>
     <link rel="icon" type="image/png" href="<?= e(base_url('assets/img/favicon.png')) ?>">
     <link rel="stylesheet" href="<?= e(base_url('assets/dist/app.css')) ?>">
     <script src="<?= e(base_url('assets/js/tema.js')) ?>"></script>
@@ -73,7 +73,7 @@ $statusOs = [
         <?= componenteConteudo($secao('Links de texto (link)', 'Texto ink com sublinhado permanente (link-on-light); externo abre em outra aba e avisa o leitor de tela.')) ?>
         <p class="text-body-md text-text">
             Cliente: <?= component('link', ['label' => 'Ana Souza', 'href' => site_url('clientes')]) ?> ·
-            <?= component('link', ['label' => 'Documentação do Map-OS', 'href' => 'https://github.com/RamonSilva20/mapos', 'external' => true]) ?>
+            <?= component('link', ['label' => 'Documentação do Nexus Ticket', 'href' => 'https://github.com/RamonSilva20/mapos', 'external' => true]) ?>
         </p>
 
         <?= componenteConteudo($secao('Botões', 'Um primary (laranja, rótulo ink) por tela; outline e ghost para o resto; danger só para ação destrutiva. Três tamanhos, com ícone, só ícone, link e desabilitado.')) ?>

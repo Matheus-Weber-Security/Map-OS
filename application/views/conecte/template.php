@@ -26,7 +26,7 @@
  * @var string      $cliente_nome
  */
 // Mesmo nome das telas de entrada (views/entrada/inicio.php).
-$nomeSistema = (string) ($this->config->item('app_name') ?: 'Map-OS');
+$nomeSistema = (string) ($this->config->item('app_name') ?: 'Nexus Ticket');
 $foco = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring';
 $atual = array_values(array_filter($menu, static fn ($item) => $item['atual']))[0]['label'] ?? 'Área do cliente';
 ?><!doctype html>

@@ -12,7 +12,7 @@ class Configuracoes extends Seeder
             [
                 'idConfig' => 2,
                 'config' => 'app_name',
-                'valor' => 'Map-OS',
+                'valor' => 'Nexus Ticket',
             ],
             [
                 'idConfig' => 3,

@@ -13,7 +13,7 @@
 
 <head>
     <meta charset="UTF-8" />
-    <title>Map-OS</title>
+    <title>Nexus Ticket</title>
     <link rel="stylesheet" href="<?= base_url() ?>assets/dist/pdf.css" />
 </head>
 

@@ -209,7 +209,7 @@ class Github_updater
             throw new RuntimeException('Essa não é mais a versão mais recente. Verifique a atualização de novo.');
         }
         if (! $this->temAtualizacao($release)) {
-            throw new RuntimeException('O Map-OS já está na versão ' . $this->versaoAtual . '.');
+            throw new RuntimeException('O Nexus Ticket já está na versão ' . $this->versaoAtual . '.');
         }
 
         $trabalho = $this->raiz . '/application/cache/atualizacao';

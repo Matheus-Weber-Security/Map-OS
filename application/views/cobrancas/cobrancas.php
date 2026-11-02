@@ -203,7 +203,7 @@ $resumo = ($total === 1 ? '1 cobrança' : number_format($total, 0, ',', '.') . '
         'message' => [
             'A cobrança ',
             new HtmlSeguro('<strong class="font-semibold text-text" data-modal-valor="nome"></strong>'),
-            ' será cancelada no gateway e removida do Map-OS. Essa ação não pode ser desfeita.',
+            ' será cancelada no gateway e removida do Nexus Ticket. Essa ação não pode ser desfeita.',
         ],
         'confirm_label' => 'Excluir',
         'confirm_attrs' => ['form' => 'form-excluir-cobranca'],

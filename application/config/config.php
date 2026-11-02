@@ -12,7 +12,7 @@ $config['app_version'] = '5.2.2';
 /**
  * Nome do sistema
  */
-$config['app_name'] = $_ENV['APP_NAME'] ?? 'Map-OS';
+$config['app_name'] = $_ENV['APP_NAME'] ?? 'Nexus Ticket';
 
 /**
  * Descrição do sistema

@@ -13,7 +13,7 @@
 ?>
   <div class="v5-shell">
     <footer class="px-4 py-6 text-center text-xs text-muted lg:px-6">
-      <span><?= e(date('Y')) ?> &copy; Matheus Weber - Map-OS - Versão: <?= e($this->config->item('app_version')) ?></span>
+      <span><?= e(date('Y')) ?> &copy; Matheus Weber - Nexus Ticket - Versão: <?= e($this->config->item('app_version')) ?></span>
     </footer>
   </div>
 </div>

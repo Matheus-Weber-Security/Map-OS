@@ -58,7 +58,7 @@ if (! defined('PERMISSOES_SISTEMA')) {
         'cUsuario' => ['Usuários', 'Cadastrar, editar e excluir usuários do painel.'],
         'cPermissao' => ['Permissões', 'Criar e alterar grupos de permissão (inclusive o próprio).'],
         'cEmitente' => ['Emitente', 'Dados da empresa nas impressões e no PIX.'],
-        'cSistema' => ['Configurações do sistema', 'Preferências, atualização do banco e do Map-OS.'],
+        'cSistema' => ['Configurações do sistema', 'Preferências, atualização do banco e do Nexus Ticket.'],
         'cEmail' => ['Fila de e-mails', 'Ver e limpar a fila de envio.'],
         'cAuditoria' => ['Auditoria', 'Ver o registro das ações dos usuários.'],
         'cBackup' => ['Backup', 'Baixar a cópia do banco de dados.'],
