@@ -13,9 +13,7 @@
 ?>
   <div class="v5-shell">
     <footer class="px-4 py-6 text-center text-xs text-muted lg:px-6">
-      <a href="https://github.com/RamonSilva20/mapos" target="_blank" rel="noopener" class="rounded-sm hover:text-text focus-visible:outline-2 focus-visible:outline-ring">
-        <?= e(date('Y')) ?> &copy; Ramon Silva - Map-OS - Versão: <?= e($this->config->item('app_version')) ?>
-      </a>
+      <span><?= e(date('Y')) ?> &copy; Matheus Weber - Map-OS - Versão: <?= e($this->config->item('app_version')) ?></span>
     </footer>
   </div>
 </div>
