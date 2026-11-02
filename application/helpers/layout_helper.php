@@ -89,23 +89,16 @@ if (! function_exists('layoutMenu')) {
             ['grupo' => 'Relatórios', 'label' => 'Financeiro', 'icon' => 'circle-dollar-sign', 'url' => 'relatorios/financeiro', 'rota' => ['Relatorios', 'financeiro'], 'ativo' => ['Relatorios/financeiro', 'Relatorios/financeiroCustom', 'Relatorios/financeiroRapid']],
             ['grupo' => 'Relatórios', 'label' => 'SKU', 'icon' => 'barcode', 'url' => 'relatorios/sku', 'rota' => ['Relatorios', 'sku'], 'ativo' => ['Relatorios/sku', 'Relatorios/skuCustom', 'Relatorios/skuRapid']],
             ['grupo' => 'Relatórios', 'label' => 'Receitas Brutas - MEI', 'icon' => 'receipt', 'url' => 'relatorios/receitasBrutasMei', 'rota' => ['Relatorios', 'receitasBrutasMei'], 'ativo' => ['Relatorios/receitasBrutasMei', 'Relatorios/receitasBrutasCustom', 'Relatorios/receitasBrutasRapid']],
-            ['grupo' => 'SaaS', 'label' => 'Assinatura', 'icon' => 'banknote', 'url' => 'assinatura', 'rota' => ['Assinatura', 'index'], 'ativo' => ['Assinatura']],
-            ['grupo' => 'SaaS', 'label' => 'Gerenciar SaaS', 'icon' => 'settings', 'url' => 'saas/gerenciar', 'rota' => ['Saas', 'gerenciar'], 'ativo' => ['Saas']],
-            ['grupo' => 'Sistema', 'label' => 'Arquivos', 'icon' => 'archive', 'url' => 'arquivos', 'rota' => ['Arquivos', 'index'], 'ativo' => ['Arquivos']],
-            [
-                'grupo' => 'Sistema',
-                'label' => 'Configurações',
-                'icon' => 'settings',
-                'itens' => [
-                    ['label' => 'Sistema', 'url' => 'mapos/configurar', 'rota' => ['Mapos', 'configurar'], 'ativo' => ['Mapos/configurar']],
-                    ['label' => 'Usuários', 'url' => 'usuarios', 'rota' => ['Usuarios', 'index'], 'ativo' => ['Usuarios']],
-                    ['label' => 'Emitente', 'url' => 'mapos/emitente', 'rota' => ['Mapos', 'emitente'], 'ativo' => ['Mapos/emitente']],
-                    ['label' => 'Permissões', 'url' => 'permissoes', 'rota' => ['Permissoes', 'index'], 'ativo' => ['Permissoes']],
-                    ['label' => 'Auditoria', 'url' => 'auditoria', 'rota' => ['Auditoria', 'index'], 'ativo' => ['Auditoria']],
-                    ['label' => 'E-mails', 'url' => 'mapos/emails', 'rota' => ['Mapos', 'emails'], 'ativo' => ['Mapos/emails']],
-                    ['label' => 'Backup', 'url' => 'mapos/backup', 'rota' => ['Mapos', 'backup'], 'ativo' => ['Mapos/backup']],
-                ],
-            ],
+            ['grupo' => 'Sistema', 'label' => 'Assinatura', 'icon' => 'banknote', 'url' => 'assinatura', 'rota' => ['Assinatura', 'index'], 'ativo' => ['Assinatura']],
+            ['grupo' => 'Sistema', 'label' => 'Gerenciar SaaS', 'icon' => 'settings', 'url' => 'saas/gerenciar', 'rota' => ['Saas', 'gerenciar'], 'ativo' => ['Saas']],
+            ['grupo' => 'Configurações', 'label' => 'Sistema', 'icon' => 'settings', 'url' => 'mapos/configurar', 'rota' => ['Mapos', 'configurar'], 'ativo' => ['Mapos/configurar']],
+            ['grupo' => 'Configurações', 'label' => 'Usuários', 'icon' => 'users', 'url' => 'usuarios', 'rota' => ['Usuarios', 'index'], 'ativo' => ['Usuarios']],
+            ['grupo' => 'Configurações', 'label' => 'Emitente', 'icon' => 'id-card', 'url' => 'mapos/emitente', 'rota' => ['Mapos', 'emitente'], 'ativo' => ['Mapos/emitente']],
+            ['grupo' => 'Configurações', 'label' => 'Permissões', 'icon' => 'shield-check', 'url' => 'permissoes', 'rota' => ['Permissoes', 'index'], 'ativo' => ['Permissoes']],
+            ['grupo' => 'Configurações', 'label' => 'Auditoria', 'icon' => 'history', 'url' => 'auditoria', 'rota' => ['Auditoria', 'index'], 'ativo' => ['Auditoria']],
+            ['grupo' => 'Configurações', 'label' => 'E-mails', 'icon' => 'mail', 'url' => 'mapos/emails', 'rota' => ['Mapos', 'emails'], 'ativo' => ['Mapos/emails']],
+            ['grupo' => 'Configurações', 'label' => 'Backup', 'icon' => 'download', 'url' => 'mapos/backup', 'rota' => ['Mapos', 'backup'], 'ativo' => ['Mapos/backup']],
+            ['grupo' => 'Configurações', 'label' => 'Arquivos', 'icon' => 'archive', 'url' => 'arquivos', 'rota' => ['Arquivos', 'index'], 'ativo' => ['Arquivos']],
         ];
     }
 }
@@ -193,8 +186,8 @@ if (! function_exists('layoutIconeGrupo')) {
             'Operação' => 'folder-open',
             'Financeiro' => 'banknote',
             'Relatórios' => 'chart-pie',
-            'SaaS' => 'shield-check',
-            'Sistema' => 'settings',
+            'Sistema' => 'shield-check',
+            'Configurações' => 'settings',
             default => 'folder-open',
         };
     }
