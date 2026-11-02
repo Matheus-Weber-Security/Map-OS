@@ -48,7 +48,7 @@ $atual = array_values(array_filter($menu, static fn ($item) => $item['atual']))[
     <header class="bg-canvas-dark text-on-dark">
         <div class="mx-auto flex h-16 w-full max-w-6xl items-center gap-4 px-4 lg:px-8">
             <a href="<?= e(site_url('mine/painel')) ?>" class="flex min-w-0 items-center gap-2.5 rounded-md <?= e($foco) ?>">
-                <span class="inline-flex size-9 shrink-0 items-center justify-center rounded-md bg-primary text-on-primary"><?= icon('wrench', ['class' => 'size-5']) ?></span>
+                <img src="<?= e(base_url('assets/img/logo-sistema.png')) ?>" alt="<?= e($nomeSistema) ?>" class="size-9 shrink-0 rounded-lg object-contain shadow-xs">
                 <span class="min-w-0 leading-tight whitespace-nowrap">
                     <span class="block truncate font-display text-[1.25rem] leading-none font-bold tracking-[-0.2px]"><?= e($nomeSistema) ?></span>
                     <span class="block text-caption text-on-dark-muted">Área do cliente</span>

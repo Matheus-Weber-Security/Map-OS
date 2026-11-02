@@ -10,9 +10,7 @@
     <div class="w-full max-w-2xl flex flex-col gap-6">
         <!-- Logo / Cabeçalho -->
         <div class="text-center flex flex-col items-center">
-            <div class="size-14 rounded-2xl bg-primary/20 text-primary flex items-center justify-center font-bold text-heading-md mb-3 border border-primary/30">
-                <?= icon('house', ['class' => 'size-7']) ?>
-            </div>
+            <img src="<?= e(base_url('assets/img/logo-sistema.png')) ?>" alt="Logo" class="size-16 rounded-2xl object-contain mb-3 shadow-lg">
             <h1 class="font-display text-heading-xl font-bold text-white">Escolha a Empresa</h1>
             <p class="text-body-md text-slate-400 mt-1 max-w-md">
                 Olá, <strong class="text-white"><?= e($usuarioNome) ?></strong>! Seu e-mail está vinculado a mais de uma empresa. Selecione em qual deseja trabalhar:

@@ -32,7 +32,7 @@ $classeSublink = 'relative flex min-h-9 items-center rounded-md py-1.5 pr-2.5 pl
   <aside id="v5-sidebar" class="v5-sidebar fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border bg-surface" data-sidebar aria-label="Menu principal">
     <div class="v5-sidebar-topo flex h-topbar shrink-0 items-center gap-3 border-b border-border px-4">
       <a href="<?= e(base_url()) ?>" class="flex min-w-0 items-center gap-2.5 rounded-md <?= e($foco) ?>" title="Início">
-        <span class="inline-flex size-[34px] shrink-0 items-center justify-center rounded-md bg-primary text-on-primary"><?= icon('wrench', ['class' => 'size-5']) ?></span>
+        <img src="<?= e(base_url('assets/img/logo-sistema.png')) ?>" alt="<?= e($layout['nome_sistema']) ?>" class="size-[34px] shrink-0 rounded-lg object-contain shadow-xs">
         <span class="v5-rotulo flex min-w-0 items-center gap-2">
           <span class="truncate font-display text-[1.3125rem] leading-none font-bold tracking-[-0.2px] text-text"><?= e($layout['nome_sistema']) ?></span>
           <?php if ($layout['versao'] !== '') { ?>
