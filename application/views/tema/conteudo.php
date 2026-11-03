@@ -17,7 +17,7 @@
 ?>
 <div class="v5-main">
   <div class="v5-shell">
-    <header class="sticky top-0 z-30 flex h-topbar items-center gap-2 border-b border-border bg-surface px-3 sm:gap-3 lg:px-6">
+    <header class="sticky top-0 z-30 flex h-topbar items-center gap-2 border-b border-border bg-surface px-4 sm:gap-3 lg:px-6">
       <?= component('button', [
           'label' => 'Menu',
           'icon' => 'menu',

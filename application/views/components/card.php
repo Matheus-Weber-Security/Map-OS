@@ -26,18 +26,18 @@ $atributos = [
 ?>
 <section<?= componenteAtributos(componenteMesclarAtributos($atributos, $attrs)) ?>>
     <?php if ($title !== null || $actions !== null) { ?>
-        <header class="flex flex-wrap items-start justify-between gap-3 border-b border-border px-4 py-3">
+        <header class="flex flex-wrap items-start justify-between gap-3 border-b border-border px-6 py-4">
             <div class="min-w-0">
                 <?php if ($title !== null) { ?><h2<?= componenteAtributos(['id' => $idTitulo]) ?> class="text-heading-sm text-text"><?= e($title) ?></h2><?php } ?>
-                <?php if ($subtitle !== null) { ?><p class="mt-0.5 text-caption text-muted"><?= e($subtitle) ?></p><?php } ?>
+                <?php if ($subtitle !== null) { ?><p class="mt-1 text-caption text-muted"><?= e($subtitle) ?></p><?php } ?>
             </div>
             <?php if ($actions !== null) { ?><div class="flex flex-wrap items-center gap-2"><?= componenteConteudo($actions) ?></div><?php } ?>
         </header>
     <?php } ?>
     <?php if ($body !== null) { ?>
-        <div class="<?= e($padded ? 'p-4' : '') ?>"><?= componenteConteudo($body) ?></div>
+        <div class="<?= e($padded ? 'px-6 py-5' : '') ?>"><?= componenteConteudo($body) ?></div>
     <?php } ?>
     <?php if ($footer !== null) { ?>
-        <footer class="flex flex-wrap items-center justify-end gap-2 border-t border-border bg-surface-subtle px-4 py-2.5"><?= componenteConteudo($footer) ?></footer>
+        <footer class="flex flex-wrap items-center justify-end gap-2 border-t border-border bg-surface-subtle px-6 py-3"><?= componenteConteudo($footer) ?></footer>
     <?php } ?>
 </section>

@@ -38,15 +38,15 @@ $atributos = [
 ];
 ?>
 <dialog<?= componenteAtributos(componenteMesclarAtributos($atributos, $attrs)) ?>>
-    <div class="flex items-start justify-between gap-4 border-b border-border px-5 py-3">
-        <h2 id="<?= e($id . '-titulo') ?>" class="text-base leading-snug font-semibold text-text"><?= e($title) ?></h2>
+    <div class="flex items-start justify-between gap-4 border-b border-border px-6 py-4">
+        <h2 id="<?= e($id . '-titulo') ?>" class="text-lg leading-snug font-semibold text-text"><?= e($title) ?></h2>
         <button type="button" data-modal-fechar class="-m-1 inline-flex size-8 items-center justify-center rounded-md text-muted hover:bg-surface-subtle hover:text-text focus-visible:outline-3 focus-visible:outline-ring">
             <?= icon('x', ['class' => 'size-5']) ?>
             <span class="sr-only"><?= e($close_label) ?></span>
         </button>
     </div>
-    <?php if ($body !== null) { ?><div class="px-5 py-3.5 text-body-md"><?= componenteConteudo($body) ?></div><?php } ?>
+    <?php if ($body !== null) { ?><div class="px-6 py-5 text-body-md"><?= componenteConteudo($body) ?></div><?php } ?>
     <?php if ($footer !== null) { ?>
-        <div class="flex flex-wrap items-center justify-end gap-2 border-t border-border bg-surface-subtle px-5 py-2.5"><?= componenteConteudo($footer) ?></div>
+        <div class="flex flex-wrap items-center justify-end gap-2 border-t border-border bg-surface-subtle px-6 py-3"><?= componenteConteudo($footer) ?></div>
     <?php } ?>
 </dialog>
