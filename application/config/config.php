@@ -46,7 +46,25 @@ date_default_timezone_set($_ENV['APP_TIMEZONE'] ?? 'America/Sao_Paulo');
 | a PHP script and you can easily do that on your own.
 |
 */
-$config['base_url'] = $_ENV['APP_BASEURL'] ?? $_ENV['APP_URL'] ?? (isset($_SERVER['HTTP_HOST']) ? ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . '/') : 'http://localhost:8001/');
+$detectedBaseUrl = null;
+if (! empty($_SERVER['HTTP_HOST'])) {
+    $isHttps = (
+        (! empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off')
+        || (! empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https')
+        || (! empty($_SERVER['HTTP_X_FORWARDED_SSL']) && strtolower($_SERVER['HTTP_X_FORWARDED_SSL']) === 'on')
+        || (isset($_SERVER['SERVER_PORT']) && (int) $_SERVER['SERVER_PORT'] === 443)
+    );
+    $protocol = $isHttps ? 'https://' : 'http://';
+    $scriptDir = trim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '')), '/');
+    $detectedBaseUrl = $protocol . $_SERVER['HTTP_HOST'] . ($scriptDir !== '' ? '/' . $scriptDir : '') . '/';
+}
+
+$envBaseUrl = $_ENV['APP_BASEURL'] ?? $_ENV['APP_URL'] ?? null;
+if ($envBaseUrl && ! preg_match('/localhost|127\.0\.0\.1|enter_baseurl/i', $envBaseUrl)) {
+    $config['base_url'] = rtrim($envBaseUrl, '/') . '/';
+} else {
+    $config['base_url'] = $detectedBaseUrl ?? ($envBaseUrl ? rtrim($envBaseUrl, '/') . '/' : 'http://localhost:8001/');
+}
 
 /*
 |--------------------------------------------------------------------------
