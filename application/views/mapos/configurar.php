@@ -97,7 +97,7 @@ foreach ($campos as $nome => $def) {
     <?php if ($aba === 'sistema') { ?>
         <section class="<?= e($caixa) ?>" aria-labelledby="secao-banco">
             <h2 id="secao-banco" class="text-heading-sm text-text">Banco de dados</h2>
-            <p class="mt-1 text-caption text-muted">Aplica as migrations que ainda não rodaram (mudanças de tabelas das versões novas). Faça um backup antes.</p>
+            <p class="mt-1 text-caption text-muted">O sistema opera com sincronização em tempo real. Esta opção aplica migrações de estrutura (novas tabelas ou colunas) quando houver novas versões do sistema.</p>
             <div class="mt-4 flex flex-wrap gap-2">
                 <?= component('button', ['label' => 'Atualizar banco de dados', 'icon' => 'download', 'variant' => 'outline', 'attrs' => ['data-modal-abrir' => 'atualizar-banco']]) ?>
                 <?php if ($pode_backup) { ?>
@@ -114,7 +114,41 @@ foreach ($campos as $nome => $def) {
         </section>
 
         <form id="form-atualizar-banco" method="post" action="<?= e(site_url('mapos/atualizarBanco')) ?>" hidden><input type="hidden" name="<?= e($this->security->get_csrf_token_name()) ?>" value="<?= e($this->security->get_csrf_hash()) ?>"></form>
-        <?= component('modal-confirm', ['id' => 'atualizar-banco', 'title' => 'Atualizar o banco de dados?', 'message' => 'As migrations pendentes alteram as tabelas. Recomendamos baixar um backup antes.', 'confirm_label' => 'Atualizar', 'icon' => 'download', 'confirm_attrs' => ['form' => 'form-atualizar-banco']]) ?>
+        <?= component('modal', [
+            'id' => 'atualizar-banco',
+            'title' => 'Sincronização e Banco de Dados',
+            'body' => [
+                component('alert', [
+                    'variant' => 'info',
+                    'title' => 'O banco de dados já atualiza em tempo real',
+                    'message' => 'Nesta versão do Nexus Ticket, todas as operações (ordens de serviço, clientes, vendas, pagamentos e movimentações) são salvas e sincronizadas automaticamente em tempo real.',
+                ]),
+                new HtmlSeguro(
+                    '<div class="mt-4 space-y-2.5 text-caption text-muted">' .
+                    '<p>Não é necessário atualizar manualmente o banco para salvar seus dados do dia a dia — suas informações já estão seguras e gravadas instantaneamente.</p>' .
+                    '<p>A opção de <strong>Atualizar banco de dados</strong> é utilizada apenas para verificar e aplicar alterações na estrutura do banco (novas tabelas ou colunas) quando houver uma nova versão do sistema lançada.</p>' .
+                    '<p>Deseja verificar e aplicar possíveis atualizações de estrutura agora?</p>' .
+                    '</div>'
+                ),
+            ],
+            'footer' => [
+                component('button', [
+                    'label' => 'Entendido',
+                    'variant' => 'outline',
+                    'attrs' => ['data-modal-fechar' => true],
+                ]),
+                component('button', [
+                    'label' => 'Atualizar estrutura do banco',
+                    'icon' => 'download',
+                    'variant' => 'primary',
+                    'type' => 'submit',
+                    'attrs' => [
+                        'form' => 'form-atualizar-banco',
+                        'data-rotulo-carregando' => 'Atualizando…',
+                    ],
+                ]),
+            ],
+        ]) ?>
     <?php } else { ?>
         <form method="post" action="<?= e(site_url('mapos/configurar') . listagemQuery(['aba' => $aba])) ?>" novalidate class="flex flex-col gap-4" <?= js_module('formulario/padrao') ?>>
             <input type="hidden" name="<?= e($this->security->get_csrf_token_name()) ?>" value="<?= e($this->security->get_csrf_hash()) ?>">
