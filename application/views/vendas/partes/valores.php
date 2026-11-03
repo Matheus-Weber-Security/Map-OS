@@ -8,7 +8,7 @@
  */
 $temDesconto = (float) ($totais['desconto'] ?? 0) > 0;
 ?>
-<section class="flex h-full flex-col justify-between rounded-xl border border-border bg-surface p-4 sm:p-6 shadow-xs" aria-labelledby="secao-valores">
+<section class="flex flex-1 flex-col justify-between rounded-xl border border-border bg-surface p-4 sm:p-6 shadow-xs" aria-labelledby="secao-valores">
     <div>
         <div class="flex items-center justify-between gap-2">
             <h2 id="secao-valores" class="text-heading-sm text-text">Valores</h2>
