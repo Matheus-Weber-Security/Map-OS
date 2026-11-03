@@ -437,26 +437,30 @@ class Mapos extends MY_Controller
             redirect(base_url());
         }
 
-        $this->load->dbutil();
-        $prefs = [
-            'format' => 'zip',
-            'foreign_key_checks' => false,
-            'filename' => 'backup' . date('d-m-Y') . '.sql',
-            // Segredos temporários que um backup nunca deve levar (#2879): o id da
-            // linha de ci_sessions é o próprio cookie de sessão de quem está logado.
-            'ignore' => ['ci_sessions', 'login_attempts', 'api_refresh_tokens', 'api_rate_limit', 'resets_de_senha'],
-        ];
+        $isSuperadmin = (bool) $this->session->userdata('is_superadmin');
+        $empresaId = (int) ($this->session->userdata('empresa_id') ?: 1);
+        $tipo = $this->input->get('tipo');
 
-        $backup = $this->dbutil->backup($prefs);
+        $this->load->library('backup_tenant');
 
-        // O backup só é entregue como download. Antes ele também era "gravado"
-        // em base_url() . 'backup/backup.zip': uma URL, então a gravação falhava
-        // sempre; e, se funcionasse, deixaria o dump do banco numa pasta
-        // pública (#2856).
-        log_info('Efetuou backup do banco de dados.');
+        try {
+            if ($tipo === 'completo' && $isSuperadmin) {
+                $backup = $this->backup_tenant->gerarBackupCompleto();
+                $nomeArquivo = 'backup-completo-' . date('Y-m-d-H\hi') . '.zip';
+                log_info('Efetuou backup completo do banco de dados.');
+            } else {
+                $backup = $this->backup_tenant->gerarBackupEmpresa($empresaId);
+                $nomeArquivo = 'backup-empresa-' . $empresaId . '-' . date('Y-m-d-H\hi') . '.zip';
+                log_info("Efetuou backup do banco de dados da empresa #{$empresaId}.");
+            }
 
-        $this->load->helper('download');
-        force_download(backupNomeArquivo(time()), $backup);
+            $this->load->helper('download');
+            force_download($nomeArquivo, $backup);
+        } catch (\Throwable $e) {
+            log_message('error', 'Erro ao gerar backup: ' . $e->getMessage());
+            $this->session->set_flashdata('error', 'Não foi possível gerar o backup: ' . $e->getMessage());
+            redirect(site_url('mapos/configurar?aba=sistema'));
+        }
     }
 
     /**
@@ -719,6 +723,7 @@ class Mapos extends MY_Controller
         $this->data['valores'] = configuracaoValores($aba, $this->input->method() === 'post' ? $this->input->post() : null, $this->data['configuration'], $_ENV);
         $this->data['erros'] = $erros;
         $this->data['pode_backup'] = $this->permite('cBackup');
+        $this->data['is_superadmin'] = (bool) $this->session->userdata('is_superadmin');
         $this->data['tema_pessoal'] = configuracaoTemaPessoal($this->data['configuration']);
         $this->data['view'] = 'mapos/configurar';
 

@@ -16,6 +16,7 @@
  * @var array<string, mixed>  $valores
  * @var array<string, string> $erros
  * @var bool                  $pode_backup
+ * @var bool                  $is_superadmin
  * @var string                $tema_pessoal  modo · cor que a pessoa logada usa (só informativo)
  */
 $erroGeral = $erros['_geral'] ?? null;
@@ -112,7 +113,10 @@ foreach ($campos as $nome => $def) {
             <div class="mt-4 flex flex-wrap gap-2">
                 <?= component('button', ['label' => 'Atualizar banco de dados', 'icon' => 'download', 'variant' => 'outline', 'attrs' => ['data-modal-abrir' => 'atualizar-banco']]) ?>
                 <?php if ($pode_backup) { ?>
-                    <?= component('button', ['label' => 'Baixar backup', 'icon' => 'archive', 'variant' => 'ghost', 'href' => site_url('mapos/backup')]) ?>
+                    <?= component('button', ['label' => 'Baixar backup da empresa', 'icon' => 'archive', 'variant' => 'ghost', 'href' => site_url('mapos/backup')]) ?>
+                    <?php if (!empty($is_superadmin)) { ?>
+                        <?= component('button', ['label' => 'Baixar backup completo (todas as empresas)', 'icon' => 'download', 'variant' => 'outline', 'href' => site_url('mapos/backup?tipo=completo')]) ?>
+                    <?php } ?>
                 <?php } ?>
             </div>
         </section>
