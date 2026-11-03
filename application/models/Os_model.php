@@ -270,12 +270,26 @@ class Os_model extends CI_Model
         return $this->db->get()->result();
     }
 
+    /**
+     * Gera o próximo ID sequencial de OS (1, 2, 3...) para evitar saltos de auto-increment do TiDB.
+     */
+    public function gerarProximoId(): int
+    {
+        $ultimo = $this->db->select_max('idOs')->get('os')->row();
+
+        return ($ultimo && (int) $ultimo->idOs > 0) ? ((int) $ultimo->idOs + 1) : 1;
+    }
+
     public function add($table, $data, $returnId = false)
     {
+        if ($table === 'os' && empty($data['idOs'])) {
+            $data['idOs'] = $this->gerarProximoId();
+        }
+
         $this->db->insert($table, $data);
         if ($this->db->affected_rows() == '1') {
             if ($returnId == true) {
-                return $this->db->insert_id($table);
+                return $data['idOs'] ?? $this->db->insert_id($table);
             }
 
             return true;

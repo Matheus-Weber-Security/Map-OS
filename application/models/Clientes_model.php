@@ -84,11 +84,25 @@ class Clientes_model extends CI_Model
         return $this->db->get('clientes')->row();
     }
 
+    /**
+     * Gera o próximo ID sequencial de cliente (1, 2, 3...) para evitar saltos de auto-increment do TiDB.
+     */
+    public function gerarProximoId(): int
+    {
+        $ultimo = $this->db->select_max('idClientes')->get('clientes')->row();
+
+        return ($ultimo && (int) $ultimo->idClientes > 0) ? ((int) $ultimo->idClientes + 1) : 1;
+    }
+
     public function add($table, $data)
     {
+        if ($table === 'clientes' && empty($data['idClientes'])) {
+            $data['idClientes'] = $this->gerarProximoId();
+        }
+
         $this->db->insert($table, $data);
         if ($this->db->affected_rows() == '1') {
-            return $this->db->insert_id($table);
+            return $data['idClientes'] ?? $this->db->insert_id($table);
         }
 
         return false;

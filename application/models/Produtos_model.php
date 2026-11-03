@@ -97,8 +97,22 @@ class Produtos_model extends CI_Model
         return $this->db->get('produtos')->row();
     }
 
+    /**
+     * Gera o próximo ID sequencial de produto (1, 2, 3...) para evitar saltos de auto-increment do TiDB.
+     */
+    public function gerarProximoId(): int
+    {
+        $ultimo = $this->db->select_max('idProdutos')->get('produtos')->row();
+
+        return ($ultimo && (int) $ultimo->idProdutos > 0) ? ((int) $ultimo->idProdutos + 1) : 1;
+    }
+
     public function add($table, $data)
     {
+        if ($table === 'produtos' && empty($data['idProdutos'])) {
+            $data['idProdutos'] = $this->gerarProximoId();
+        }
+
         $this->db->insert($table, $data);
         if ($this->db->affected_rows() == '1') {
             return true;

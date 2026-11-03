@@ -59,8 +59,22 @@ class Servicos_model extends CI_Model
         return $this->db->get('servicos')->row();
     }
 
+    /**
+     * Gera o próximo ID sequencial de serviço (1, 2, 3...) para evitar saltos de auto-increment do TiDB.
+     */
+    public function gerarProximoId(): int
+    {
+        $ultimo = $this->db->select_max('idServicos')->get('servicos')->row();
+
+        return ($ultimo && (int) $ultimo->idServicos > 0) ? ((int) $ultimo->idServicos + 1) : 1;
+    }
+
     public function add($table, $data)
     {
+        if ($table === 'servicos' && empty($data['idServicos'])) {
+            $data['idServicos'] = $this->gerarProximoId();
+        }
+
         $this->db->insert($table, $data);
         if ($this->db->affected_rows() == '1') {
             return true;
