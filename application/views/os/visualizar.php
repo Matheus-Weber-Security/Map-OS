@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Tela da OS (#2842), migrada para os componentes da v5.
  *
@@ -248,6 +248,15 @@ $textos = [
             <div class="mt-4" data-os-parte="historico"><?php $this->load->view('os/partes/historico'); ?></div>
         </section>
     <?php } ?>
+
+    <div class="flex justify-end pt-2">
+        <?= component('button', [
+            'label' => 'Salvar',
+            'icon' => 'check',
+            'variant' => 'primary',
+            'href' => site_url('os'),
+        ]) ?>
+    </div>
 </div>
 
 <?php

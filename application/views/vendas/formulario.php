@@ -163,7 +163,7 @@ $statusOpcoes = array_combine(array_keys(OS_STATUS_VARIANTES), array_keys(OS_STA
 
         <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <?= component('button', ['label' => 'Cancelar', 'variant' => 'ghost', 'href' => site_url('vendas')]) ?>
-            <?= component('button', ['label' => $editando ? 'Salvar alterações' : 'Criar venda', 'icon' => 'save', 'type' => 'submit', 'attrs' => ['data-rotulo-carregando' => 'Salvando…']]) ?>
+            <?= component('button', ['label' => 'Salvar', 'icon' => 'check', 'variant' => 'primary', 'type' => 'submit', 'attrs' => ['data-rotulo-carregando' => 'Salvando…']]) ?>
         </div>
     </form>
 
