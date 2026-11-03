@@ -17,7 +17,7 @@
 ?>
 <div class="v5-main">
   <div class="v5-shell">
-    <header class="sticky top-0 z-30 flex h-topbar items-center gap-2 border-b border-border bg-surface px-4 sm:gap-3 lg:px-6">
+    <header class="v5-topbar flex h-topbar items-center gap-2 border-b border-border bg-surface px-4 sm:gap-3 lg:px-6 shadow-xs">
       <?= component('button', [
           'label' => 'Menu',
           'icon' => 'menu',
@@ -116,7 +116,9 @@
       </div>
     </header>
 
-    <div class="px-4 pt-2 lg:px-6">
+    <div class="h-topbar shrink-0" aria-hidden="true"></div>
+
+    <div class="v5-breadcrumb">
       <?= component('breadcrumb', ['items' => $layout['breadcrumb']]) ?>
     </div>
   </div>
