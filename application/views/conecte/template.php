@@ -85,7 +85,7 @@ $atual = array_values(array_filter($menu, static fn ($item) => $item['atual']))[
         <?php $this->load->view($view); ?>
     </main>
 
-    <footer class="hidden px-4 pb-6 text-center text-caption text-muted lg:block">
+    <footer class="hidden mt-auto px-4 pb-6 text-center text-caption text-muted lg:block">
         <?= e(date('Y') . ' © ' . $nomeSistema) ?>
     </footer>
 

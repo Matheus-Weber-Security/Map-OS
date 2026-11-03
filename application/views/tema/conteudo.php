@@ -15,7 +15,7 @@
  * @var string|null $view
  */
 ?>
-<div class="v5-main">
+<div class="v5-main flex min-h-screen flex-col">
   <div class="v5-shell">
     <header class="v5-topbar flex h-topbar items-center gap-2 border-b border-border bg-surface px-4 sm:gap-3 lg:px-6 shadow-xs">
       <?= component('button', [
@@ -119,8 +119,8 @@
     <div class="h-topbar shrink-0" aria-hidden="true"></div>
   </div>
 
-  <main id="conteudo-principal" tabindex="-1">
-    <div class="v5-conteudo">
+  <main id="conteudo-principal" class="flex flex-1 flex-col" tabindex="-1">
+    <div class="v5-conteudo flex flex-1 flex-col">
       <?php
       $larguraLimitada = isset($view) && (
           str_contains($view, 'formulario')

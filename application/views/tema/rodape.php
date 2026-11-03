@@ -11,8 +11,8 @@
  * @var array $layout
  */
 ?>
-  <div class="v5-shell">
-    <footer class="px-4 py-6 text-center text-xs text-muted lg:px-6">
+  <div class="v5-shell mt-auto">
+    <footer class="mt-auto px-4 py-6 text-center text-xs text-muted lg:px-6">
       <span><?= e(date('Y')) ?> &copy; Matheus Weber - Nexus Ticket - Versão: <?= e($this->config->item('app_version')) ?></span>
     </footer>
   </div>
