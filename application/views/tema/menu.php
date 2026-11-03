@@ -23,8 +23,8 @@
 $ativo = 'aria-[current=page]:bg-primary-tint aria-[current=page]:font-semibold aria-[current=page]:text-text'
     . ' aria-[current=page]:before:absolute aria-[current=page]:before:inset-y-1.5 aria-[current=page]:before:left-0 aria-[current=page]:before:w-[3px] aria-[current=page]:before:rounded-r-[3px] aria-[current=page]:before:bg-primary';
 $foco = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring';
-$classeLink = 'relative flex h-10 items-center gap-3 rounded-xl px-3.5 text-sm font-medium text-muted transition-colors hover:bg-surface-subtle hover:text-text ' . $foco . ' ' . $ativo;
-$classeSublink = 'relative flex min-h-8.5 items-center gap-2.5 rounded-lg py-1.5 pr-3 pl-10 text-xs font-medium text-muted transition-colors hover:bg-surface-subtle hover:text-text ' . $foco . ' ' . $ativo;
+$classeLink = 'relative flex h-12 items-center gap-3.5 rounded-xl px-4 text-base font-medium text-muted transition-colors hover:bg-surface-subtle hover:text-text ' . $foco . ' ' . $ativo;
+$classeSublink = 'relative flex min-h-10 items-center gap-3 rounded-lg py-2 pr-3.5 pl-12 text-sm font-medium text-muted transition-colors hover:bg-surface-subtle hover:text-text ' . $foco . ' ' . $ativo;
 ?>
 <div class="v5-shell">
   <div class="v5-gaveta-fundo fixed inset-0 z-40 bg-backdrop lg:hidden" data-gaveta-fechar aria-hidden="true"></div>
@@ -52,13 +52,13 @@ $classeSublink = 'relative flex min-h-8.5 items-center gap-2.5 rounded-lg py-1.5
         <?php $grupoAberto = ! empty($grupo['atual']); ?>
         <details class="v5-grupo v5-grupo-categoria group/grupo mt-3.5 first:mt-0" data-grupo="<?= e($grupo['label']) ?>" <?= $grupoAberto ? 'open data-aberto-inicial="1"' : '' ?>>
           <?php if ($grupo['label'] !== '') { ?>
-            <summary class="v5-grupo-cabecalho flex h-9 w-full cursor-pointer list-none items-center gap-3 rounded-xl px-3.5 text-xs font-semibold tracking-wider uppercase text-muted transition-colors hover:bg-surface-subtle hover:text-text <?= e($foco) ?> [&::-webkit-details-marker]:hidden" title="<?= e($grupo['label']) ?>">
-              <span class="v5-grupo-icone inline-flex size-5 shrink-0 items-center justify-center text-muted" aria-hidden="true">
-                <?= icon($grupo['icon'] ?? 'folder-open', ['class' => 'size-[19px] shrink-0']) ?>
+            <summary class="v5-grupo-cabecalho flex h-11 w-full cursor-pointer list-none items-center gap-3.5 rounded-xl px-4 text-sm font-semibold tracking-wider uppercase text-muted transition-colors hover:bg-surface-subtle hover:text-text <?= e($foco) ?> [&::-webkit-details-marker]:hidden" title="<?= e($grupo['label']) ?>">
+              <span class="v5-grupo-icone inline-flex size-6 shrink-0 items-center justify-center text-muted" aria-hidden="true">
+                <?= icon($grupo['icon'] ?? 'folder-open', ['class' => 'size-[23px] shrink-0']) ?>
               </span>
               <span class="v5-rotulo flex-1 truncate text-left"><?= e($grupo['label']) ?></span>
               <span class="v5-rotulo inline-flex shrink-0 items-center">
-                <?= icon('chevron-down', ['class' => 'size-[15px] text-muted transition-transform duration-200 group-open/grupo:rotate-180']) ?>
+                <?= icon('chevron-down', ['class' => 'size-[18px] text-muted transition-transform duration-200 group-open/grupo:rotate-180']) ?>
               </span>
             </summary>
           <?php } ?>
@@ -68,9 +68,9 @@ $classeSublink = 'relative flex min-h-8.5 items-center gap-2.5 rounded-lg py-1.5
                 <li>
                   <details class="group/grupo" <?= $item['atual'] ? 'open' : '' ?>>
                     <summary class="<?= e($classeLink) ?> cursor-pointer list-none [&::-webkit-details-marker]:hidden" title="<?= e($item['label']) ?>"<?= $item['atual'] ? ' data-atual' : '' ?>>
-                      <?= icon($item['icon'], ['class' => 'size-[19px] shrink-0']) ?>
+                      <?= icon($item['icon'], ['class' => 'size-[23px] shrink-0']) ?>
                       <span class="v5-rotulo flex-1 truncate"><?= e($item['label']) ?></span>
-                      <?= icon('chevron-down', ['class' => 'v5-rotulo size-[15px] shrink-0 transition-transform group-open/grupo:rotate-180']) ?>
+                      <?= icon('chevron-down', ['class' => 'v5-rotulo size-[18px] shrink-0 transition-transform group-open/grupo:rotate-180']) ?>
                     </summary>
                     <div class="v5-subitens">
                       <ul class="mt-1 flex flex-col gap-1">
@@ -86,7 +86,7 @@ $classeSublink = 'relative flex min-h-8.5 items-center gap-2.5 rounded-lg py-1.5
               <?php } else { ?>
                 <li>
                   <a href="<?= e(site_url($item['url'])) ?>" class="<?= e($classeLink) ?>" title="<?= e($item['label']) ?>"<?= $item['atual'] ? ' aria-current="page"' : '' ?>>
-                    <?= icon($item['icon'], ['class' => 'size-[19px] shrink-0']) ?>
+                    <?= icon($item['icon'], ['class' => 'size-[23px] shrink-0']) ?>
                     <span class="v5-rotulo truncate"><?= e($item['label']) ?></span>
                   </a>
                 </li>
@@ -97,22 +97,22 @@ $classeSublink = 'relative flex min-h-8.5 items-center gap-2.5 rounded-lg py-1.5
       <?php } ?>
     </nav>
 
-    <div class="shrink-0 border-t border-border p-3">
-      <div class="v5-sidebar-usuario flex items-center gap-3 rounded-xl p-1">
+    <div class="shrink-0 border-t border-border p-3.5">
+      <div class="v5-sidebar-usuario flex items-center gap-3.5 rounded-xl p-1.5">
         <a href="<?= e(site_url('mapos/minhaConta')) ?>" class="shrink-0 rounded-full <?= e($foco) ?>" title="Meu perfil">
           <?php if ($layout['tem_foto']) { ?>
-            <img src="<?= e($layout['avatar']) ?>" alt="" class="size-9 rounded-full object-cover">
+            <img src="<?= e($layout['avatar']) ?>" alt="" class="size-[43px] rounded-full object-cover">
           <?php } else { ?>
-            <span class="inline-flex size-9 items-center justify-center rounded-full bg-accent-violet-mid text-sm font-semibold text-on-dark" aria-hidden="true"><?= e($layout['iniciais']) ?></span>
+            <span class="inline-flex size-[43px] items-center justify-center rounded-full bg-accent-violet-mid text-base font-semibold text-on-dark" aria-hidden="true"><?= e($layout['iniciais']) ?></span>
           <?php } ?>
           <span class="sr-only">Meu perfil</span>
         </a>
         <span class="v5-rotulo min-w-0 flex-1 leading-tight">
-          <span class="block truncate text-sm font-semibold text-text"><?= e($layout['usuario']) ?></span>
-          <a href="<?= e(site_url('mapos/minhaConta')) ?>" class="text-caption text-muted hover:text-text hover:underline">Meu perfil</a>
+          <span class="block truncate text-base font-semibold text-text"><?= e($layout['usuario']) ?></span>
+          <a href="<?= e(site_url('mapos/minhaConta')) ?>" class="text-xs text-muted hover:text-text hover:underline">Meu perfil</a>
         </span>
-        <a href="<?= e(site_url('login/sair')) ?>" class="v5-rotulo inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-muted hover:bg-surface-subtle hover:text-text <?= e($foco) ?>" title="Sair">
-          <?= icon('log-out', ['class' => 'size-4']) ?>
+        <a href="<?= e(site_url('login/sair')) ?>" class="v5-rotulo inline-flex size-[38px] shrink-0 items-center justify-center rounded-lg text-muted hover:bg-surface-subtle hover:text-text <?= e($foco) ?>" title="Sair">
+          <?= icon('log-out', ['class' => 'size-[19px]']) ?>
           <span class="sr-only">Sair</span>
         </a>
       </div>
