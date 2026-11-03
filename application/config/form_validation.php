@@ -18,6 +18,14 @@ $config = [
             ],
         ],
         [
+            'field' => 'celular',
+            'label' => 'Celular',
+            'rules' => 'required|trim',
+            'errors' => [
+                'required' => 'O campo %s é obrigatório.',
+            ],
+        ],
+        [
             'field' => 'telefone',
             'label' => 'Telefone',
             'rules' => 'trim',

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Ficha do cliente (#2841), migrada para os componentes da v5.
  *
@@ -40,8 +40,8 @@ $secoes = [
         'Cadastrado em' => dataBr($cliente->dataCadastro),
     ]),
     'Contato' => $campos([
-        'Telefone' => $cliente->telefone,
         'Celular' => $cliente->celular,
+        'Telefone' => $cliente->telefone,
         'E-mail' => $cliente->email ? component('link', ['label' => $cliente->email, 'href' => 'mailto:' . $cliente->email]) : null,
     ]),
     'Endereço' => $campos([

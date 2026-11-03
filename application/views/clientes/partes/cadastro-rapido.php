@@ -51,8 +51,17 @@ $comForm = static fn (array $attrs) => ['form' => $idForm] + $attrs;
                 'label' => 'Pessoa de contato',
                 'attrs' => $comForm(['maxlength' => 45]),
             ])),
-            component('input', $campo('telefone', ['label' => 'Telefone', 'type' => 'tel', 'attrs' => $comForm(['data-mascara' => 'telefone', 'maxlength' => 20])])),
-            component('input', $campo('celular', ['label' => 'Celular', 'type' => 'tel', 'attrs' => $comForm(['data-mascara' => 'telefone', 'maxlength' => 20])])),
+            component('input', $campo('celular', [
+                'label' => 'Celular',
+                'type' => 'tel',
+                'required' => true,
+                'attrs' => $comForm(['data-mascara' => 'telefone', 'maxlength' => 20, 'data-msg-vazio' => 'Informe o celular do cliente.']),
+            ])),
+            component('input', $campo('telefone', [
+                'label' => 'Telefone',
+                'type' => 'tel',
+                'attrs' => $comForm(['data-mascara' => 'telefone', 'maxlength' => 20]),
+            ])),
             new HtmlSeguro('<div class="sm:col-span-2">'),
             component('input', $campo('email', [
                 'label' => 'E-mail',
@@ -80,7 +89,7 @@ $comForm = static fn (array $attrs) => ['form' => $idForm] + $attrs;
                 'attrs' => $comForm([]),
             ]),
             new HtmlSeguro('</div>'),
-            new HtmlSeguro('<p class="text-caption text-muted sm:col-span-2">A senha da área do cliente começa com o CPF ou CNPJ, só os números. Só o nome é obrigatório.</p>'),
+            new HtmlSeguro('<p class="text-caption text-muted sm:col-span-2">A senha da área do cliente começa com o CPF ou CNPJ, só os números. Nome e celular são obrigatórios.</p>'),
             new HtmlSeguro('</div>'),
         ],
         'footer' => [

@@ -26,7 +26,7 @@ $colunas = [
     ['key' => 'idClientes', 'label' => 'Cód.', 'align' => 'right', 'nowrap' => true],
     ['label' => 'Nome', 'class' => 'min-w-40', 'render' => fn ($c) => component('link', ['label' => $c->nomeCliente, 'href' => site_url('clientes/visualizar/' . $c->idClientes), 'class' => 'font-medium'])],
     ['key' => 'documento', 'label' => 'CPF/CNPJ', 'nowrap' => true, 'hide_until' => '2xl'],
-    ['label' => 'Telefone', 'nowrap' => true, 'hide_until' => 'md', 'render' => fn ($c) => $c->celular ?: $c->telefone],
+    ['label' => 'Celular', 'nowrap' => true, 'hide_until' => 'md', 'render' => fn ($c) => $c->celular ?: ($c->telefone ?: '—')],
     // E-mail longo trunca com reticências na tabela (o valor completo fica no
     // title); no cartão do celular, quebra.
     ['label' => 'E-mail', 'hide_until' => 'xl', 'render' => fn ($c) => $c->email ? component('link', [
@@ -88,7 +88,7 @@ $vazio = $temFiltro
             'label' => 'Buscar',
             'type' => 'search',
             'value' => $filtros['pesquisa'] ?? null,
-            'placeholder' => 'Nome, documento, e-mail ou telefone',
+            'placeholder' => 'Nome, documento, e-mail ou celular',
             'attrs' => ['maxlength' => 100],
         ]) ?>
         <?= component('select', [

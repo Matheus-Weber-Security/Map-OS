@@ -33,7 +33,7 @@ $grade = 'mt-4 grid gap-4 sm:grid-cols-2';
 <div class="flex max-w-4xl flex-col gap-4 pt-2 pb-8 mx-auto w-full" <?= js_module('clientes/formulario') ?>>
     <header>
         <h1 class="font-display text-heading-xl text-text"><?= e($editando ? 'Editar cliente' : 'Novo cliente') ?></h1>
-        <p class="text-caption text-muted"><?= e($editando ? $cliente->nomeCliente : 'Cliente ou fornecedor. Só o nome é obrigatório.') ?></p>
+        <p class="text-caption text-muted"><?= e($editando ? $cliente->nomeCliente : 'Cliente ou fornecedor. Nome e celular são obrigatórios.') ?></p>
     </header>
 
     <?php if ($erroGeral !== null) { ?>
@@ -81,8 +81,19 @@ $grade = 'mt-4 grid gap-4 sm:grid-cols-2';
         <section class="<?= e($caixa) ?>" aria-labelledby="secao-contato">
             <h2 id="secao-contato" class="text-heading-sm text-text">Contato</h2>
             <div class="<?= e($grade) ?>">
-                <?= component('input', $campo('telefone', ['label' => 'Telefone', 'type' => 'tel', 'autocomplete' => 'tel', 'attrs' => ['data-mascara' => 'telefone', 'maxlength' => 20]])) ?>
-                <?= component('input', $campo('celular', ['label' => 'Celular', 'type' => 'tel', 'autocomplete' => 'tel', 'attrs' => ['data-mascara' => 'telefone', 'maxlength' => 20]])) ?>
+                <?= component('input', $campo('celular', [
+                    'label' => 'Celular',
+                    'type' => 'tel',
+                    'required' => true,
+                    'autocomplete' => 'tel',
+                    'attrs' => ['data-mascara' => 'telefone', 'maxlength' => 20, 'data-msg-vazio' => 'Informe o celular do cliente.'],
+                ])) ?>
+                <?= component('input', $campo('telefone', [
+                    'label' => 'Telefone',
+                    'type' => 'tel',
+                    'autocomplete' => 'tel',
+                    'attrs' => ['data-mascara' => 'telefone', 'maxlength' => 20],
+                ])) ?>
                 <?= component('input', $campo('email', [
                     'label' => 'E-mail',
                     'type' => 'email',
