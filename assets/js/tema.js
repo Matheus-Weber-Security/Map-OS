@@ -47,8 +47,8 @@
   // Cor do tema (data-tema, #3032). O servidor já manda o atributo; o
   // localStorage só entra quando a pessoa não tem preferência gravada
   // (data-tema-cor-usuario) e a tela não fixa a marca (data-tema-fixo, área
-  // do cliente). Allow-list: o padrão (laranja) não leva atributo.
-  var CORES = ['azul', 'verde', 'violeta', 'grafite'];
+  // do cliente). Allow-list: o padrão (violeta) não leva atributo.
+  var CORES = ['laranja', 'azul', 'verde', 'violeta', 'grafite'];
   if (!html.hasAttribute('data-tema-cor-usuario') && !html.hasAttribute('data-tema-fixo')) {
     var corLocal = ler('mapos:tema-cor');
     if (CORES.indexOf(corLocal) !== -1) {
