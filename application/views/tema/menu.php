@@ -30,11 +30,11 @@ $classeSublink = 'relative flex min-h-8.5 items-center gap-2.5 rounded-lg py-1.5
   <div class="v5-gaveta-fundo fixed inset-0 z-40 bg-backdrop lg:hidden" data-gaveta-fechar aria-hidden="true"></div>
 
   <aside id="v5-sidebar" class="v5-sidebar fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border bg-surface" data-sidebar aria-label="Menu principal">
-    <div class="v5-sidebar-topo flex h-topbar shrink-0 items-center gap-3 border-b border-border px-4">
+    <div class="v5-sidebar-topo flex shrink-0 items-center gap-3 border-b border-border px-4 py-3.5">
       <a href="<?= e(base_url()) ?>" class="flex min-w-0 items-center gap-2 rounded-md <?= e($foco) ?>" title="Início">
-        <img src="<?= e(base_url('assets/img/logo-sistema.png')) ?>" alt="<?= e($layout['nome_sistema']) ?>" class="size-9 shrink-0 rounded-xl object-contain shadow-xs">
+        <img src="<?= e(base_url('assets/img/logo-sistema.png')) ?>" alt="<?= e($layout['nome_sistema']) ?>" class="v5-sidebar-logo shrink-0 rounded-xl object-contain shadow-xs">
         <span class="v5-rotulo flex min-w-0 items-center gap-1.5">
-          <span class="truncate font-display text-lg leading-none font-bold tracking-[-0.2px] text-text"><?= e($layout['nome_sistema']) ?></span>
+          <span class="v5-sidebar-titulo truncate font-display leading-none font-bold tracking-[-0.2px] text-text"><?= e($layout['nome_sistema']) ?></span>
           <?php if ($layout['versao'] !== '') { ?>
             <span class="shrink-0 rounded-xs bg-surface-subtle px-1.5 text-micro-cap text-muted max-lg:hidden">v<?= e($layout['versao']) ?></span>
           <?php } ?>
