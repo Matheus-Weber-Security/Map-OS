@@ -38,8 +38,18 @@ class Saas extends MY_Controller
             redirect('saas/gerenciar');
         }
 
-        $valorBasico = (float) str_replace(',', '.', $this->input->post('valor_basico'));
-        $valorEssencial = (float) str_replace(',', '.', $this->input->post('valor_essencial'));
+        $limparValor = static function ($v) {
+            $v = trim(str_replace(['R$', ' ', ' '], '', (string) $v));
+            if (strpos($v, ',') !== false) {
+                $v = str_replace('.', '', $v);
+                $v = str_replace(',', '.', $v);
+            }
+
+            return (float) $v;
+        };
+
+        $valorBasico = $limparValor($this->input->post('valor_basico'));
+        $valorEssencial = $limparValor($this->input->post('valor_essencial'));
 
         $this->saas_model->atualizarPrecosPlanos($valorBasico, $valorEssencial);
 
