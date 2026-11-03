@@ -159,6 +159,7 @@ if (! function_exists('componenteEspecificacoes')) {
                     'caption' => null,
                     'striped' => false,
                     'dense' => false,
+                    'compact' => false,
                 ],
             ],
             'modal' => [

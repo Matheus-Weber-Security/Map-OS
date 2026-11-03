@@ -549,7 +549,7 @@ if (! function_exists('osBotaoDescontoDoItem')) {
      * Botão da linha que abre o modal "desconto-item-<tipo>" (views/os/partes/
      * desconto-item-modal.php) com o item e o desconto atual.
      */
-    function osBotaoDescontoDoItem(object $item, string $tipo, int $idItem, string $nome): HtmlSeguro
+    function osBotaoDescontoDoItem(object $item, string $tipo, int $idItem, string $nome, string $classeExtra = ''): HtmlSeguro
     {
         $desconto = (float) ($item->desconto ?? 0);
 
@@ -559,6 +559,7 @@ if (! function_exists('osBotaoDescontoDoItem')) {
             'icon_only' => true,
             'variant' => 'ghost',
             'size' => 'sm',
+            'class' => $classeExtra !== '' ? $classeExtra : null,
             'attrs' => [
                 'data-modal-abrir' => 'desconto-item-' . $tipo,
                 'data-valor-id' => (string) $idItem,

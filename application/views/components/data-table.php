@@ -75,7 +75,7 @@ foreach ($columns as $chave => $coluna) {
 }
 
 $alinhamentos = ['left' => 'text-left', 'center' => 'text-center', 'right' => 'text-right tabular-nums'];
-$celula = $dense ? 'px-3 py-2' : 'px-4 py-3.5';
+$celula = ! empty($compact) ? 'px-4 py-1' : ($dense ? 'px-3 py-2' : 'px-4 py-3.5');
 // Abaixo de 640px: linha em bloco e o título da coluna antes do valor.
 // No cartão, texto longo sem espaço (e-mail, URL) quebra em qualquer ponto.
 $celulaCelular = 'max-sm:flex max-sm:items-baseline max-sm:justify-between max-sm:gap-4 max-sm:py-1 max-sm:text-right max-sm:[overflow-wrap:anywhere] max-sm:before:shrink-0 max-sm:before:text-left max-sm:before:text-caption max-sm:before:text-muted max-sm:before:content-[attr(data-label)]';
@@ -108,7 +108,7 @@ $atributos = [
         <thead class="bg-surface-subtle text-xs font-semibold tracking-[0.35px] text-muted uppercase max-sm:sr-only">
             <tr>
                 <?php foreach ($colunas as $coluna) { ?>
-                    <th scope="col" class="<?= e(componenteClasses($dense ? 'px-3 py-2' : 'px-4 py-3', $alinhamentos[$coluna['align']], 'border-b border-border whitespace-nowrap', DATA_TABLE_ESCONDER[$coluna['hide_until'] ?? ''] ?? null)) ?>"><?= e($coluna['label']) ?></th>
+                    <th scope="col" class="<?= e(componenteClasses(! empty($compact) ? 'px-4 py-2' : ($dense ? 'px-3 py-2' : 'px-4 py-3'), $alinhamentos[$coluna['align']], 'border-b border-border whitespace-nowrap', DATA_TABLE_ESCONDER[$coluna['hide_until'] ?? ''] ?? null)) ?>"><?= e($coluna['label']) ?></th>
                 <?php } ?>
             </tr>
         </thead>

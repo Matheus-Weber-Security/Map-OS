@@ -21,13 +21,14 @@ $colunas[] = ['label' => 'Subtotal', 'align' => 'right', 'nowrap' => true, 'rend
 
 if ($pode['editar']) {
     $colunas[] = ['label' => 'Ações', 'align' => 'right', 'nowrap' => true, 'render' => fn ($p) => [
-        osBotaoDescontoDoItem($p, 'produto', (int) $p->idProdutos_os, (string) $p->descricao),
+        osBotaoDescontoDoItem($p, 'produto', (int) $p->idProdutos_os, (string) $p->descricao, '!size-7'),
         component('button', [
             'label' => 'Excluir ' . $p->descricao,
             'icon' => 'trash-2',
             'icon_only' => true,
             'variant' => 'ghost',
             'size' => 'sm',
+            'class' => '!size-7',
             'attrs' => ['data-modal-abrir' => 'excluir-produto', 'data-valor-id' => (string) $p->idProdutos_os, 'data-valor-nome' => (string) $p->descricao],
         ]),
     ]];
@@ -38,6 +39,7 @@ if ($pode['editar']) {
         'caption' => 'Produtos da OS',
         'rows' => $produtos,
         'columns' => $colunas,
+        'compact' => true,
         'empty' => component('empty-state', [
             'title' => 'Nenhum produto na OS',
             'message' => $pode['editar'] ? 'Adicione as peças e os produtos usados pelo formulário acima.' : 'Esta OS não tem produtos.',

@@ -24,13 +24,14 @@ $colunas[] = ['label' => 'Subtotal', 'align' => 'right', 'nowrap' => true, 'rend
 
 if ($pode['editar']) {
     $colunas[] = ['label' => 'Ações', 'align' => 'right', 'nowrap' => true, 'render' => fn ($s) => [
-        osBotaoDescontoDoItem($s, 'servico', (int) $s->idServicos_os, (string) $s->nome),
+        osBotaoDescontoDoItem($s, 'servico', (int) $s->idServicos_os, (string) $s->nome, '!size-7'),
         component('button', [
             'label' => 'Excluir ' . $s->nome,
             'icon' => 'trash-2',
             'icon_only' => true,
             'variant' => 'ghost',
             'size' => 'sm',
+            'class' => '!size-7',
             'attrs' => ['data-modal-abrir' => 'excluir-servico', 'data-valor-id' => (string) $s->idServicos_os, 'data-valor-nome' => (string) $s->nome],
         ]),
     ]];
@@ -41,6 +42,7 @@ if ($pode['editar']) {
         'caption' => 'Serviços da OS',
         'rows' => $servicos,
         'columns' => $colunas,
+        'compact' => true,
         'empty' => component('empty-state', [
             'title' => 'Nenhum serviço na OS',
             'message' => $pode['editar'] ? 'Adicione a mão de obra e os serviços pelo formulário acima.' : 'Esta OS não tem serviços.',
