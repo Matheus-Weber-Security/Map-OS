@@ -15,7 +15,7 @@
  * @var string|null $view
  */
 ?>
-<div class="v5-main flex min-h-screen flex-col">
+<div class="v5-main flex min-h-screen flex-col" style="min-height: calc(100vh / 0.85); min-height: calc(100dvh / 0.85);">
   <div class="v5-shell">
     <header class="v5-topbar flex h-topbar items-center gap-2 border-b border-border bg-surface px-4 sm:gap-3 lg:px-6 shadow-xs">
       <?= component('button', [
