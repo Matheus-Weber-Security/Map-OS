@@ -95,9 +95,9 @@ if (! function_exists('configuracaoCampos')) {
                 'pix_key' => ['destino' => 'config', 'tipo' => 'texto', 'rotulo' => 'Chave PIX', 'max' => 100, 'ajuda' => 'CPF, CNPJ, e-mail, telefone ou chave aleatória. Gera o QR Code e o copia e cola na OS e na venda. Em branco, sem PIX.'],
             ],
             'email' => [
-                'EMAIL_PROTOCOL' => ['destino' => 'env', 'tipo' => 'opcao', 'rotulo' => 'Protocolo', 'opcoes' => ['smtp' => 'SMTP', 'mail' => 'mail() do PHP', 'sendmail' => 'Sendmail']],
-                'EMAIL_SMTP_HOST' => ['destino' => 'env', 'tipo' => 'texto', 'rotulo' => 'Servidor SMTP', 'max' => 255],
-                'EMAIL_SMTP_PORT' => ['destino' => 'env', 'tipo' => 'numero', 'rotulo' => 'Porta', 'max' => 5],
+                'EMAIL_PROTOCOL' => ['destino' => 'env', 'tipo' => 'opcao', 'rotulo' => 'Protocolo', 'opcoes' => ['smtp' => 'SMTP', 'mail' => 'mail() do PHP', 'sendmail' => 'Sendmail'], 'ajuda' => 'Método de envio dos e-mails. Recomendamos SMTP, pois conecta diretamente à sua conta com autenticação e evita que caia no spam.'],
+                'EMAIL_SMTP_HOST' => ['destino' => 'env', 'tipo' => 'texto', 'rotulo' => 'Servidor SMTP', 'max' => 255, 'ajuda' => 'Endereço do servidor de e-mail do seu provedor (ex: smtp.gmail.com, smtp.office365.com ou mail.seudominio.com.br).'],
+                'EMAIL_SMTP_PORT' => ['destino' => 'env', 'tipo' => 'numero', 'rotulo' => 'Porta', 'max' => 5, 'ajuda' => 'Porta de conexão do servidor SMTP. Use 587 para criptografia TLS (recomendada) ou 465 para SSL.'],
                 'EMAIL_SMTP_CRYPTO' => ['destino' => 'env', 'tipo' => 'opcao', 'rotulo' => 'Criptografia', 'opcoes' => ['tls' => 'TLS', 'ssl' => 'SSL']],
                 'EMAIL_SMTP_USER' => ['destino' => 'env', 'tipo' => 'texto', 'rotulo' => 'Usuário', 'max' => 255],
                 'EMAIL_SMTP_PASS' => ['destino' => 'env', 'tipo' => 'segredo', 'rotulo' => 'Senha', 'max' => 255],
@@ -329,7 +329,7 @@ if (! function_exists('configuracaoTemaPessoal')) {
     {
         $modos = ['claro' => 'Claro', 'escuro' => 'Escuro', 'sistema' => 'Igual ao do sistema operacional'];
 
-        return $modos[temaConfiguracao($configuracao)['modo']] . ' · ' . (temaCoresRotulos()[temaCorConfiguracao($configuracao)] ?? 'Padrão (violeta)');
+        return $modos[temaConfiguracao($configuracao)['modo']] . ' · ' . (temaCoresRotulos()[temaCorConfiguracao($configuracao)] ?? 'Padrão');
     }
 }
 

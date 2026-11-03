@@ -23,7 +23,7 @@ if (! defined('TEMA_MODOS')) {
 }
 
 if (! defined('TEMA_CORES')) {
-    define('TEMA_CORES', ['padrao', 'laranja', 'azul', 'verde', 'violeta', 'grafite']);
+    define('TEMA_CORES', ['padrao', 'roxo', 'laranja', 'azul', 'verde', 'violeta', 'grafite']);
 }
 
 if (! defined('TEMA_PADRAO')) {
@@ -94,8 +94,8 @@ if (! function_exists('temaCoresRotulos')) {
     function temaCoresRotulos(): array
     {
         return [
-            'padrao' => 'Padrão (violeta)',
-            'laranja' => 'Laranja',
+            'padrao' => 'Padrão',
+            'roxo' => 'Roxo',
             'azul' => 'Azul',
             'verde' => 'Verde',
             'grafite' => 'Grafite',
@@ -124,7 +124,11 @@ if (! function_exists('temaCorConfiguracao')) {
             ?? temaCorValida($configuration['app_tema_cor'] ?? null)
             ?? 'padrao';
 
-        return $cor === 'violeta' ? 'padrao' : $cor;
+        if ($cor === 'laranja' || $cor === 'violeta') {
+            return 'roxo';
+        }
+
+        return $cor;
     }
 }
 

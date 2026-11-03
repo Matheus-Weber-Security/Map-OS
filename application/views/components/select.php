@@ -64,7 +64,7 @@ $atributos = [
 ?>
 <div class="flex flex-col gap-1">
     <label for="<?= e($id) ?>" class="<?= e($hide_label ? 'sr-only' : 'text-sm font-medium text-text') ?>">
-        <?= e($label) ?><?php if ($required) { ?> <span class="text-danger-ink" aria-hidden="true">*</span><?php } ?>
+        <?= componenteConteudo($label) ?><?php if ($required) { ?> <span class="text-danger-ink" aria-hidden="true">*</span><?php } ?>
     </label>
     <div class="relative">
         <select<?= componenteAtributos(componenteMesclarAtributos($atributos, $attrs)) ?>>

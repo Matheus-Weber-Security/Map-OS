@@ -44,7 +44,7 @@ $atributos = [
 ?>
 <div class="flex flex-col gap-1">
     <label for="<?= e($id) ?>" class="<?= e($hide_label ? 'sr-only' : 'text-sm font-medium text-text') ?>">
-        <?= e($label) ?><?php if ($required) { ?> <span class="text-danger-ink" aria-hidden="true">*</span><?php } ?>
+        <?= componenteConteudo($label) ?><?php if ($required) { ?> <span class="text-danger-ink" aria-hidden="true">*</span><?php } ?>
     </label>
     <textarea<?= componenteAtributos(componenteMesclarAtributos($atributos, $attrs)) ?>><?= e($value === null ? '' : (string) $value) ?></textarea>
     <?php if ($help !== null) { ?><p id="<?= e($idAjuda) ?>" class="text-caption text-muted"><?= e($help) ?></p><?php } ?>

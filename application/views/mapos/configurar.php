@@ -58,17 +58,27 @@ $campo = static function (string $nome, array $def) use ($valores, $errosDeCampo
         ]);
     }
 
+    $rotulo = $def['rotulo'];
+    if (! empty($def['ajuda'])) {
+        $rotulo = new HtmlSeguro(
+            e($def['rotulo']) .
+            ' <span class="inline-flex items-center text-muted hover:text-text cursor-help align-middle ml-1" title="' . e($def['ajuda']) . '">' .
+            icon('info', ['class' => 'size-3.5 inline']) .
+            '</span>'
+        );
+    }
+
     return match ($def['tipo']) {
-        'sim_nao', 'bool_env' => component('switch', ['name' => $nome, 'id' => $id, 'value' => $def['tipo'] === 'bool_env' ? 'true' : '1', 'label' => $def['rotulo'], 'checked' => (bool) $valor, 'help' => $def['ajuda'] ?? null]),
-        'opcao' => component('select', ['name' => $nome, 'id' => $id, 'label' => $def['rotulo'], 'options' => $def['opcoes'], 'selected' => (string) $valor !== '' ? (string) $valor : null, 'placeholder' => (string) $valor === '' ? 'Escolha' : null, 'error' => $erro, 'help' => $def['ajuda'] ?? null]),
-        'area' => component('textarea', ['name' => $nome, 'id' => $id, 'label' => $def['rotulo'], 'value' => $valor, 'rows' => 5, 'error' => $erro, 'help' => $def['ajuda'] ?? null, 'attrs' => ['maxlength' => $def['max'] ?? 2000]]),
-        'segredo' => component('input', ['name' => $nome, 'id' => $id, 'label' => $def['rotulo'], 'type' => 'password', 'autocomplete' => 'new-password', 'error' => $erro,
+        'sim_nao', 'bool_env' => component('switch', ['name' => $nome, 'id' => $id, 'value' => $def['tipo'] === 'bool_env' ? 'true' : '1', 'label' => $rotulo, 'checked' => (bool) $valor, 'help' => $def['ajuda'] ?? null]),
+        'opcao' => component('select', ['name' => $nome, 'id' => $id, 'label' => $rotulo, 'options' => $def['opcoes'], 'selected' => (string) $valor !== '' ? (string) $valor : null, 'placeholder' => (string) $valor === '' ? 'Escolha' : null, 'error' => $erro, 'help' => $def['ajuda'] ?? null]),
+        'area' => component('textarea', ['name' => $nome, 'id' => $id, 'label' => $rotulo, 'value' => $valor, 'rows' => 5, 'error' => $erro, 'help' => $def['ajuda'] ?? null, 'attrs' => ['maxlength' => $def['max'] ?? 2000]]),
+        'segredo' => component('input', ['name' => $nome, 'id' => $id, 'label' => $rotulo, 'type' => 'password', 'autocomplete' => 'new-password', 'error' => $erro,
             'placeholder' => $valor['definido'] ? '••••••••' : null,
             'help' => $valor['definido'] ? 'Definida. Deixe em branco para manter.' : 'Ainda não definida.',
             'attrs' => ['maxlength' => $def['max'] ?? 255]]),
-        'gerar_jwt' => component('checkbox', ['name' => $nome, 'id' => $id, 'value' => '1', 'label' => $def['rotulo'], 'help' => $def['ajuda'] ?? null]),
-        'numero' => component('input', ['name' => $nome, 'id' => $id, 'label' => $def['rotulo'], 'value' => $valor, 'error' => $erro, 'help' => $def['ajuda'] ?? null, 'attrs' => ['inputmode' => 'numeric', 'pattern' => '\d*', 'maxlength' => $def['max'] ?? 10, 'data-msg-invalido' => 'Use só números.']]),
-        default => component('input', ['name' => $nome, 'id' => $id, 'label' => $def['rotulo'], 'value' => $valor, 'required' => $def['obrigatorio'] ?? false, 'error' => $erro, 'help' => $def['ajuda'] ?? null, 'attrs' => ['maxlength' => $def['max'] ?? 255, 'data-msg-vazio' => 'Preencha este campo.']]),
+        'gerar_jwt' => component('checkbox', ['name' => $nome, 'id' => $id, 'value' => '1', 'label' => $rotulo, 'help' => $def['ajuda'] ?? null]),
+        'numero' => component('input', ['name' => $nome, 'id' => $id, 'label' => $rotulo, 'value' => $valor, 'error' => $erro, 'help' => $def['ajuda'] ?? null, 'attrs' => ['inputmode' => 'numeric', 'pattern' => '\d*', 'maxlength' => $def['max'] ?? 10, 'data-msg-invalido' => 'Use só números.']]),
+        default => component('input', ['name' => $nome, 'id' => $id, 'label' => $rotulo, 'value' => $valor, 'required' => $def['obrigatorio'] ?? false, 'error' => $erro, 'help' => $def['ajuda'] ?? null, 'attrs' => ['maxlength' => $def['max'] ?? 255, 'data-msg-vazio' => 'Preencha este campo.']]),
     };
 };
 

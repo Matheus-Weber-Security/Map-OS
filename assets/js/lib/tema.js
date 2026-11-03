@@ -27,9 +27,9 @@ export function salvarModo(modo, armazenamento = globalThis.localStorage) {
     }
 }
 
-// Cor do tema (#3032): padrao (violeta), laranja, azul, verde, violeta ou grafite. Vale
+// Cor do tema (#3032): padrao (roxo), roxo, azul, verde, grafite. Vale
 // para o atributo data-tema do <html>; o padrão não leva atributo.
-export const CORES = ['padrao', 'laranja', 'azul', 'verde', 'violeta', 'grafite'];
+export const CORES = ['padrao', 'roxo', 'laranja', 'azul', 'verde', 'violeta', 'grafite'];
 export const CHAVE_COR = 'mapos:tema-cor';
 
 export function aplicarCor(html, cor) {
@@ -40,7 +40,7 @@ export function aplicarCor(html, cor) {
     if (cor === 'padrao') {
         delete html.dataset.tema;
     } else {
-        html.dataset.tema = cor;
+        html.dataset.tema = (cor === 'laranja' || cor === 'violeta') ? 'roxo' : cor;
     }
 }
 
