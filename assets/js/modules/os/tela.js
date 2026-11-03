@@ -59,6 +59,87 @@ export function mensagemDeErro(erro, erros = {}) {
     return textoSemHtml(erros._geral ?? erro.corpo.message ?? erro.message) || 'Não foi possível concluir. Tente de novo.';
 }
 
+/** Formata valor numérico para moeda brasileira: "R$ 1.234,56". */
+export function formatarMoeda(valor) {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(valor) || 0);
+}
+
+/**
+ * Atualiza o modal de faturamento em tempo real quando totais mudam via AJAX
+ * (produtos/serviços adicionados ou excluídos, descontos alterados).
+ */
+export function atualizarFaturamento(doc, totais) {
+    if (!totais || typeof totais !== 'object' || typeof totais.total === 'undefined') {
+        return;
+    }
+
+    const total = Number(totais.total) || 0;
+    const bruto = Number(totais.bruto) || 0;
+    const desconto = Number(totais.desconto) || 0;
+
+    // 1. Atualiza o botão de submit do modal de faturamento
+    const botaoFaturar = doc.querySelector('button[type="submit"][form="form-faturar"]');
+    if (botaoFaturar) {
+        botaoFaturar.disabled = total <= 0;
+    }
+
+    // 2. Atualiza o alerta dentro do modal de faturamento
+    const aviso = doc.getElementById('fatura-aviso');
+    if (aviso) {
+        const tipo = aviso.dataset.tipo === 'os' ? 'os' : 'venda';
+        const cliente = aviso.dataset.cliente || '';
+        const textoContainer = aviso.querySelector('.min-w-0 > div:last-child') || aviso.querySelector('.min-w-0');
+        const iconeUse = aviso.querySelector('svg use');
+
+        if (total > 0) {
+            aviso.setAttribute('role', 'status');
+            aviso.classList.remove('bg-warning-soft', 'text-warning-ink');
+            aviso.classList.add('bg-info-soft', 'text-info-ink');
+
+            if (iconeUse) {
+                const hrefAtual = iconeUse.getAttribute('href') || '';
+                const baseHref = hrefAtual.includes('#') ? hrefAtual.split('#')[0] : '';
+                iconeUse.setAttribute('href', `${baseHref}#info`);
+            }
+
+            const totalFmt = formatarMoeda(total);
+            const detalheDesconto = desconto > 0
+                ? ` (${formatarMoeda(bruto)} menos ${formatarMoeda(desconto)} de desconto)`
+                : '';
+            const entidade = tipo === 'os' ? 'A OS' : 'A venda';
+            const mensagem = `Será lançada uma receita de ${totalFmt}${detalheDesconto} para ${cliente}. ${entidade} passa a Faturado e não pode mais ser alterada.`;
+
+            if (textoContainer) {
+                textoContainer.textContent = mensagem;
+            }
+        } else {
+            aviso.setAttribute('role', 'alert');
+            aviso.classList.remove('bg-info-soft', 'text-info-ink');
+            aviso.classList.add('bg-warning-soft', 'text-warning-ink');
+
+            if (iconeUse) {
+                const hrefAtual = iconeUse.getAttribute('href') || '';
+                const baseHref = hrefAtual.includes('#') ? hrefAtual.split('#')[0] : '';
+                iconeUse.setAttribute('href', `${baseHref}#triangle-alert`);
+            }
+
+            const mensagemVazio = tipo === 'os'
+                ? 'Adicione produtos ou serviços antes de faturar.'
+                : 'Adicione produtos antes de faturar.';
+
+            if (textoContainer) {
+                textoContainer.textContent = mensagemVazio;
+            }
+        }
+    }
+
+    // 3. Atualiza texto de ajuda do select de cobrança (gateway), se existir
+    const cobrancaAjuda = doc.getElementById('cobranca-forma-ajuda');
+    if (cobrancaAjuda && total > 0) {
+        cobrancaAjuda.textContent = `A cobrança de ${formatarMoeda(total)} é criada no gateway escolhido.`;
+    }
+}
+
 /** "Biblioteca|forma" do select de cobrança → {gateway, forma}, ou null. */
 export function separarCobranca(valor) {
     const [gateway, forma, ...resto] = String(valor ?? '').split('|');
@@ -204,6 +285,9 @@ export default function iniciar(raiz, { post = postPadrao, doc = document, naveg
             }
 
             aplicarTrechos(raiz, resposta?.html, trocar);
+            if (resposta?.totais) {
+                atualizarFaturamento(doc, resposta.totais);
+            }
             dialogo?.close();
 
             if (form.hasAttribute('data-os-limpar')) {
@@ -224,6 +308,9 @@ export default function iniciar(raiz, { post = postPadrao, doc = document, naveg
         } catch (erro) {
             if (erro instanceof ErroHttp) {
                 aplicarTrechos(raiz, erro.corpo?.html, trocar);
+                if (erro.corpo?.totais) {
+                    atualizarFaturamento(doc, erro.corpo.totais);
+                }
                 const erros = errosDaResposta(erro.corpo);
                 const marcouCampo = erro.status === 422 && mostrarErrosDoServidor(form, erros, doc);
                 if (!marcouCampo) {

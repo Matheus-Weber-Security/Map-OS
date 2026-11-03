@@ -311,10 +311,15 @@ foreach ($exclusoes as $tipo => [$rota, $titulo, $consequencia]) { ?>
         'title' => 'Faturar OS #' . $idOs,
         'body' => [
             component('alert', [
+                'id' => 'fatura-aviso',
                 'variant' => $totais['total'] > 0 ? 'info' : 'warning',
                 'message' => $totais['total'] > 0
                     ? 'Será lançada uma receita de ' . dinheiro($totais['total']) . ($totais['desconto'] > 0 ? ' (' . dinheiro($totais['bruto']) . ' menos ' . dinheiro($totais['desconto']) . ' de desconto)' : '') . ' para ' . $os->nomeCliente . '. A OS passa a Faturado e não pode mais ser alterada.'
                     : 'Adicione produtos ou serviços antes de faturar.',
+                'attrs' => [
+                    'data-cliente' => $os->nomeCliente,
+                    'data-tipo' => 'os',
+                ],
             ]),
             new HtmlSeguro('<div class="mt-4 grid gap-4 sm:grid-cols-2">'),
             new HtmlSeguro('<div class="sm:col-span-2">'),
