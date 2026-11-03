@@ -40,6 +40,24 @@ $campo = static function (string $nome, array $def) use ($valores, $errosDeCampo
         $def['ajuda'] = ($def['ajuda'] ?? '') . ' Você está usando: ' . $tema_pessoal . '.';
     }
 
+    // Nome do sistema é bloqueado para edição e mantém o nome original
+    if ($nome === 'app_name' || ! empty($def['bloqueado'])) {
+        return component('input', [
+            'name' => $nome,
+            'id' => $id,
+            'label' => $def['rotulo'],
+            'value' => 'Nexus Ticket',
+            'readonly' => true,
+            'help' => 'Nome do sistema bloqueado para edição.',
+            'class' => 'cursor-not-allowed bg-surface-subtle text-muted opacity-80',
+            'attrs' => [
+                'readonly' => true,
+                'tabindex' => '-1',
+                'title' => 'O nome do sistema é fixo e não pode ser alterado.',
+            ],
+        ]);
+    }
+
     return match ($def['tipo']) {
         'sim_nao', 'bool_env' => component('switch', ['name' => $nome, 'id' => $id, 'value' => $def['tipo'] === 'bool_env' ? 'true' : '1', 'label' => $def['rotulo'], 'checked' => (bool) $valor, 'help' => $def['ajuda'] ?? null]),
         'opcao' => component('select', ['name' => $nome, 'id' => $id, 'label' => $def['rotulo'], 'options' => $def['opcoes'], 'selected' => (string) $valor !== '' ? (string) $valor : null, 'placeholder' => (string) $valor === '' ? 'Escolha' : null, 'error' => $erro, 'help' => $def['ajuda'] ?? null]),

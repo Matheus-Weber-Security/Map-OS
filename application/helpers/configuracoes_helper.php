@@ -72,7 +72,7 @@ if (! function_exists('configuracaoCampos')) {
 
         return match ($aba) {
             'geral' => [
-                'app_name' => ['destino' => 'config', 'tipo' => 'texto', 'rotulo' => 'Nome do sistema', 'obrigatorio' => true, 'max' => 100, 'ajuda' => 'Aparece no título das páginas e nos e-mails.'],
+                'app_name' => ['destino' => 'config', 'tipo' => 'texto', 'rotulo' => 'Nome do sistema', 'obrigatorio' => false, 'bloqueado' => true, 'max' => 100, 'ajuda' => 'Nome do sistema bloqueado para alterações.'],
                 'per_page' => ['destino' => 'config', 'tipo' => 'opcao', 'rotulo' => 'Registros por página', 'opcoes' => ['10' => '10', '20' => '20', '50' => '50', '100' => '100']],
                 'app_tema_modo' => ['destino' => 'config', 'tipo' => 'opcao', 'rotulo' => 'Tema padrão', 'opcoes' => ['claro' => 'Claro', 'escuro' => 'Escuro', 'sistema' => 'Igual ao do sistema operacional'], 'ajuda' => 'Cada pessoa pode trocar o tema na barra do topo, e a escolha fica salva no perfil dela. Este é o modo de quem ainda não escolheu.'],
                 'app_tema_cor' => ['destino' => 'config', 'tipo' => 'opcao', 'rotulo' => 'Cor padrão do sistema', 'opcoes' => temaCoresRotulos(), 'ajuda' => 'Cada pessoa pode escolher a própria cor no menu do usuário. Esta é a cor de quem ainda não escolheu.'],
@@ -210,6 +210,11 @@ if (! function_exists('configuracaoDadosDoFormulario')) {
             }
         }
 
+        if ($aba === 'geral') {
+            $config['app_name'] = 'Nexus Ticket';
+            unset($erros['app_name']);
+        }
+
         if ($aba === 'financeiro' && ($config['pix_key'] ?? '') !== '' && ! isset($erros['pix_key']) && function_exists('valid_pix_key') && ! valid_pix_key($config['pix_key'])) {
             $erros['pix_key'] = 'Chave PIX inválida. Use CPF, CNPJ, e-mail, telefone com DDD ou a chave aleatória.';
         }
@@ -300,11 +305,14 @@ if (! function_exists('configuracaoValores')) {
         // Os campos de tema mostram o padrão do SISTEMA, nunca a preferência
         // pessoal de quem está na tela: salvar a aba não pode gravá-la como padrão.
         $semPessoal = array_diff_key($configuracao, ['tema_usuario_modo' => true, 'tema_usuario_cor' => true]);
-        if ($aba === 'geral' && $post === null) {
-            if (! isset($configuracao['app_tema_modo'])) {
-                $valores['app_tema_modo'] = temaConfiguracao($semPessoal)['modo'];
+        if ($aba === 'geral') {
+            $valores['app_name'] = 'Nexus Ticket';
+            if ($post === null) {
+                if (! isset($configuracao['app_tema_modo'])) {
+                    $valores['app_tema_modo'] = temaConfiguracao($semPessoal)['modo'];
+                }
+                $valores['app_tema_cor'] = temaCorConfiguracao($semPessoal);
             }
-            $valores['app_tema_cor'] = temaCorConfiguracao($semPessoal);
         }
 
         return $valores;

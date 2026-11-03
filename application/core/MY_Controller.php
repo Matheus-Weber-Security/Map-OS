@@ -333,6 +333,9 @@ class MY_Controller extends CI_Controller
             $this->data['configuration'][$c->config] = $c->valor;
         }
 
+        // Nome do sistema fixo e bloqueado para manter o original
+        $this->data['configuration']['app_name'] = 'Nexus Ticket';
+
         // Modo de cor do próprio usuário (#2854); separado de app_tema_modo, o padrão do sistema.
         $this->data['configuration']['tema_usuario_modo'] = (string) $this->session->userdata('tema_modo_admin');
         // Cor do próprio usuário (#3032); separada de app_tema_cor, a cor padrão do sistema.
