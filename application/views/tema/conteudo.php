@@ -117,14 +117,13 @@
     </header>
 
     <div class="h-topbar shrink-0" aria-hidden="true"></div>
-
-    <div class="v5-breadcrumb">
-      <?= component('breadcrumb', ['items' => $layout['breadcrumb']]) ?>
-    </div>
   </div>
 
   <main id="conteudo-principal" tabindex="-1">
     <div class="v5-conteudo">
+      <div class="v5-shell mb-2">
+        <?= component('breadcrumb', ['items' => $layout['breadcrumb']]) ?>
+      </div>
       <?php if (isset($view)) {
           $this->load->view($view);
       } ?>
