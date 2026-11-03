@@ -89,7 +89,7 @@ class Authorization_Token
      */
     public function expiresIn(?int $teto = null): int
     {
-        $duracao = (int) $this->token_expire_time;
+        $duracao = (int) ($this->token_expire_time ?: 86400);
 
         return $teto !== null ? min($duracao, $teto) : $duracao;
     }

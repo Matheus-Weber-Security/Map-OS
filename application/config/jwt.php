@@ -7,7 +7,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
 | JWT Secure Key
 |--------------------------------------------------------------------------
 */
-$config['jwt_key'] = $_ENV['API_JWT_KEY'];
+$config['jwt_key'] = $_ENV['API_JWT_KEY'] ?? '';
 
 /*
 |-----------------------
@@ -26,4 +26,4 @@ $config['jwt_algorithm'] = 'HS256';
 | ( 1 Hour ) : 60 * 60     = 3600
 | ( 1 Minute ) : 60        = 60
 */
-$config['token_expire_time'] = $_ENV['API_TOKEN_EXPIRE_TIME'];
+$config['token_expire_time'] = $_ENV['API_TOKEN_EXPIRE_TIME'] ?? 86400;

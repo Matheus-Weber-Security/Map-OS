@@ -422,6 +422,99 @@ class UsuariosController extends REST_Controller
     }
 
     /**
+     * Retrocompatibilidade para aplicativos legados (ex: Map-OS Flutter v2),
+     * que renovam a sessão chamando GET /api/v1/reGenToken em vez de POST /api/v1/refresh.
+     */
+    public function reGenToken_get()
+    {
+        $this->processarReGenToken();
+    }
+
+    public function reGenToken_post()
+    {
+        $this->processarReGenToken();
+    }
+
+    private function processarReGenToken(): void
+    {
+        $headers = $this->input->request_headers();
+        $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? $headers['Authorization'] ?? $headers['authorization'] ?? '';
+        $token = '';
+        if (preg_match('/Bearer\s+(\S+)/i', $authHeader, $matches)) {
+            $token = $matches[1];
+        }
+
+        if (empty($token)) {
+            $this->response([
+                'status' => false,
+                'message' => 'Token não informado.',
+            ], REST_Controller::HTTP_UNAUTHORIZED);
+        }
+
+        $this->load->config('jwt');
+        $tokenKey = $this->config->item('jwt_key');
+        $tokenAlgorithm = $this->config->item('jwt_algorithm') ?: 'HS256';
+
+        $leewayAnterior = \Firebase\JWT\JWT::$leeway;
+        \Firebase\JWT\JWT::$leeway = 31536000;
+
+        try {
+            $decoded = \Firebase\JWT\JWT::decode($token, new \Firebase\JWT\Key($tokenKey, $tokenAlgorithm));
+        } catch (\Throwable $e) {
+            \Firebase\JWT\JWT::$leeway = $leewayAnterior;
+            $this->response([
+                'status' => false,
+                'message' => 'Token inválido ou corrompido.',
+            ], REST_Controller::HTTP_UNAUTHORIZED);
+        } finally {
+            \Firebase\JWT\JWT::$leeway = $leewayAnterior;
+        }
+
+        if (empty($decoded->uid) || ($decoded->type ?? null) !== REST_Controller::TOKEN_TYPE_USER) {
+            $this->response([
+                'status' => false,
+                'message' => 'Tipo de token inválido.',
+            ], REST_Controller::HTTP_FORBIDDEN);
+        }
+
+        $usuario = $this->usuarios_model->getById((int) $decoded->uid);
+        if (empty($usuario) || (int) $usuario->situacao !== 1 || $this->chk_date($usuario->dataExpiracao)) {
+            $this->response([
+                'status' => false,
+                'message' => 'Usuário desativado ou expirado.',
+            ], REST_Controller::HTTP_FORBIDDEN);
+        }
+
+        $versaoAtual = $this->authorization_token->versaoAtual('usuarios', 'idUsuarios', (int) $usuario->idUsuarios);
+        if (! Authorization_Token::versaoVigente($decoded, $versaoAtual)) {
+            $this->response([
+                'status' => false,
+                'message' => 'Sessão revogada. Faça login novamente.',
+            ], REST_Controller::HTTP_FORBIDDEN);
+        }
+
+        $permissoes = $this->permissoes_model->getById($usuario->permissoes_id);
+        $permissoes = ! empty($permissoes->permissoes) ? unserialize($permissoes->permissoes) : [];
+
+        $novoAccess = $this->accessTokenDoUsuario($usuario, null, $decoded->sid ?? null);
+
+        $result = [
+            'access_token' => $novoAccess,
+            'token' => $novoAccess,
+            'token_type' => 'Bearer',
+            'expires_in' => $this->authorization_token->expiresIn(Authorization_Token::TETO_COM_REFRESH),
+            'permissions' => [$permissoes],
+        ];
+
+        $this->response([
+            'status' => true,
+            'message' => 'Token gerado com sucesso!',
+            'result' => $result,
+            'token' => $novoAccess,
+        ], REST_Controller::HTTP_OK);
+    }
+
+    /**
      * Campos da sessão que o login devolve além do access_token: refresh_token
      * (só se a migration rodou), token_type e expires_in.
      *
