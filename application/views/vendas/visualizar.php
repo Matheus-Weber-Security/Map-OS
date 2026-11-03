@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Tela da venda (#2843), migrada para os componentes da v5, no mesmo desenho
  * da tela da OS (views/os/visualizar.php).
@@ -188,6 +188,15 @@ $textos = $campos([
         <div data-os-parte="valores" class="<?= ! $pode['editar'] ? 'lg:col-span-2' : 'flex flex-col' ?>"><?php $this->load->view('vendas/partes/valores'); ?></div>
     </div>
     <div data-os-parte="pix"><?php $this->load->view('vendas/partes/pix'); ?></div>
+
+    <div class="flex justify-end pt-2">
+        <?= component('button', [
+            'label' => 'Salvar',
+            'icon' => 'check',
+            'variant' => 'primary',
+            'href' => site_url('vendas'),
+        ]) ?>
+    </div>
 </div>
 
 <?php
