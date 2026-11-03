@@ -109,7 +109,7 @@ if (! function_exists('vendaDadosDoFormulario')) {
             'usuarios_id' => $vendedorId,
             'status' => $status,
             'dataVenda' => $dataVenda,
-            'garantia' => $garantia === '' ? '' : (string) (int) $garantia,
+            'garantia' => $garantia === '' ? null : (int) $garantia,
         ];
         foreach (VENDA_CAMPOS_TEXTO as $campo) {
             $dados[$campo] = osTextoParaGravar(is_scalar($post[$campo] ?? null) ? (string) $post[$campo] : '');
