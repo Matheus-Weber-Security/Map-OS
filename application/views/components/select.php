@@ -48,11 +48,11 @@ $atributos = [
     'aria-invalid' => $error !== null ? 'true' : null,
     'aria-describedby' => trim(($idAjuda ?? '') . ' ' . ($idErro ?? '')) ?: null,
     'class' => componenteClasses(
-        'block w-full rounded-sm border bg-field px-3 py-2 text-body-md text-text',
+        'block w-full rounded-sm border bg-field px-3 py-1.5 text-body-md text-text',
         // O múltiplo mantém a aparência nativa (lista com rolagem); a opção
         // marcada usa o tint do item ativo em vez do azul do sistema, e a barra
         // de rolagem usa os tokens (sem a calha clara do sistema no escuro).
-        $multiple ? 'min-h-24 [scrollbar-color:var(--color-input)_transparent] [&_option:checked]:bg-primary-tint [&_option:checked]:text-text' : 'appearance-none pr-10 max-sm:min-h-11',
+        $multiple ? 'min-h-24 [scrollbar-color:var(--color-input)_transparent] [&_option:checked]:bg-primary-tint [&_option:checked]:text-text' : 'appearance-none pr-10 max-sm:min-h-10',
         // DESIGN.md text-input: borda hairline-input (3:1), texto body-md 400,
         // foco com sombra interna e anel azul de 3px, erro em danger.
         'focus:outline-3 focus:outline-offset-0 focus:outline-ring focus:shadow-field-focus',
@@ -62,8 +62,8 @@ $atributos = [
     ),
 ];
 ?>
-<div class="flex flex-col gap-1.5">
-    <label for="<?= e($id) ?>" class="<?= e($hide_label ? 'sr-only' : 'text-label-md text-text') ?>">
+<div class="flex flex-col gap-1">
+    <label for="<?= e($id) ?>" class="<?= e($hide_label ? 'sr-only' : 'text-sm font-medium text-text') ?>">
         <?= e($label) ?><?php if ($required) { ?> <span class="text-danger-ink" aria-hidden="true">*</span><?php } ?>
     </label>
     <div class="relative">

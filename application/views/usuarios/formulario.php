@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Formulário de usuário, para cadastrar e editar (#2846), no padrão dos
  * formulários da v5 (#2851, views/clientes/formulario.php).
@@ -28,7 +28,7 @@ $campo = static fn (string $nome, array $props) => $props + [
     'error' => $errosDeCampo[$nome] ?? null,
 ];
 
-$caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
+$caixa = 'rounded-xl border border-border bg-surface p-3.5 sm:p-4';
 $grade = 'mt-4 grid gap-4 sm:grid-cols-2';
 ?>
 <div class="flex max-w-4xl flex-col gap-4 pt-2 pb-8" <?= js_module('usuarios/formulario') ?>>
@@ -135,7 +135,7 @@ $grade = 'mt-4 grid gap-4 sm:grid-cols-2';
     </form>
 
     <?php if ($editando && ! empty($dois_fatores_ativo)) { ?>
-        <section class="rounded-xl border border-border bg-surface p-4 sm:p-6" aria-labelledby="secao-2fa">
+        <section class="rounded-xl border border-border bg-surface p-3.5 sm:p-4" aria-labelledby="secao-2fa">
             <div class="flex flex-wrap items-center gap-2">
                 <h2 id="secao-2fa" class="text-heading-sm text-text">Autenticação em dois fatores</h2>
                 <?= component('pill-status', ['label' => 'Ativada', 'variant' => 'success']) ?>

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Emitente (#2846): os dados da empresa que saem nas impressões, nos e-mails
  * e no PIX, num formulário só, no padrão dos formulários da v5 (#2851).
@@ -16,7 +16,7 @@
  */
 $erroGeral = $erros['_geral'] ?? null;
 $errosDeCampo = array_diff_key($erros, ['_geral' => true]);
-$caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
+$caixa = 'rounded-xl border border-border bg-surface p-3.5 sm:p-4';
 $grade = 'mt-4 grid gap-4 sm:grid-cols-2';
 $campo = static fn (string $nome, array $props) => $props + [
     'name' => $nome,

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * OS do cliente (#2848): substitui as telas visualizar_os e detalhes_os da
  * v4. Só leitura: status, valores em kpi-card, dados e textos da OS,
@@ -13,7 +13,7 @@
  * @var array|null  $pix
  */
 $idOs = (int) $os->idOs;
-$caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
+$caixa = 'rounded-xl border border-border bg-surface p-3.5 sm:p-4';
 $campos = static fn (array $itens) => array_filter($itens, static fn ($valor) => $valor !== null && $valor !== '');
 
 $dados = $campos([

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * PIX da venda (#2843): QR Code e o código "copia e cola", os dois gerados no
  * servidor com o total atual (Vendas_model::getQrCode() e getPixPayload()).
@@ -13,7 +13,7 @@ if ($pix === null) {
     return;
 }
 ?>
-<section class="rounded-xl border border-border bg-surface p-4 sm:p-6" aria-labelledby="secao-pix">
+<section class="rounded-xl border border-border bg-surface p-3.5 sm:p-4" aria-labelledby="secao-pix">
     <h2 id="secao-pix" class="text-heading-sm text-text">Pagamento por PIX</h2>
     <div class="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start">
         <?php if (! empty($pix['qr'])) { ?>

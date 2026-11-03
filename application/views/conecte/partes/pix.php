@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Pagamento por PIX na área do cliente (#2848): QR Code e o "copia e cola",
  * gerados no servidor com o total atual (getQrCode() e getPixPayload() dos
@@ -11,7 +11,7 @@ if ($pix === null) {
     return;
 }
 ?>
-<section class="rounded-xl border border-border bg-surface p-4 sm:p-6" aria-labelledby="secao-pix" <?= js_module('conecte/copiar') ?>>
+<section class="rounded-xl border border-border bg-surface p-3.5 sm:p-4" aria-labelledby="secao-pix" <?= js_module('conecte/copiar') ?>>
     <h2 id="secao-pix" class="text-heading-sm text-text">Pagar com PIX</h2>
     <p class="mt-0.5 text-caption text-muted">Leia o QR Code no app do banco ou copie o código.</p>
     <div class="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start">

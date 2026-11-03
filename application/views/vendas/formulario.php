@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Formulário de venda, para cadastrar e editar os dados (#2843), no padrão dos
  * formulários da v5 (#2851, views/clientes/formulario.php e views/os/formulario.php).
@@ -25,7 +25,7 @@ $editando = $venda !== null;
 $erroGeral = $erros['_geral'] ?? null;
 $errosDeCampo = array_diff_key($erros, ['_geral' => true]);
 
-$caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
+$caixa = 'rounded-xl border border-border bg-surface p-3.5 sm:p-4';
 $grade = 'mt-4 grid gap-4 sm:grid-cols-2';
 
 /*

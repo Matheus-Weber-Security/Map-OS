@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Minha conta (#2855): dados do usuário logado, a foto (modal de envio) e a
  * troca de senha, no padrão dos formulários (#2851): POST comum, validação no
@@ -10,7 +10,7 @@
  * @var bool                  $pode_foto Permissão cUsuario (a mesma da ação de enviar)
  * @var array<string, string> $erros     oldSenha, novaSenha, confirmarSenha
  */
-$caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
+$caixa = 'rounded-xl border border-border bg-surface p-3.5 sm:p-4';
 $dados = array_filter([
     'Nome' => (string) $usuario->nome,
     'E-mail' => (string) $usuario->email,

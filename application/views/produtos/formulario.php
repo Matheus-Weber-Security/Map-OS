@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Formulário de produto, para cadastrar e editar (#2841), no padrão dos
  * formulários (#2851).
@@ -27,7 +27,7 @@ $campo = static fn (string $nome, array $props) => $props + [
     'value' => ($valores[$nome] ?? '') !== '' ? $valores[$nome] : null,
     'error' => $errosDeCampo[$nome] ?? null,
 ];
-$caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
+$caixa = 'rounded-xl border border-border bg-surface p-3.5 sm:p-4';
 ?>
 <div class="flex max-w-4xl flex-col gap-4 pt-2 pb-8" <?= js_module('produtos/formulario') ?>>
     <header>

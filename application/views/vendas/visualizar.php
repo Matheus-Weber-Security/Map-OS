@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Tela da venda (#2843), migrada para os componentes da v5, no mesmo desenho
  * da tela da OS (views/os/visualizar.php).
@@ -26,7 +26,7 @@
 $idVenda = (int) $venda->idVendas;
 $cancelada = $venda->status === 'Cancelado';
 $fechada = (int) $venda->faturado === 1 || $venda->status === 'Faturado' || $cancelada;
-$caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
+$caixa = 'rounded-xl border border-border bg-surface p-3.5 sm:p-4';
 $campos = static fn (array $itens) => array_filter($itens, static fn ($valor) => $valor !== null && $valor !== '');
 
 $dados = $campos([

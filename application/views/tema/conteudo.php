@@ -116,7 +116,7 @@
       </div>
     </header>
 
-    <div class="px-4 pt-4 lg:px-6">
+    <div class="px-4 pt-2 lg:px-6">
       <?= component('breadcrumb', ['items' => $layout['breadcrumb']]) ?>
     </div>
   </div>

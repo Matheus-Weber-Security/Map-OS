@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Ficha do termo de garantia (#2845): referência, responsável, data e o texto
  * como sai na impressão. "Editar termo" é a ação principal, na topbar;
@@ -8,7 +8,7 @@
  * @var array{editar: bool, excluir: bool} $pode
  */
 $nome = trim((string) $result->refGarantia) !== '' ? $result->refGarantia : 'Termo #' . (int) $result->idGarantias;
-$caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
+$caixa = 'rounded-xl border border-border bg-surface p-3.5 sm:p-4';
 $dados = array_filter([
     'Código' => '#' . (int) $result->idGarantias,
     'Data' => dataBr($result->dataGarantia),

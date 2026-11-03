@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Formulário de OS, para cadastrar e editar os dados (#2842), no padrão dos
  * formulários da v5 (#2851, views/clientes/formulario.php).
@@ -24,7 +24,7 @@ $editando = $os !== null;
 $erroGeral = $erros['_geral'] ?? null;
 $errosDeCampo = array_diff_key($erros, ['_geral' => true]);
 
-$caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
+$caixa = 'rounded-xl border border-border bg-surface p-3.5 sm:p-4';
 $grade = 'mt-4 grid gap-4 sm:grid-cols-2';
 
 /*

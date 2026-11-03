@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Listagem de lançamentos financeiros (#2844), no padrão das listagens da v5
  * (#2852, ver views/clientes/clientes.php e views/os/os.php):
@@ -26,7 +26,7 @@
 $temFiltro = isset($filtros['pesquisa']) || isset($filtros['tipo']) || isset($filtros['status']);
 $queryDoPeriodo = listagemQuery(array_intersect_key($filtros, ['periodo' => true, 'de' => true, 'ate' => true]));
 $saldo = round($totais['receitas'] - $totais['despesas'], 2);
-$caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
+$caixa = 'rounded-xl border border-border bg-surface p-3.5 sm:p-4';
 
 $colunas = [
     ['key' => 'idLancamentos', 'label' => 'Nº', 'align' => 'right', 'nowrap' => true],

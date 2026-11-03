@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Conta do cliente (#2848): os dados do cadastro, "Editar dados" como ação
  * principal e, abaixo de lg (com a tabbar), os atalhos que não cabem na tabbar (cobranças e
@@ -6,7 +6,7 @@
  *
  * @var object $cliente
  */
-$caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
+$caixa = 'rounded-xl border border-border bg-surface p-3.5 sm:p-4';
 $endereco = trim(implode(', ', array_filter([
     trim(implode(', ', array_filter([$cliente->rua, $cliente->numero, $cliente->complemento]))),
     $cliente->bairro,

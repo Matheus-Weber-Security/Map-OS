@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Detalhe da cobrança (#2844): cliente e dados do gateway em listas de
  * definição, com o status em pill-status e as ações por POST (atualizar, enviar
@@ -12,7 +12,7 @@
  * @var array{editar: bool, excluir: bool, ver_os: bool, ver_venda: bool, ver_cliente: bool} $pode
  */
 $id = (int) $result->idCobranca;
-$caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
+$caixa = 'rounded-xl border border-border bg-surface p-3.5 sm:p-4';
 $campos = static fn (array $itens) => array_filter($itens, static fn ($valor) => $valor !== null && $valor !== '');
 
 $referencia = null;

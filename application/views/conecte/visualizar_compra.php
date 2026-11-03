@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Compra do cliente (#2848). Só leitura: status, valores
  * (vendas/partes/totais), dados da venda, produtos (vendas/partes/produtos,
@@ -12,7 +12,7 @@
  * @var array|null  $pix
  */
 $idVenda = (int) $venda->idVendas;
-$caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
+$caixa = 'rounded-xl border border-border bg-surface p-3.5 sm:p-4';
 $garantia = vendaGarantiaPill($garantia_ate);
 
 $dados = array_filter([

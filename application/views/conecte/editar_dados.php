@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * "Meus dados" do cliente (#2848), no padrão dos formulários (#2851): POST
  * comum, validação no navegador e no servidor, erro em cada campo. Os campos
@@ -29,9 +29,9 @@ $errosDeCampo = array_diff_key($erros, ['_geral' => true]);
     <form method="post" action="<?= e(site_url('mine/editarDados')) ?>" novalidate class="flex flex-col gap-4" <?= js_module('formulario/padrao') ?>>
         <input type="hidden" name="<?= e($this->security->get_csrf_token_name()) ?>" value="<?= e($this->security->get_csrf_hash()) ?>">
 
-        <?php $this->load->view('conecte/partes/campos_cliente', ['erros' => $errosDeCampo, 'novo' => false, 'caixa' => 'rounded-xl border border-border bg-surface p-4 sm:p-6']); ?>
+        <?php $this->load->view('conecte/partes/campos_cliente', ['erros' => $errosDeCampo, 'novo' => false, 'caixa' => 'rounded-xl border border-border bg-surface p-3.5 sm:p-4']); ?>
 
-        <section class="rounded-xl border border-border bg-surface p-4 sm:p-6" aria-labelledby="secao-senha-atual">
+        <section class="rounded-xl border border-border bg-surface p-3.5 sm:p-4" aria-labelledby="secao-senha-atual">
             <h2 id="secao-senha-atual" class="text-heading-sm text-text">Confirmar com a senha atual</h2>
             <p class="mt-0.5 text-caption text-muted">Só é preciso se você for trocar o e-mail ou a senha.</p>
             <div class="mt-4 sm:max-w-sm">

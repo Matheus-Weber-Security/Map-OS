@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Tela da OS (#2842), migrada para os componentes da v5.
  *
@@ -23,7 +23,7 @@
  */
 $idOs = (int) $os->idOs;
 $fechada = (int) $os->faturado === 1 || $os->status === 'Faturado' || $os->status === 'Cancelado';
-$caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
+$caixa = 'rounded-xl border border-border bg-surface p-3.5 sm:p-4';
 $campos = static fn (array $itens) => array_filter($itens, static fn ($valor) => $valor !== null && $valor !== '');
 
 $dados = $campos([
