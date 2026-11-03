@@ -691,7 +691,7 @@ class Os extends MY_Controller
             if ($this->data['configuration']['control_estoque']) {
                 foreach ($produtos as $p) {
                     $this->produtos_model->updateEstoque($p->produtos_id, $p->quantidade, '-');
-                    log_info('ESTOQUE: Produto id ' . $p->produtos_id . ' baixa do estoque. Quantidade: ' . $p->quantidade . '. Motivo: Mudou status que já estava Cancelado para outro');
+                    log_info('ESTOQUE: Produto id ' . $p->produtos_id . ' baixa do estoque. Quantidade: ' . $p->quantidade . '. Motivo: Reabertura da OS');
                 }
             }
         }

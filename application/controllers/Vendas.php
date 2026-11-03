@@ -241,12 +241,12 @@ class Vendas extends MY_Controller
 
     private function devolucaoEstoque(int $idVenda): void
     {
-        $this->movimentarEstoque($idVenda, '+', 'Motivo: Cancelamento/Exclusão da venda');
+        $this->movimentarEstoque($idVenda, '+', 'Cancelamento da venda');
     }
 
     private function debitarEstoque(int $idVenda): void
     {
-        $this->movimentarEstoque($idVenda, '-', 'Motivo: Mudou o status que já estava Cancelado para outro');
+        $this->movimentarEstoque($idVenda, '-', 'Reabertura de venda cancelada');
     }
 
     private function movimentarEstoque(int $idVenda, string $operacao, string $motivo): void
@@ -258,7 +258,7 @@ class Vendas extends MY_Controller
         $this->load->model('produtos_model');
         foreach ($this->vendas_model->getProdutos($idVenda) as $p) {
             $this->produtos_model->updateEstoque($p->produtos_id, $p->quantidade, $operacao);
-            log_info('ESTOQUE: Produto id ' . $p->produtos_id . ($operacao === '+' ? ' voltou ao estoque' : ' baixa do estoque') . '. Quantidade: ' . $p->quantidade . '. ' . $motivo . '. Venda: ' . $idVenda);
+            log_info('ESTOQUE: Produto id ' . $p->produtos_id . ($operacao === '+' ? ' voltou ao estoque' : ' baixa do estoque') . '. Quantidade: ' . $p->quantidade . '. Motivo: ' . $motivo);
         }
     }
 
