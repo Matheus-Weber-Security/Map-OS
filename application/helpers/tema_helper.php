@@ -93,7 +93,7 @@ if (! function_exists('temaCoresRotulos')) {
      */
     function temaCoresRotulos(): array
     {
-        return ['padrao' => 'Padrão (laranja)', 'azul' => 'Azul', 'verde' => 'Verde', 'violeta' => 'Violeta', 'grafite' => 'Grafite'];
+        return ['padrao' => 'Padrão (roxo)', 'azul' => 'Azul', 'verde' => 'Verde', 'violeta' => 'Violeta', 'grafite' => 'Grafite'];
     }
 }
 
