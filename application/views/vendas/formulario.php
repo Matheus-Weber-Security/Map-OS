@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Formulário de venda, para cadastrar e editar os dados (#2843), no padrão dos
  * formulários da v5 (#2851, views/clientes/formulario.php e views/os/formulario.php).
@@ -55,7 +55,7 @@ $texto = static fn (string $nome, string $label, ?string $ajuda = null) => [
 
 $statusOpcoes = array_combine(array_keys(OS_STATUS_VARIANTES), array_keys(OS_STATUS_VARIANTES));
 ?>
-<div class="flex max-w-4xl flex-col gap-4 pt-2 pb-8" <?= js_module('vendas/formulario') ?>>
+<div class="flex max-w-4xl flex-col gap-4 pt-2 pb-8 mx-auto w-full" <?= js_module('vendas/formulario') ?>>
     <header class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div class="flex flex-col gap-1">
             <div class="flex flex-wrap items-center gap-3">

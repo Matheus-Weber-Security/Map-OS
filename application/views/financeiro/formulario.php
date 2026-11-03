@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Formulário de lançamento (#2844), para cadastrar receitas e despesas e para
  * editar, no padrão dos formulários da v5 (#2851, views/clientes/formulario.php).
@@ -34,7 +34,7 @@ for ($i = 1; $i <= FINANCEIRO_PARCELAS_MAX; $i++) {
     $parcelas[(string) $i] = $i === 1 ? 'À vista' : $i . 'x';
 }
 ?>
-<div class="flex max-w-4xl flex-col gap-4 pt-2 pb-8" <?= js_module('financeiro/formulario') ?>>
+<div class="flex max-w-4xl flex-col gap-4 pt-2 pb-8 mx-auto w-full" <?= js_module('financeiro/formulario') ?>>
     <header class="flex flex-col gap-1">
         <div class="flex flex-wrap items-center gap-3">
             <h1 class="font-display text-heading-xl text-text"><?= e($editando ? 'Editar lançamento #' . $lancamento->idLancamentos : 'Novo lançamento') ?></h1>

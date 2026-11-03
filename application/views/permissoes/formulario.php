@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Grupo de permissão, para criar e editar (#2846): nome, situação e as
  * permissões em três blocos.
@@ -22,7 +22,7 @@ $errosDeCampo = array_diff_key($erros, ['_geral' => true]);
 $marcada = static fn (string $codigo) => in_array($codigo, $valores['marcadas'], true);
 $caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
 ?>
-<div class="flex max-w-4xl flex-col gap-4 pt-2 pb-8" <?= js_module('permissoes/formulario') ?>>
+<div class="flex max-w-4xl flex-col gap-4 pt-2 pb-8 mx-auto w-full" <?= js_module('permissoes/formulario') ?>>
     <header>
         <h1 class="font-display text-heading-xl text-text"><?= e($editando ? 'Editar grupo' : 'Novo grupo de permissão') ?></h1>
         <p class="text-caption text-muted"><?= e($editando ? $grupo->nome : 'Marque o que os usuários deste grupo podem ver e fazer.') ?></p>

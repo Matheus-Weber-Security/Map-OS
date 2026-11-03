@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * "Meus dados" do cliente (#2848), no padrão dos formulários (#2851): POST
  * comum, validação no navegador e no servidor, erro em cada campo. Os campos
@@ -10,7 +10,7 @@
 $erroGeral = $erros['_geral'] ?? null;
 $errosDeCampo = array_diff_key($erros, ['_geral' => true]);
 ?>
-<div class="flex max-w-4xl flex-col gap-4" <?= js_module('clientes/formulario') ?>>
+<div class="flex max-w-4xl flex-col gap-4 mx-auto w-full" <?= js_module('clientes/formulario') ?>>
     <div>
         <?= component('button', ['label' => 'Minha conta', 'icon' => 'chevron-left', 'variant' => 'ghost', 'size' => 'sm', 'href' => site_url('mine/conta'), 'class' => '-ml-3']) ?>
     </div>

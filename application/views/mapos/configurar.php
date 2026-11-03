@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Configurações do sistema (#2846), em abas por link (?aba=).
  *
@@ -62,7 +62,7 @@ foreach ($campos as $nome => $def) {
     $grupos[$atual][$nome] = $def;
 }
 ?>
-<div class="flex max-w-4xl flex-col gap-4 pt-2 pb-8" <?= js_module('configuracoes/configurar') ?>>
+<div class="flex max-w-4xl flex-col gap-4 pt-2 pb-8 mx-auto w-full" <?= js_module('configuracoes/configurar') ?>>
     <header>
         <h1 class="font-display text-heading-xl text-text">Configurações</h1>
         <p class="text-caption text-muted">Preferências do Nexus Ticket para todos os usuários.</p>

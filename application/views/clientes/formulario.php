@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Formulário de cliente, para cadastrar e editar (#2851): o padrão dos
  * formulários da v5.
@@ -30,7 +30,7 @@ $campo = static fn (string $nome, array $props) => $props + [
 $caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
 $grade = 'mt-4 grid gap-4 sm:grid-cols-2';
 ?>
-<div class="flex max-w-4xl flex-col gap-4 pt-2 pb-8" <?= js_module('clientes/formulario') ?>>
+<div class="flex max-w-4xl flex-col gap-4 pt-2 pb-8 mx-auto w-full" <?= js_module('clientes/formulario') ?>>
     <header>
         <h1 class="font-display text-heading-xl text-text"><?= e($editando ? 'Editar cliente' : 'Novo cliente') ?></h1>
         <p class="text-caption text-muted"><?= e($editando ? $cliente->nomeCliente : 'Cliente ou fornecedor. Só o nome é obrigatório.') ?></p>

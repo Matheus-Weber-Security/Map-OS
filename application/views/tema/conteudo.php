@@ -121,7 +121,22 @@
 
   <main id="conteudo-principal" tabindex="-1">
     <div class="v5-conteudo">
-      <div class="v5-shell mb-2">
+      <?php
+      $larguraLimitada = isset($view) && (
+          str_contains($view, 'formulario')
+          || in_array($view, [
+              'assinatura/index',
+              'mapos/configurar',
+              'mapos/emitente',
+              'mapos/doisFatores',
+              'mapos/atualizacao',
+              'mapos/escolher_empresa',
+              'conecte/adicionarOs',
+              'conecte/editar_dados',
+          ], true)
+      );
+      ?>
+      <div class="v5-shell mb-2 <?= $larguraLimitada ? 'max-w-4xl mx-auto w-full' : '' ?>">
         <?= component('breadcrumb', ['items' => $layout['breadcrumb']]) ?>
       </div>
       <?php if (isset($view)) {

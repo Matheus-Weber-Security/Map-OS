@@ -15,7 +15,7 @@ $erroGeral = $erros['_geral'] ?? null;
 $errosDeCampo = array_diff_key($erros, ['_geral' => true]);
 $erroArquivo = $errosDeCampo['userfile'] ?? null;
 ?>
-<div class="flex max-w-3xl flex-col gap-4 pt-2 pb-8">
+<div class="flex max-w-4xl flex-col gap-4 pt-2 pb-8 mx-auto w-full">
     <header>
         <h1 class="font-display text-heading-xl text-text"><?= e($editando ? 'Editar arquivo' : 'Enviar arquivo') ?></h1>
         <p class="text-caption text-muted"><?= e($editando ? $arquivo->documento : 'TXT, JPG, GIF, PNG ou PDF. Imagens de até 3000 × 2000 px.') ?></p>

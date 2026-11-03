@@ -12,7 +12,7 @@ $editando = $servico !== null;
 $erroGeral = $erros['_geral'] ?? null;
 $errosDeCampo = array_diff_key($erros, ['_geral' => true]);
 ?>
-<div class="flex max-w-2xl flex-col gap-4 pt-2 pb-8">
+<div class="flex max-w-4xl flex-col gap-4 pt-2 pb-8 mx-auto w-full">
     <header>
         <h1 class="font-display text-heading-xl text-text"><?= e($editando ? 'Editar serviço' : 'Novo serviço') ?></h1>
         <p class="text-caption text-muted"><?= e($editando ? $servico->nome : 'Mão de obra ou serviço cobrado nas ordens de serviço.') ?></p>

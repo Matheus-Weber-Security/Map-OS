@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Atualização do Map-OS (#2871): versão atual, última release do GitHub, o
  * changelog dela e o botão de aplicar (POST com CSRF e a tag, confirmado em
@@ -13,7 +13,7 @@
 $caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
 $notas = $release !== null ? trim($release['notas']) : '';
 ?>
-<div class="flex max-w-3xl flex-col gap-4 pt-2 pb-8">
+<div class="flex max-w-4xl flex-col gap-4 pt-2 pb-8 mx-auto w-full">
     <header>
         <h1 class="font-display text-heading-xl text-text">Atualizar o Nexus Ticket</h1>
         <p class="text-caption text-muted">Versão instalada: <?= e($versao_atual) ?></p>

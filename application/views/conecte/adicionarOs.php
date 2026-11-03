@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Abrir uma OS pela área do cliente (#2848), no padrão dos formulários
  * (#2851): POST comum, validação no navegador (formulario/padrao) e no
@@ -17,7 +17,7 @@ $texto = static fn (string $nome, array $props) => [
     'attrs' => ['maxlength' => 2000] + ($props['attrs'] ?? []),
 ] + $props;
 ?>
-<div class="flex max-w-3xl flex-col gap-4">
+<div class="flex max-w-4xl flex-col gap-4 mx-auto w-full">
     <div>
         <?= component('button', ['label' => 'Ordens de serviço', 'icon' => 'chevron-left', 'variant' => 'ghost', 'size' => 'sm', 'href' => site_url('mine/os'), 'class' => '-ml-3']) ?>
     </div>

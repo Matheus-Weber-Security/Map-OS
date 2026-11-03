@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Autenticação em dois fatores da própria conta (#2876).
  *
@@ -19,7 +19,7 @@
  */
 $caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
 ?>
-<div class="flex max-w-3xl flex-col gap-4 pt-2 pb-8">
+<div class="flex max-w-4xl flex-col gap-4 pt-2 pb-8 mx-auto w-full">
     <header>
         <h1 class="font-display text-heading-xl text-text">Autenticação em dois fatores</h1>
         <p class="text-caption text-muted">Além da senha, o login pede um código de 6 dígitos gerado no seu celular.</p>

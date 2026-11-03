@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Emitente (#2846): os dados da empresa que saem nas impressões, nos e-mails
  * e no PIX, num formulário só, no padrão dos formulários da v5 (#2851).
@@ -25,7 +25,7 @@ $campo = static fn (string $nome, array $props) => $props + [
 ];
 $logo = (string) ($emitente->url_logo ?? '');
 ?>
-<div class="flex max-w-4xl flex-col gap-4 pt-2 pb-8" <?= js_module('usuarios/formulario') ?>>
+<div class="flex max-w-4xl flex-col gap-4 pt-2 pb-8 mx-auto w-full" <?= js_module('usuarios/formulario') ?>>
     <header>
         <h1 class="font-display text-heading-xl text-text">Emitente</h1>
         <p class="text-caption text-muted">Os dados da sua empresa nas impressões de OS e vendas, nos e-mails e no PIX.</p>
