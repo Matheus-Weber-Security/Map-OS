@@ -91,7 +91,9 @@ if (! function_exists('configuracaoCampos')) {
                 'control_edit_vendas' => ['destino' => 'config', 'tipo' => 'sim_nao', 'rotulo' => 'Permitir editar venda faturada ou cancelada'],
             ],
             'financeiro' => [
-                'control_baixa' => ['destino' => 'config', 'tipo' => 'sim_nao', 'rotulo' => 'Impedir editar lançamento já pago'],
+                'control_edit_pago' => ['destino' => 'config', 'tipo' => 'sim_nao', 'rotulo' => 'Permitir editar lançamento já pago', 'ajuda' => 'Quando desativado, impede a edição de receitas e despesas que já foram marcadas como recebidas ou pagas.'],
+                'control_del_pago' => ['destino' => 'config', 'tipo' => 'sim_nao', 'rotulo' => 'Permitir excluir lançamentos já pagos', 'ajuda' => 'Quando desativado, impede a exclusão de receitas e despesas que já foram quitadas.'],
+                'control_baixa' => ['destino' => 'config', 'tipo' => 'sim_nao', 'rotulo' => 'Controlar baixa retroativa', 'ajuda' => 'Ao marcar como pago, exige que a data do pagamento seja a data de hoje (impede datas retroativas).'],
                 'pix_key' => ['destino' => 'config', 'tipo' => 'texto', 'rotulo' => 'Chave PIX', 'max' => 100, 'ajuda' => 'CPF, CNPJ, e-mail, telefone ou chave aleatória. Gera o QR Code e o copia e cola na OS e na venda. Em branco, sem PIX.'],
             ],
             'email' => [

@@ -74,6 +74,8 @@ class Financeiro extends MY_Controller
         $this->data['tendencias'] = $tendencias;
         $this->data['series'] = $this->financeiro_model->serieMensal(6, $hoje);
         $this->data['paginacao'] = $this->paginacao(site_url('financeiro/lancamentos'), $total, $offset, null, $filtros);
+        $this->data['permite_editar_pago'] = ($this->data['configuration']['control_edit_pago'] ?? '0') === '1';
+        $this->data['permite_excluir_pago'] = ($this->data['configuration']['control_del_pago'] ?? '0') === '1';
         $this->data['pode'] = [
             'adicionar' => $this->permite('aLancamento'),
             'editar' => $this->permite('eLancamento'),
@@ -164,6 +166,12 @@ class Financeiro extends MY_Controller
             redirect(base_url());
         }
 
+        $permiteEditarPago = ($this->data['configuration']['control_edit_pago'] ?? '0') === '1';
+        if ((int) $lancamento->baixado === 1 && ! $permiteEditarPago) {
+            $this->session->set_flashdata('error', 'Lançamentos já pagos não podem ser editados. Habilite a permissão em Configurações > Financeiro se necessário.');
+            redirect('financeiro/lancamentos');
+        }
+
         return $this->formulario($lancamento);
     }
 
@@ -184,6 +192,13 @@ class Financeiro extends MY_Controller
         $retorno = $this->filtrosDeRetorno();
 
         if ($this->input->method() === 'post') {
+            $permiteEditarPago = ($this->data['configuration']['control_edit_pago'] ?? '0') === '1';
+            if ($editando && (int) $lancamento->baixado === 1 && ! $permiteEditarPago) {
+                $this->session->set_flashdata('error', 'Lançamentos já pagos não podem ser editados. Habilite a permissão em Configurações > Financeiro se necessário.');
+
+                return redirect('financeiro/lancamentos');
+            }
+
             $post = $this->input->post();
             $idCliente = is_scalar($post['clientes_id'] ?? null) && ctype_digit((string) $post['clientes_id']) ? (int) $post['clientes_id'] : 0;
 
@@ -290,8 +305,15 @@ class Financeiro extends MY_Controller
         // Volta para a listagem com os mesmos filtros (só os permitidos).
         $listagem = site_url('financeiro/lancamentos') . listagemQuery($this->filtrosDeRetorno());
 
-        if (! is_scalar($id) || ! ctype_digit((string) $id) || ! $this->financeiro_model->getLancamento((int) $id)) {
+        $lancamento = (is_scalar($id) && ctype_digit((string) $id)) ? $this->financeiro_model->getLancamento((int) $id) : null;
+        if (! $lancamento) {
             $this->session->set_flashdata('error', 'Lançamento não encontrado.');
+            redirect($listagem);
+        }
+
+        $permiteExcluirPago = ($this->data['configuration']['control_del_pago'] ?? '0') === '1';
+        if ((int) $lancamento->baixado === 1 && ! $permiteExcluirPago) {
+            $this->session->set_flashdata('error', 'Lançamentos já pagos não podem ser excluídos. Habilite a permissão em Configurações > Financeiro se necessário.');
             redirect($listagem);
         }
 

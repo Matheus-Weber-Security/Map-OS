@@ -76,6 +76,16 @@ class Configuracoes extends Seeder
                 'config' => 'control_2vias',
                 'valor' => '0',
             ],
+            [
+                'idConfig' => 16,
+                'config' => 'control_edit_pago',
+                'valor' => '0',
+            ],
+            [
+                'idConfig' => 17,
+                'config' => 'control_del_pago',
+                'valor' => '0',
+            ],
         ];
 
         foreach ($configs as $config) {

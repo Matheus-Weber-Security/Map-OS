@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Listagem de lançamentos financeiros (#2844), no padrão das listagens da v5
  * (#2852, ver views/clientes/clientes.php e views/os/os.php):
@@ -22,6 +22,8 @@
  * @var array                 $paginacao
  * @var string                $hoje        AAAA-MM-DD
  * @var array{adicionar: bool, editar: bool, excluir: bool, ver_cliente: bool} $pode
+ * @var bool                  $permite_editar_pago
+ * @var bool                  $permite_excluir_pago
  */
 $temFiltro = isset($filtros['pesquisa']) || isset($filtros['tipo']) || isset($filtros['status']);
 $queryDoPeriodo = listagemQuery(array_intersect_key($filtros, ['periodo' => true, 'de' => true, 'ate' => true]));
@@ -40,13 +42,16 @@ $colunas = [
     ['label' => 'Situação', 'nowrap' => true, 'render' => fn ($l) => component('pill-status', financeiroStatusPill($l, $hoje))],
     ['label' => 'Desconto', 'align' => 'right', 'nowrap' => true, 'hide_until' => '2xl', 'render' => fn ($l) => financeiroDescontoEmReais($l) > 0 ? dinheiro(financeiroDescontoEmReais($l)) : '—'],
     ['label' => 'Valor', 'align' => 'right', 'nowrap' => true, 'render' => fn ($l) => dinheiro(financeiroLiquido($l))],
-    ['label' => 'Ações', 'align' => 'right', 'nowrap' => true, 'render' => function ($l) use ($pode, $filtros) {
+    ['label' => 'Ações', 'align' => 'right', 'nowrap' => true, 'render' => function ($l) use ($pode, $filtros, $permite_editar_pago, $permite_excluir_pago) {
         $acoes = [];
         $nome = 'lançamento ' . $l->idLancamentos;
-        if ($pode['editar']) {
+        $editavel = ((int) $l->baixado !== 1) || $permite_editar_pago;
+        $excluivel = ((int) $l->baixado !== 1) || $permite_excluir_pago;
+
+        if ($pode['editar'] && $editavel) {
             $acoes[] = component('button', ['label' => 'Editar ' . $nome, 'icon' => 'pencil', 'icon_only' => true, 'variant' => 'ghost', 'size' => 'sm', 'href' => site_url('financeiro/editar/' . $l->idLancamentos) . listagemQuery($filtros)]);
         }
-        if ($pode['excluir']) {
+        if ($pode['excluir'] && $excluivel) {
             $acoes[] = component('button', ['label' => 'Excluir ' . $nome, 'icon' => 'trash-2', 'icon_only' => true, 'variant' => 'ghost', 'size' => 'sm', 'class' => 'hover:text-danger-ink', 'attrs' => [
                 'data-modal-abrir' => 'excluir-lancamento',
                 'data-valor-id' => (string) $l->idLancamentos,
