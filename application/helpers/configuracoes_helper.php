@@ -329,7 +329,7 @@ if (! function_exists('configuracaoTemaPessoal')) {
     {
         $modos = ['claro' => 'Claro', 'escuro' => 'Escuro', 'sistema' => 'Igual ao do sistema operacional'];
 
-        return $modos[temaConfiguracao($configuracao)['modo']] . ' · ' . (temaCoresRotulos()[temaCorConfiguracao($configuracao)] ?? 'Padrão');
+        return $modos[temaConfiguracao($configuracao)['modo']] . ' · ' . temaCoresRotulos()[temaCorConfiguracao($configuracao)];
     }
 }
 
