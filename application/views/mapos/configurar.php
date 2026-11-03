@@ -59,7 +59,8 @@ $campo = static function (string $nome, array $def) use ($valores, $errosDeCampo
     }
 
     $rotulo = $def['rotulo'];
-    if (! empty($def['ajuda'])) {
+    $camposComIconeInfo = ['EMAIL_PROTOCOL', 'EMAIL_SMTP_HOST', 'EMAIL_SMTP_PORT'];
+    if (in_array($nome, $camposComIconeInfo, true) && ! empty($def['ajuda'])) {
         $rotulo = new HtmlSeguro(
             e($def['rotulo']) .
             ' <span class="inline-flex items-center text-muted hover:text-text cursor-help align-middle ml-1" title="' . e($def['ajuda']) . '">' .
