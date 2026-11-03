@@ -55,11 +55,9 @@ class Os_model extends CI_Model
 
         $this->db->select($fields . ',clientes.idClientes, clientes.nomeCliente, clientes.celular as celular_cliente, usuarios.nome, garantias.*');
         $this->db->from($table);
-        $this->db->join('clientes', 'clientes.idClientes = os.clientes_id');
-        $this->db->join('usuarios', 'usuarios.idUsuarios = os.usuarios_id');
+        $this->db->join('clientes', 'clientes.idClientes = os.clientes_id', 'left');
+        $this->db->join('usuarios', 'usuarios.idUsuarios = os.usuarios_id', 'left');
         $this->db->join('garantias', 'garantias.idGarantias = os.garantias_id', 'left');
-        $this->db->join('produtos_os', 'produtos_os.os_id = os.idOs', 'left');
-        $this->db->join('servicos_os', 'servicos_os.os_id = os.idOs', 'left');
 
         // condicionais da pesquisa
 
@@ -68,11 +66,17 @@ class Os_model extends CI_Model
             $this->db->where_in('status', $where['status']);
         }
 
-        // condicional de clientes
-        if (array_key_exists('pesquisa', $where)) {
-            if ($lista_clientes != null) {
+        // condicional de pesquisa
+        if (array_key_exists('pesquisa', $where) && $where['pesquisa'] !== '') {
+            $this->db->group_start();
+            if (! empty($lista_clientes)) {
                 $this->db->where_in('os.clientes_id', $lista_clientes);
             }
+            $this->db->or_like('os.descricaoProduto', $where['pesquisa']);
+            if (ctype_digit((string) $where['pesquisa'])) {
+                $this->db->or_where('os.idOs', (int) $where['pesquisa']);
+            }
+            $this->db->group_end();
         }
 
         // condicional data inicial
@@ -86,7 +90,6 @@ class Os_model extends CI_Model
 
         $this->db->limit($perpage, $start);
         $this->db->order_by('os.idOs', 'desc');
-        $this->db->group_by('os.idOs');
 
         $query = $this->db->get();
 

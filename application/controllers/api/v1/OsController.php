@@ -39,22 +39,24 @@ class OsController extends REST_Controller
             $where_array['status'] = $status;
         }
         if ($de) {
-            $de = explode('/', $de);
-            $de = $de[2] . '-' . $de[1] . '-' . $de[0];
-
+            if (str_contains($de, '/')) {
+                $partes = explode('/', $de);
+                $de = count($partes) === 3 ? "{$partes[2]}-{$partes[1]}-{$partes[0]}" : $de;
+            }
             $where_array['de'] = $de;
         }
         if ($ate) {
-            $ate = explode('/', $ate);
-            $ate = $ate[2] . '-' . $ate[1] . '-' . $ate[0];
-
+            if (str_contains($ate, '/')) {
+                $partes = explode('/', $ate);
+                $ate = count($partes) === 3 ? "{$partes[2]}-{$partes[1]}-{$partes[0]}" : $ate;
+            }
             $where_array['ate'] = $ate;
         }
 
         if (! $id) {
-            $perPage = $this->get('perPage', true) ?: 20;
-            $page = $this->get('page', true) ? ($this->get('page', true) * $perPage) : 0;
-            $start = $page ? ($perPage * $page) : 0;
+            $perPage = (int) ($this->get('perPage', true) ?: 20);
+            $page = (int) ($this->get('page', true) ?: 0);
+            $start = $page > 0 ? ($perPage * $page) : 0;
 
             // Com o desconto individual dos itens (#2880), o valor do item é o subTotal gravado.
             $valorProduto = 'produtos_os.preco * produtos_os.quantidade';
@@ -71,7 +73,7 @@ class OsController extends REST_Controller
                 COALESCE((SELECT SUM({$valorServico}) FROM servicos_os WHERE servicos_os.os_id = os.idOs), 0) totalServicos",
                 $where_array,
                 $perPage,
-                $page
+                $start
             );
 
             $this->response([
@@ -139,20 +141,24 @@ class OsController extends REST_Controller
         $termoGarantiaId = $this->post('termoGarantia', true);
 
         try {
-            $dataInicial = explode('/', $dataInicial);
-            $dataInicial = $dataInicial[2] . '-' . $dataInicial[1] . '-' . $dataInicial[0];
+            if ($dataInicial && str_contains($dataInicial, '/')) {
+                $partes = explode('/', $dataInicial);
+                $dataInicial = count($partes) === 3 ? "{$partes[2]}-{$partes[1]}-{$partes[0]}" : $dataInicial;
+            } elseif (! $dataInicial) {
+                $dataInicial = date('Y-m-d');
+            }
 
-            if ($dataFinal) {
-                $dataFinal = explode('/', $dataFinal);
-                $dataFinal = $dataFinal[2] . '-' . $dataFinal[1] . '-' . $dataFinal[0];
-            } else {
-                $dataFinal = date('Y/m/d');
+            if ($dataFinal && str_contains($dataFinal, '/')) {
+                $partes = explode('/', $dataFinal);
+                $dataFinal = count($partes) === 3 ? "{$partes[2]}-{$partes[1]}-{$partes[0]}" : $dataFinal;
+            } elseif (! $dataFinal) {
+                $dataFinal = date('Y-m-d');
             }
 
             $termoGarantiaId = (! $termoGarantiaId == null || ! $termoGarantiaId == '') ? $this->post('garantias_id', true) : null;
         } catch (Exception $e) {
-            $dataInicial = date('Y/m/d');
-            $dataFinal = date('Y/m/d');
+            $dataInicial = date('Y-m-d');
+            $dataFinal = date('Y-m-d');
         }
 
         $data = [
@@ -257,20 +263,24 @@ class OsController extends REST_Controller
         $termoGarantiaId = $this->put('termoGarantia', true);
 
         try {
-            $dataInicial = explode('/', $dataInicial);
-            $dataInicial = $dataInicial[2] . '-' . $dataInicial[1] . '-' . $dataInicial[0];
+            if ($dataInicial && str_contains($dataInicial, '/')) {
+                $partes = explode('/', $dataInicial);
+                $dataInicial = count($partes) === 3 ? "{$partes[2]}-{$partes[1]}-{$partes[0]}" : $dataInicial;
+            } elseif (! $dataInicial) {
+                $dataInicial = date('Y-m-d');
+            }
 
-            if ($dataFinal) {
-                $dataFinal = explode('/', $dataFinal);
-                $dataFinal = $dataFinal[2] . '-' . $dataFinal[1] . '-' . $dataFinal[0];
-            } else {
-                $dataFinal = date('Y/m/d');
+            if ($dataFinal && str_contains($dataFinal, '/')) {
+                $partes = explode('/', $dataFinal);
+                $dataFinal = count($partes) === 3 ? "{$partes[2]}-{$partes[1]}-{$partes[0]}" : $dataFinal;
+            } elseif (! $dataFinal) {
+                $dataFinal = date('Y-m-d');
             }
 
             $termoGarantiaId = (! $termoGarantiaId == null || ! $termoGarantiaId == '') ? $this->put('garantias_id') : null;
         } catch (Exception $e) {
-            $dataInicial = date('Y/m/d');
-            $dataFinal = date('Y/m/d');
+            $dataInicial = date('Y-m-d');
+            $dataFinal = date('Y-m-d');
         }
 
         $data = [
