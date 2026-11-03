@@ -20,7 +20,7 @@ $editando = $grupo !== null;
 $erroGeral = $erros['_geral'] ?? null;
 $errosDeCampo = array_diff_key($erros, ['_geral' => true]);
 $marcada = static fn (string $codigo) => in_array($codigo, $valores['marcadas'], true);
-$caixa = 'rounded-xl border border-border bg-surface p-3.5 sm:p-4';
+$caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
 ?>
 <div class="flex max-w-4xl flex-col gap-4 pt-2 pb-8" <?= js_module('permissoes/formulario') ?>>
     <header>

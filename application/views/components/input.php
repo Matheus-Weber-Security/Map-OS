@@ -35,7 +35,7 @@ $atributos = [
     'aria-invalid' => $error !== null ? 'true' : null,
     'aria-describedby' => trim(($idAjuda ?? '') . ' ' . ($idErro ?? '')) ?: null,
     'class' => componenteClasses(
-        'block w-full rounded-sm border bg-field px-3 py-1.5 text-body-md text-text placeholder:text-muted max-sm:min-h-10',
+        'block w-full rounded-sm border bg-field px-3 py-1.5 text-body-md text-text placeholder:text-muted max-sm:min-h-11',
         // DESIGN.md text-input: borda hairline-input (3:1), texto body-md 400,
         // foco com sombra interna e anel azul de 3px, erro em danger.
         'focus:outline-3 focus:outline-offset-0 focus:outline-ring focus:shadow-field-focus',

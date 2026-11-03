@@ -20,7 +20,7 @@
  */
 $erroGeral = $erros['_geral'] ?? null;
 $errosDeCampo = array_diff_key($erros, ['_geral' => true]);
-$caixa = 'rounded-xl border border-border bg-surface p-3.5 sm:p-4';
+$caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
 $icones = ['geral' => 'settings', 'os' => 'wrench', 'vendas' => 'shopping-cart', 'financeiro' => 'circle-dollar-sign', 'email' => 'mail', 'pagamentos' => 'banknote', 'api' => 'key-round', 'sistema' => 'download'];
 $curtos = ['os' => 'OS', 'vendas' => 'Vendas', 'pagamentos' => 'Gateways', 'sistema' => 'Atualizar'];
 

@@ -22,7 +22,7 @@
  * @var bool                 $instalador_no_servidor Pasta install/ ainda existe (aviso a quem tem cSistema)
  * @var list<string>         $avisos_sistema Migrations pendentes e .env com valores antigos (só para quem tem cSistema)
  */
-$caixa = 'rounded-xl border border-border bg-surface p-3.5 sm:p-4';
+$caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
 
 // Tendência e sparkline do "Saldo do mês": só quando a série do ano (balanço)
 // está disponível e é o ano atual.

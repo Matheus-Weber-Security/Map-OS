@@ -17,7 +17,7 @@
  * @var string|null           $qr         Data URI do QR code (só desativado)
  * @var string|null           $segredo    Segredo em grupos de 4 letras
  */
-$caixa = 'rounded-xl border border-border bg-surface p-3.5 sm:p-4';
+$caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
 ?>
 <div class="flex max-w-3xl flex-col gap-4 pt-2 pb-8">
     <header>

@@ -10,7 +10,7 @@
  * @var list<string> $problemas       Requisitos que faltam no servidor
  * @var string|null $erro
  */
-$caixa = 'rounded-xl border border-border bg-surface p-3.5 sm:p-4';
+$caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
 $notas = $release !== null ? trim($release['notas']) : '';
 ?>
 <div class="flex max-w-3xl flex-col gap-4 pt-2 pb-8">

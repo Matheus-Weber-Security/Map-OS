@@ -50,7 +50,7 @@ $secoes = [
 
     <div class="grid gap-4 lg:grid-cols-3">
         <?php foreach ($secoes as $titulo => $itens) { ?>
-            <section class="rounded-xl border border-border bg-surface p-3.5 sm:p-4" aria-label="<?= e($titulo) ?>">
+            <section class="rounded-xl border border-border bg-surface p-4 sm:p-6" aria-label="<?= e($titulo) ?>">
                 <h2 class="text-heading-sm text-text"><?= e($titulo) ?></h2>
                 <dl class="mt-3 grid grid-cols-2 gap-3">
                     <?php foreach ($itens as $rotulo => $valor) { ?>
@@ -63,7 +63,7 @@ $secoes = [
             </section>
         <?php } ?>
 
-        <section class="rounded-xl border border-border bg-surface p-3.5 sm:p-4" aria-labelledby="titulo-estoque">
+        <section class="rounded-xl border border-border bg-surface p-4 sm:p-6" aria-labelledby="titulo-estoque">
             <h2 id="titulo-estoque" class="text-heading-sm text-text">Estoque</h2>
             <dl class="mt-3 grid grid-cols-2 gap-3">
                 <div>

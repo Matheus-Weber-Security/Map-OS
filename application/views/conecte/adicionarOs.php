@@ -36,7 +36,7 @@ $texto = static fn (string $nome, array $props) => [
     <form method="post" action="<?= e(site_url('mine/adicionarOs')) ?>" novalidate class="flex flex-col gap-4" <?= js_module('formulario/padrao') ?>>
         <input type="hidden" name="<?= e($this->security->get_csrf_token_name()) ?>" value="<?= e($this->security->get_csrf_hash()) ?>">
 
-        <section class="flex flex-col gap-4 rounded-xl border border-border bg-surface p-3.5 sm:p-4" aria-label="Pedido">
+        <section class="flex flex-col gap-4 rounded-xl border border-border bg-surface p-4 sm:p-6" aria-label="Pedido">
             <?= component('textarea', $texto('descricaoProduto', [
                 'label' => 'Equipamento ou serviço',
                 'rows' => 3,

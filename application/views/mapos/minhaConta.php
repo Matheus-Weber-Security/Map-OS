@@ -10,7 +10,7 @@
  * @var bool                  $pode_foto Permissão cUsuario (a mesma da ação de enviar)
  * @var array<string, string> $erros     oldSenha, novaSenha, confirmarSenha
  */
-$caixa = 'rounded-xl border border-border bg-surface p-3.5 sm:p-4';
+$caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
 $dados = array_filter([
     'Nome' => (string) $usuario->nome,
     'E-mail' => (string) $usuario->email,

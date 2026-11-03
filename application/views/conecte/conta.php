@@ -6,7 +6,7 @@
  *
  * @var object $cliente
  */
-$caixa = 'rounded-xl border border-border bg-surface p-3.5 sm:p-4';
+$caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
 $endereco = trim(implode(', ', array_filter([
     trim(implode(', ', array_filter([$cliente->rua, $cliente->numero, $cliente->complemento]))),
     $cliente->bairro,

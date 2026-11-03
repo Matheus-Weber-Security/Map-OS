@@ -52,7 +52,7 @@ $atributos = [
         // O múltiplo mantém a aparência nativa (lista com rolagem); a opção
         // marcada usa o tint do item ativo em vez do azul do sistema, e a barra
         // de rolagem usa os tokens (sem a calha clara do sistema no escuro).
-        $multiple ? 'min-h-24 [scrollbar-color:var(--color-input)_transparent] [&_option:checked]:bg-primary-tint [&_option:checked]:text-text' : 'appearance-none pr-10 max-sm:min-h-10',
+        $multiple ? 'min-h-24 [scrollbar-color:var(--color-input)_transparent] [&_option:checked]:bg-primary-tint [&_option:checked]:text-text' : 'appearance-none pr-10 max-sm:min-h-11',
         // DESIGN.md text-input: borda hairline-input (3:1), texto body-md 400,
         // foco com sombra interna e anel azul de 3px, erro em danger.
         'focus:outline-3 focus:outline-offset-0 focus:outline-ring focus:shadow-field-focus',

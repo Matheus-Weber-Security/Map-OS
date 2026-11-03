@@ -11,7 +11,7 @@
     <meta name="theme-color" content="#7c3aed">
     <link rel="stylesheet" href="<?= e(base_url('assets/dist/app.css')) ?>">
 </head>
-<body class="h-full bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-3.5 sm:p-4 antialiased">
+<body class="h-full bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-4 sm:p-6 antialiased">
     <div class="w-full max-w-2xl flex flex-col gap-6">
         <!-- Logo / Cabeçalho -->
         <div class="text-center flex flex-col items-center">

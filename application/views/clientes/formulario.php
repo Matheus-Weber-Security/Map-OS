@@ -27,7 +27,7 @@ $campo = static fn (string $nome, array $props) => $props + [
     'error' => $errosDeCampo[$nome] ?? null,
 ];
 
-$caixa = 'rounded-xl border border-border bg-surface p-3.5 sm:p-4';
+$caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
 $grade = 'mt-4 grid gap-4 sm:grid-cols-2';
 ?>
 <div class="flex max-w-4xl flex-col gap-4 pt-2 pb-8" <?= js_module('clientes/formulario') ?>>

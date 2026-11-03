@@ -12,7 +12,7 @@
  * @var array{editar: bool, excluir: bool, ver_os: bool, ver_venda: bool, ver_cliente: bool} $pode
  */
 $id = (int) $result->idCobranca;
-$caixa = 'rounded-xl border border-border bg-surface p-3.5 sm:p-4';
+$caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
 $campos = static fn (array $itens) => array_filter($itens, static fn ($valor) => $valor !== null && $valor !== '');
 
 $referencia = null;

@@ -13,7 +13,7 @@
  *
  * @var array{titulo: string, descricao: string, icone: string, rapidos: list<array>, acao: string, dica: string|null, campos: list<array>} $relatorio
  */
-$caixa = 'rounded-xl border border-border bg-surface p-3.5 sm:p-4';
+$caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
 $novaAba = ['target' => '_blank', 'rel' => 'noopener'];
 ?>
 <div class="flex flex-col gap-4 pt-2 pb-8" <?= js_module('relatorios/filtros') ?>>

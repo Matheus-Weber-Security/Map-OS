@@ -12,7 +12,7 @@
  * @var array|null  $pix
  */
 $idVenda = (int) $venda->idVendas;
-$caixa = 'rounded-xl border border-border bg-surface p-3.5 sm:p-4';
+$caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
 $garantia = vendaGarantiaPill($garantia_ate);
 
 $dados = array_filter([

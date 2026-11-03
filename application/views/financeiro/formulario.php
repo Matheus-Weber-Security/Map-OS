@@ -24,7 +24,7 @@ $errosDeCampo = array_diff_key($erros, ['_geral' => true]);
 $baixado = $valores['baixado'] === '1';
 $parcelado = ! $editando && (int) ($valores['parcelas'] ?: 1) > 1;
 
-$caixa = 'rounded-xl border border-border bg-surface p-3.5 sm:p-4';
+$caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
 $grade = 'mt-4 grid gap-4 sm:grid-cols-2';
 $listagem = site_url('financeiro/lancamentos') . listagemQuery($retorno);
 $valor = static fn (string $nome): ?string => $valores[$nome] !== '' ? $valores[$nome] : null;

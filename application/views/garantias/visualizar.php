@@ -8,7 +8,7 @@
  * @var array{editar: bool, excluir: bool} $pode
  */
 $nome = trim((string) $result->refGarantia) !== '' ? $result->refGarantia : 'Termo #' . (int) $result->idGarantias;
-$caixa = 'rounded-xl border border-border bg-surface p-3.5 sm:p-4';
+$caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
 $dados = array_filter([
     'Código' => '#' . (int) $result->idGarantias,
     'Data' => dataBr($result->dataGarantia),

@@ -26,7 +26,7 @@
 $temFiltro = isset($filtros['pesquisa']) || isset($filtros['tipo']) || isset($filtros['status']);
 $queryDoPeriodo = listagemQuery(array_intersect_key($filtros, ['periodo' => true, 'de' => true, 'ate' => true]));
 $saldo = round($totais['receitas'] - $totais['despesas'], 2);
-$caixa = 'rounded-xl border border-border bg-surface p-3.5 sm:p-4';
+$caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
 
 $colunas = [
     ['key' => 'idLancamentos', 'label' => 'Nº', 'align' => 'right', 'nowrap' => true],

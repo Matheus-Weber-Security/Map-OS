@@ -82,7 +82,7 @@ $secoes = [
     <?php if ($aba === 'dados') { ?>
         <div class="grid gap-4 lg:grid-cols-3">
             <?php foreach ($secoes as $titulo => $itens) { ?>
-                <section class="rounded-xl border border-border bg-surface p-3.5 sm:p-4" aria-label="<?= e($titulo) ?>">
+                <section class="rounded-xl border border-border bg-surface p-4 sm:p-6" aria-label="<?= e($titulo) ?>">
                     <h2 class="text-heading-sm text-text"><?= e($titulo) ?></h2>
                     <?php if ($itens === []) { ?>
                         <p class="mt-3 text-caption text-muted">Nada informado.</p>

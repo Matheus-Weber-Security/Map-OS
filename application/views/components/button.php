@@ -33,9 +33,9 @@ $variantes = [
 
 $tamanhos = [
     // DESIGN.md: botões compactos em telas operacionais
-    // Só ícone em sm: size-7 (28px) no desktop, size-9 (36px) no celular
-    'sm' => $icon_only ? 'size-7 max-sm:size-9' : 'h-8 gap-1.5 px-2.5 max-sm:h-11',
-    'md' => $icon_only ? 'size-9 max-sm:size-11' : 'h-9 gap-2 px-3.5 max-sm:h-11',
+    // Só ícone em sm: size-7 (28px) no desktop, size-11 (44px) no celular
+    'sm' => $icon_only ? 'size-7 max-sm:size-11' : 'h-8 gap-1.5 px-3 max-sm:h-11',
+    'md' => $icon_only ? 'size-10 max-sm:size-11' : 'h-10 gap-2 px-4 max-sm:h-11',
     'lg' => $icon_only ? 'size-12' : 'h-12 gap-2 px-5',
 ];
 

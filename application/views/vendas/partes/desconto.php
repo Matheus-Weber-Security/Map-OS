@@ -17,7 +17,7 @@ if (! $pode['editar']) {
 
 $valorAtual = $totais['desconto'] > 0 ? rtrim(rtrim(number_format($totais['informado'], 2, ',', ''), '0'), ',') : null;
 ?>
-<section class="flex flex-1 flex-col justify-between rounded-xl border border-border bg-surface p-3.5 sm:p-4 shadow-xs" aria-labelledby="secao-desconto">
+<section class="flex flex-1 flex-col justify-between rounded-xl border border-border bg-surface p-4 sm:p-6 shadow-xs" aria-labelledby="secao-desconto">
     <div>
         <h2 id="secao-desconto" class="text-heading-sm text-text">Desconto</h2>
         <p class="mt-1 text-caption text-muted">

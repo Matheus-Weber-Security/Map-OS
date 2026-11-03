@@ -75,7 +75,7 @@ foreach ($columns as $chave => $coluna) {
 }
 
 $alinhamentos = ['left' => 'text-left', 'center' => 'text-center', 'right' => 'text-right tabular-nums'];
-$celula = ! empty($compact) ? 'px-3.5 py-1' : ($dense ? 'px-3 py-1' : 'px-3.5 py-1.5');
+$celula = ! empty($compact) ? 'px-4 py-1' : ($dense ? 'px-3 py-1' : 'px-4 py-2');
 // Abaixo de 640px: linha em bloco e o título da coluna antes do valor.
 // No cartão, texto longo sem espaço (e-mail, URL) quebra em qualquer ponto.
 $celulaCelular = 'max-sm:flex max-sm:items-baseline max-sm:justify-between max-sm:gap-4 max-sm:py-1 max-sm:text-right max-sm:[overflow-wrap:anywhere] max-sm:before:shrink-0 max-sm:before:text-left max-sm:before:text-caption max-sm:before:text-muted max-sm:before:content-[attr(data-label)]';
@@ -108,7 +108,7 @@ $atributos = [
         <thead class="bg-surface-subtle text-xs font-semibold tracking-[0.35px] text-muted uppercase max-sm:sr-only">
             <tr>
                 <?php foreach ($colunas as $coluna) { ?>
-                    <th scope="col" class="<?= e(componenteClasses(! empty($compact) ? 'px-3.5 py-1.5' : ($dense ? 'px-3 py-1.5' : 'px-3.5 py-2'), $alinhamentos[$coluna['align']], 'border-b border-border whitespace-nowrap', DATA_TABLE_ESCONDER[$coluna['hide_until'] ?? ''] ?? null)) ?>"><?= e($coluna['label']) ?></th>
+                    <th scope="col" class="<?= e(componenteClasses(! empty($compact) ? 'px-4 py-1.5' : ($dense ? 'px-3 py-1.5' : 'px-4 py-2.5'), $alinhamentos[$coluna['align']], 'border-b border-border whitespace-nowrap', DATA_TABLE_ESCONDER[$coluna['hide_until'] ?? ''] ?? null)) ?>"><?= e($coluna['label']) ?></th>
                 <?php } ?>
             </tr>
         </thead>
@@ -121,7 +121,7 @@ $atributos = [
                 </tr>
             <?php } ?>
             <?php foreach ($linhas as $i => $linha) { ?>
-                <tr class="<?= e(componenteClasses('border-b border-border last:border-b-0 hover:bg-surface-subtle max-sm:block max-sm:px-3 max-sm:py-2', ['bg-surface-subtle/60' => $striped && $i % 2 === 1])) ?>">
+                <tr class="<?= e(componenteClasses('border-b border-border last:border-b-0 hover:bg-surface-subtle max-sm:block max-sm:px-4 max-sm:py-3', ['bg-surface-subtle/60' => $striped && $i % 2 === 1])) ?>">
                     <?php foreach ($colunas as $coluna) { ?>
                         <td data-label="<?= e($coluna['label']) ?>" class="<?= e(componenteClasses($celula, $alinhamentos[$coluna['align']], ['whitespace-nowrap' => ! empty($coluna['nowrap'])], $celulaCelular, DATA_TABLE_ESCONDER[$coluna['hide_until'] ?? ''] ?? null, $coluna['class'] ?? null)) ?>"><?php $valor = $valorDaCelula($linha, $coluna); ?><?php if (! empty($coluna['truncate']) && is_scalar($valor)) { ?><span class="block max-w-48 truncate max-sm:max-w-none max-sm:whitespace-normal" title="<?= e($valor) ?>"><?= e($valor) ?></span><?php } elseif (is_array($valor)) { ?><span class="<?= e(componenteClasses('inline-flex items-center gap-1', empty($coluna['nowrap']) ? 'flex-wrap' : 'flex-nowrap')) ?>"><?= componenteConteudo($valor) ?></span><?php } else { ?><?= componenteConteudo($valor) ?><?php } ?></td>
                     <?php } ?>

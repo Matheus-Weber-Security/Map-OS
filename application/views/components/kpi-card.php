@@ -59,7 +59,7 @@ $ocultavel = $sensitive ? 'kpi-oculto-valores' : '';
 $atributos = [
     'id' => $id,
     'class' => componenteClasses(
-        'group flex items-center justify-between gap-3 rounded-xl border border-border bg-surface p-3.5 text-text shadow-card',
+        'group flex items-center justify-between gap-4 rounded-xl border border-border bg-surface px-5 py-4 text-text shadow-card',
         $classesAcento[$acento] ?? null,
         $ehLink ? 'ui-lift hover:border-input focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring' : null,
         $class
@@ -74,7 +74,7 @@ $tag = $ehLink ? 'a' : 'div';
     <div class="min-w-0 flex-1">
         <p class="text-sm font-medium text-muted"><?= e($label) ?></p>
         <div class="mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-            <p class="font-display text-[1.65rem] leading-tight font-medium tabular-nums"><?= $sensitive ? component('valor-sensivel', ['value' => (string) $value]) : e((string) $value) ?></p>
+            <p class="font-display text-[1.9rem] leading-[1.15] font-medium tabular-nums"><?= $sensitive ? component('valor-sensivel', ['value' => (string) $value]) : e((string) $value) ?></p>
             <?php if (is_array($trend) && isset($trend['curto'])) {
                 $trendCor = ($trend['bom'] ?? null) === true ? 'bg-success-soft text-success-ink' : (($trend['bom'] ?? null) === false ? 'bg-warning-soft text-warning-ink' : 'bg-neutral-soft text-neutral-ink');
                 $trendSeta = ($trend['dir'] ?? 'flat') === 'up' ? '↑' : (($trend['dir'] ?? 'flat') === 'down' ? '↓' : '→'); ?>
@@ -91,6 +91,6 @@ $tag = $ehLink ? 'a' : 'div';
         <?php } ?>
     </div>
     <?php if ($icon !== null) { ?>
-        <span class="inline-flex size-10 shrink-0 items-center justify-center self-start rounded-lg <?= e($acentos[$acento]) ?>"><?= icon($icon, ['class' => 'size-5']) ?></span>
+        <span class="inline-flex size-14 shrink-0 items-center justify-center self-start rounded-xl <?= e($acentos[$acento]) ?>"><?= icon($icon, ['class' => 'size-7']) ?></span>
     <?php } ?>
 </<?= e($tag) ?>>

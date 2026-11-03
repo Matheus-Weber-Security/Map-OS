@@ -28,7 +28,7 @@ $errosDeCampo = array_diff_key($erros, ['_geral' => true]);
     <form method="post" action="<?= e($editando ? site_url('garantias/editar/' . (int) $garantia->idGarantias) : site_url('garantias/adicionar')) ?>" novalidate class="flex flex-col gap-4" <?= js_module('formulario/padrao') ?>>
         <input type="hidden" name="<?= e($this->security->get_csrf_token_name()) ?>" value="<?= e($this->security->get_csrf_hash()) ?>">
 
-        <section class="flex flex-col gap-4 rounded-xl border border-border bg-surface p-3.5 sm:p-4" aria-label="Dados do termo">
+        <section class="flex flex-col gap-4 rounded-xl border border-border bg-surface p-4 sm:p-6" aria-label="Dados do termo">
             <div class="sm:max-w-xs">
                 <?= component('input', [
                     'name' => 'refGarantia',
