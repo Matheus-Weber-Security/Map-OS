@@ -278,4 +278,122 @@ class Saas_model extends CI_Model
             'valor_essencial' => (float) ($planoEssencial->valor ?? 37.90),
         ];
     }
+
+    /**
+     * Cadastro completo de uma nova empresa (Tenant) com período de degustação (trial).
+     *
+     * @param array $dadosEmpresa  Campos para saas_empresas (razao_social, nome_fantasia, documento, telefone, email)
+     * @param array $dadosUsuario  Campos para usuarios (nome, email, senha_plana, cpf, telefone, cep, rua, numero, bairro, cidade, estado)
+     * @param int   $diasTrial     Quantidade de dias de trial (padrão 10)
+     * @return array{sucesso: bool, mensagem?: string, empresa_id?: int, empresa_nome?: string, usuario?: object}
+     */
+    public function cadastrarEmpresaComDono(array $dadosEmpresa, array $dadosUsuario, int $diasTrial = 10): array
+    {
+        $this->db->trans_start();
+
+        $email = strtolower(trim((string) $dadosUsuario['email']));
+        $userExistente = $this->db->get_where('usuarios', ['email' => $email])->row();
+
+        if ($userExistente) {
+            // Se o usuário já existe, valida se a senha bate com a conta dele
+            if (! senhaConfere((string) ($dadosUsuario['senha_plana'] ?? ''), $userExistente->senha)) {
+                $this->db->trans_rollback();
+
+                return [
+                    'sucesso' => false,
+                    'mensagem' => 'Este e-mail já possui uma conta no sistema. Entre com a sua senha correta para criar e vincular uma nova empresa ou utilize outro e-mail.',
+                ];
+            }
+            $usuarioId = (int) $userExistente->idUsuarios;
+            $usuario = $userExistente;
+        } else {
+            // Cria novo usuário administrador
+            $insertUser = [
+                'nome' => trim((string) $dadosUsuario['nome']),
+                'email' => $email,
+                'senha' => password_hash((string) $dadosUsuario['senha_plana'], PASSWORD_DEFAULT),
+                'telefone' => (string) ($dadosUsuario['telefone'] ?? ''),
+                'celular' => (string) ($dadosUsuario['celular'] ?? $dadosUsuario['telefone'] ?? ''),
+                'cpf' => preg_replace('/\D/', '', (string) ($dadosEmpresa['documento'] ?? '')),
+                'cep' => (string) ($dadosUsuario['cep'] ?? ''),
+                'rua' => (string) ($dadosUsuario['rua'] ?? ''),
+                'numero' => (string) ($dadosUsuario['numero'] ?? ''),
+                'bairro' => (string) ($dadosUsuario['bairro'] ?? ''),
+                'cidade' => (string) ($dadosUsuario['cidade'] ?? ''),
+                'estado' => (string) ($dadosUsuario['estado'] ?? ''),
+                'situacao' => 1,
+                'dataCadastro' => date('Y-m-d'),
+                'permissoes_id' => 1, // Administrador
+                'is_superadmin' => 0,
+            ];
+
+            $this->db->insert('usuarios', $insertUser);
+            $usuarioId = (int) $this->db->insert_id();
+            $usuario = $this->db->get_where('usuarios', ['idUsuarios' => $usuarioId])->row();
+        }
+
+        // Cria a nova empresa com 10 dias de trial no plano Essencial
+        $hoje = date('Y-m-d');
+        $vencimento = date('Y-m-d', strtotime("+{$diasTrial} days"));
+        $nomeFantasia = trim((string) ($dadosEmpresa['nome_fantasia'] ?? '')) ?: trim((string) $dadosEmpresa['razao_social']);
+
+        $insertEmpresa = [
+            'razao_social' => trim((string) $dadosEmpresa['razao_social']),
+            'nome_fantasia' => $nomeFantasia,
+            'documento' => trim((string) ($dadosEmpresa['documento'] ?? '')),
+            'telefone' => trim((string) ($dadosEmpresa['telefone'] ?? '')),
+            'email' => $email,
+            'plano_id' => 2, // Essencial
+            'dias_restantes' => $diasTrial,
+            'data_vencimento' => $vencimento,
+            'status' => 'ativa',
+            'desconto_percentual' => 0,
+            'forma_pagamento_preferida' => 'PIX',
+            'criado_em' => date('Y-m-d H:i:s'),
+        ];
+
+        $this->db->insert('saas_empresas', $insertEmpresa);
+        $empresaId = (int) $this->db->insert_id();
+
+        // Vincula o usuário como 'dono' da nova empresa
+        $this->db->insert('saas_empresa_usuarios', [
+            'empresa_id' => $empresaId,
+            'usuario_id' => $usuarioId,
+            'papel' => 'dono',
+            'ativo' => 1,
+            'criado_em' => date('Y-m-d H:i:s'),
+        ]);
+
+        // Cria registro inicial em emitente para a nova empresa
+        $this->db->insert('emitente', [
+            'empresa_id' => $empresaId,
+            'nome' => $nomeFantasia,
+            'cnpj' => trim((string) ($dadosEmpresa['documento'] ?? '')),
+            'telefone' => trim((string) ($dadosEmpresa['telefone'] ?? '')),
+            'email' => $email,
+            'cep' => (string) ($dadosUsuario['cep'] ?? ''),
+            'rua' => (string) ($dadosUsuario['rua'] ?? ''),
+            'numero' => (string) ($dadosUsuario['numero'] ?? ''),
+            'bairro' => (string) ($dadosUsuario['bairro'] ?? ''),
+            'cidade' => (string) ($dadosUsuario['cidade'] ?? ''),
+            'uf' => (string) ($dadosUsuario['estado'] ?? ''),
+            'url_logo' => '',
+        ]);
+
+        $this->db->trans_complete();
+
+        if ($this->db->trans_status() === false) {
+            return [
+                'sucesso' => false,
+                'mensagem' => 'Não foi possível cadastrar a empresa no banco de dados. Tente novamente.',
+            ];
+        }
+
+        return [
+            'sucesso' => true,
+            'empresa_id' => $empresaId,
+            'empresa_nome' => $nomeFantasia,
+            'usuario' => $usuario,
+        ];
+    }
 }

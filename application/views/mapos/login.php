@@ -45,6 +45,10 @@ include APPPATH . 'views/entrada/inicio.php';
         <section class="superficie-entrada w-full rounded-xxl border border-hairline-violet bg-night p-6 text-text sm:p-8" aria-labelledby="titulo-login">
             <h2 id="titulo-login" class="mb-6 font-display text-heading-md text-text"><?= e($saudacao . '! Entre na sua conta') ?></h2>
 
+            <?php if (! empty($sucesso)) { ?>
+                <div class="mb-4"><?= component('alert', ['message' => (string) $sucesso, 'variant' => 'success']) ?></div>
+            <?php } ?>
+
             <form id="formLogin" method="post" action="<?= e(site_url('login/verificarLogin?ajax=true')) ?>" novalidate class="flex flex-col gap-4" <?= js_module('login/formulario') ?> data-destino="<?= e(site_url('mapos')) ?>">
                 <input type="hidden" name="<?= e($this->security->get_csrf_token_name()) ?>" value="<?= e($this->security->get_csrf_hash()) ?>">
 
@@ -84,6 +88,10 @@ include APPPATH . 'views/entrada/inicio.php';
                     'attrs' => ['data-rotulo-carregando' => 'Entrando…'],
                 ]) ?>
             </form>
+            <div class="mt-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-body-md">
+                <a href="<?= e(site_url('login/resetarSenha')) ?>" class="rounded-xs text-on-dark underline underline-offset-4 hover:decoration-2 focus-visible:outline-3 focus-visible:outline-ring max-sm:inline-flex max-sm:min-h-11 max-sm:items-center">Esqueci minha senha</a>
+                <a href="<?= e(site_url('login/cadastrar')) ?>" class="rounded-xs text-on-dark underline underline-offset-4 hover:decoration-2 focus-visible:outline-3 focus-visible:outline-ring max-sm:inline-flex max-sm:min-h-11 max-sm:items-center">Criar conta</a>
+            </div>
         </section>
     </main>
 <?php include APPPATH . 'views/entrada/fim.php'; ?>

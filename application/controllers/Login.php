@@ -19,6 +19,7 @@ class Login extends CI_Controller
         // de cor das configurações.
         $this->load->view('mapos/login', [
             'erro' => $this->session->flashdata('error'),
+            'sucesso' => $this->session->flashdata('success'),
         ]);
     }
 
@@ -305,5 +306,393 @@ class Login extends CI_Controller
     private function chk_date($data_banco)
     {
         return contaExpirada($data_banco);
+    }
+
+    /**
+     * Tela de cadastro de nova empresa (Tenant com 10 dias de degustação).
+     */
+    public function cadastrar()
+    {
+        $this->load->model('saas_model');
+        $erros = [];
+        $valores = [];
+
+        if ($this->input->method() === 'post') {
+            $captchaEsperado = (string) $this->session->userdata('captchaWord_empresa');
+            $captchaInformado = trim((string) $this->input->post('captcha'));
+            $this->session->unset_userdata('captchaWord_empresa');
+
+            $nomeEmpresa = trim((string) $this->input->post('nome_empresa'));
+            $nomeFantasia = trim((string) $this->input->post('nome_fantasia'));
+            $documento = trim((string) $this->input->post('documento'));
+            $nomeResponsavel = trim((string) $this->input->post('nome_responsavel'));
+            $email = strtolower(trim((string) $this->input->post('email')));
+            $telefone = trim((string) $this->input->post('telefone'));
+            $senha = (string) $this->input->post('senha');
+            $senhaConfirmacao = (string) $this->input->post('senha_confirmacao');
+
+            $cep = trim((string) $this->input->post('cep'));
+            $rua = trim((string) $this->input->post('rua'));
+            $numero = trim((string) $this->input->post('numero'));
+            $bairro = trim((string) $this->input->post('bairro'));
+            $cidade = trim((string) $this->input->post('cidade'));
+            $estado = trim((string) $this->input->post('estado'));
+
+            $valores = [
+                'nome_empresa' => $nomeEmpresa,
+                'nome_fantasia' => $nomeFantasia,
+                'documento' => $documento,
+                'nome_responsavel' => $nomeResponsavel,
+                'email' => $email,
+                'telefone' => $telefone,
+                'cep' => $cep,
+                'rua' => $rua,
+                'numero' => $numero,
+                'bairro' => $bairro,
+                'cidade' => $cidade,
+                'estado' => $estado,
+            ];
+
+            if ($nomeEmpresa === '') {
+                $erros['nome_empresa'] = 'Informe a razão social ou nome da empresa.';
+            }
+
+            $docLimpo = preg_replace('/\D/', '', $documento);
+            if ($docLimpo === '' || (! in_array(strlen($docLimpo), [11, 14], true))) {
+                $erros['documento'] = 'Informe um CPF (11 dígitos) ou CNPJ (14 dígitos) válido.';
+            }
+
+            if ($nomeResponsavel === '') {
+                $erros['nome_responsavel'] = 'Informe o nome do responsável.';
+            }
+
+            if ($email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $erros['email'] = 'Informe um e-mail válido para acesso.';
+            }
+
+            if ($telefone === '') {
+                $erros['telefone'] = 'Informe um WhatsApp ou telefone de contato.';
+            }
+
+            if (strlen($senha) < 8) {
+                $erros['senha'] = 'A senha precisa ter pelo menos 8 caracteres.';
+            } elseif ($senha !== $senhaConfirmacao) {
+                $erros['senha_confirmacao'] = 'A confirmação de senha não confere.';
+            }
+
+            if ($captchaEsperado === '' || $captchaInformado === '' || strtolower($captchaInformado) !== strtolower($captchaEsperado)) {
+                $erros['captcha'] = 'Os caracteres não conferem com a imagem. Digite os da imagem nova.';
+            }
+
+            if ($erros === []) {
+                $resultado = $this->saas_model->cadastrarEmpresaComDono(
+                    [
+                        'razao_social' => $nomeEmpresa,
+                        'nome_fantasia' => $nomeFantasia ?: $nomeEmpresa,
+                        'documento' => $documento,
+                        'telefone' => $telefone,
+                        'email' => $email,
+                    ],
+                    [
+                        'nome' => $nomeResponsavel,
+                        'email' => $email,
+                        'senha_plana' => $senha,
+                        'telefone' => $telefone,
+                        'cep' => $cep,
+                        'rua' => $rua,
+                        'numero' => $numero,
+                        'bairro' => $bairro,
+                        'cidade' => $cidade,
+                        'estado' => $estado,
+                    ],
+                    10 // 10 dias de degustação
+                );
+
+                if (! $resultado['sucesso']) {
+                    $erros['_geral'] = $resultado['mensagem'] ?? 'Erro ao criar a empresa. Tente novamente.';
+                } else {
+                    // Auto-login na empresa recém-criada
+                    $this->iniciarSessao($resultado['usuario']);
+                    $this->session->set_userdata([
+                        'empresa_id' => (int) $resultado['empresa_id'],
+                        'empresa_nome' => (string) $resultado['empresa_nome'],
+                    ]);
+
+                    $this->session->set_flashdata('success', '🎉 Parabéns! Sua empresa foi criada com sucesso. Você ganhou 10 dias de assinatura grátis para testar todos os recursos!');
+
+                    return redirect(site_url('mapos'));
+                }
+            }
+        }
+
+        $this->load->view('mapos/cadastrar_empresa', [
+            'valores' => $valores,
+            'erros' => $erros,
+        ]);
+    }
+
+    /**
+     * Captcha para o formulário de cadastro de empresa.
+     */
+    public function captcha()
+    {
+        header('Content-type: image/png');
+        header('Cache-Control: no-store');
+
+        $arrFont = [
+            'font-ZXX_Noise.otf',
+            'font-karabine.ttf',
+            'font-capture.ttf',
+            'font-captcha.ttf',
+        ];
+        shuffle($arrFont);
+
+        $codigoCaptcha = substr(bin2hex(random_bytes(4)), 0, 7);
+
+        $bgFile = FCPATH . 'assets/img/captcha_bg.jpg';
+        if (file_exists($bgFile)) {
+            $img = imagecreatefromjpeg($bgFile);
+        } else {
+            $img = imagecreatetruecolor(180, 50);
+            $bg = imagecolorallocate($img, 240, 240, 240);
+            imagefill($img, 0, 0, $bg);
+        }
+
+        $corCaptcha = imagecolorallocate($img, 220, 38, 38);
+        $fontPath = FCPATH . 'assets/fonts/captcha/' . $arrFont[0];
+
+        if (file_exists($fontPath)) {
+            imagettftext($img, 22, 0, 10, rand(32, 38), $corCaptcha, $fontPath, $codigoCaptcha);
+        } else {
+            imagestring($img, 5, 30, 15, $codigoCaptcha, $corCaptcha);
+        }
+
+        imagepng($img);
+        imagedestroy($img);
+
+        $this->session->set_userdata('captchaWord_empresa', $codigoCaptcha);
+    }
+
+    /**
+     * Tela de solicitação de redefinição de senha para usuários do painel.
+     */
+    public function resetarSenha()
+    {
+        $this->load->view('mapos/resetar_senha', [
+            'erro' => $this->session->flashdata('error'),
+        ]);
+    }
+
+    /**
+     * Processa a solicitação de token para redefinir senha.
+     */
+    public function gerarTokenResetarSenha()
+    {
+        $email = strtolower(trim((string) $this->input->post('email')));
+        $ip = $this->input->ip_address();
+
+        $this->load->library('Limite_login');
+        if ($this->limite_login->bloqueado('reset', $email, $ip)) {
+            $this->session->set_flashdata('error', Limite_login::MENSAGEM);
+
+            return redirect(site_url('login/resetarSenha'));
+        }
+
+        $this->limite_login->registrarFalha('reset', $email, $ip);
+
+        $user = $this->mapos_model->check_credentials($email);
+
+        // Resposta idêntica existindo ou não a conta, evitando enumeração de usuários
+        if (! $user) {
+            log_info("Solicitação de redefinição de senha para e-mail inexistente: {$email}");
+            $this->session->set_flashdata('success', "Se o e-mail informado estiver cadastrado, as instruções para redefinição foram enviadas para {$email}.");
+
+            return redirect(site_url('login'));
+        }
+
+        [$tokenEmClaro, $tokenHash] = tokenRecuperacaoGerar();
+
+        // Invalida tokens anteriores
+        $this->db->where('email', $user->email)->where('token_utilizado', 0)->update('resets_de_senha', ['token_utilizado' => 1]);
+
+        $dadosToken = [
+            'email' => $user->email,
+            'token' => $tokenHash,
+            'data_expiracao' => date('Y-m-d H:i:s', time() + 3600), // 1 hora
+            'token_utilizado' => 0,
+        ];
+
+        $this->db->insert('resets_de_senha', $dadosToken);
+
+        // Tenta enviar e-mail
+        $this->enviarEmailRecuperacao($user, $tokenEmClaro);
+
+        log_info("Usuário {$user->idUsuarios} solicitou redefinição de senha.");
+        $this->session->set_flashdata('success', "Instruções para redefinir sua senha foram enviadas para {$user->email}. O link é válido por 1 hora.");
+
+        return redirect(site_url('login'));
+    }
+
+    /**
+     * Envia o e-mail com o link de recuperação.
+     */
+    private function enviarEmailRecuperacao(object $user, string $token): bool
+    {
+        $this->load->model('email_model');
+        $emitente = $this->mapos_model->getEmitente();
+        $nomeSistema = $this->config->item('app_name') ?: 'Nexus Ticket';
+        $remetenteNome = $emitente ? $emitente->nome : $nomeSistema;
+        $remetenteEmail = $emitente ? $emitente->email : 'nao-responder@mapos.com.br';
+
+        $link = site_url('login/novaSenha?token=' . $token);
+
+        $mensagem = "
+        <div style='font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;'>
+            <h2 style='color: #0f172a;'>Recuperação de Senha</h2>
+            <p>Olá, <strong>" . htmlspecialchars($user->nome) . "</strong>,</p>
+            <p>Recebemos uma solicitação para redefinir a senha da sua conta de acesso ao sistema <strong>" . htmlspecialchars($nomeSistema) . "</strong>.</p>
+            <p style='margin: 24px 0;'>
+                <a href='" . htmlspecialchars($link) . "' style='background-color: #f37338; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;'>Redefinir Minha Senha</a>
+            </p>
+            <p style='color: #64748b; font-size: 14px;'>Ou acesse o link manualmente: <br><a href='" . htmlspecialchars($link) . "'>" . htmlspecialchars($link) . "</a></p>
+            <p style='color: #64748b; font-size: 14px;'>Se preferir digitar o código na página, use o token: <strong>" . htmlspecialchars($token) . "</strong></p>
+            <p style='color: #94a3b8; font-size: 12px; margin-top: 32px;'>Este link expira em 1 hora. Se você não solicitou a alteração, ignore este e-mail com segurança.</p>
+        </div>";
+
+        $headers = [
+            'From' => "\"$remetenteNome\" <$remetenteEmail>",
+            'Subject' => 'Recuperação de Senha - ' . $nomeSistema,
+            'Return-Path' => '',
+        ];
+
+        $emailData = [
+            'to' => $user->email,
+            'message' => $mensagem,
+            'status' => 'pending',
+            'date' => date('Y-m-d H:i:s'),
+            'headers' => serialize($headers),
+        ];
+
+        try {
+            $this->email_model->add('email_queue', $emailData);
+            return true;
+        } catch (\Throwable $e) {
+            log_message('error', 'Falha ao enfileirar e-mail de recuperação: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Tela para digitar nova senha a partir do token.
+     */
+    public function novaSenha()
+    {
+        $tokenEmClaro = trim((string) ($this->input->get('token') ?: $this->input->post('token')));
+
+        if ($tokenEmClaro === '') {
+            $this->session->set_flashdata('error', 'Token de recuperação não informado.');
+
+            return redirect(site_url('login'));
+        }
+
+        $tokenHash = tokenRecuperacaoHash($tokenEmClaro);
+        $registro = $this->db
+            ->where('token', $tokenHash)
+            ->where('token_utilizado', 0)
+            ->where('data_expiracao >=', date('Y-m-d H:i:s'))
+            ->get('resets_de_senha')
+            ->row();
+
+        if (! $registro) {
+            $this->session->set_flashdata('error', 'Token inválido ou expirado. Por favor, solicite uma nova recuperação de senha.');
+
+            return redirect(site_url('login'));
+        }
+
+        $this->load->view('mapos/nova_senha', [
+            'token' => $tokenEmClaro,
+            'erros' => [],
+        ]);
+    }
+
+    /**
+     * Grava a nova senha para o usuário.
+     */
+    public function salvarNovaSenha()
+    {
+        $tokenEmClaro = trim((string) $this->input->post('token'));
+        if ($tokenEmClaro === '') {
+            return redirect(site_url('login'));
+        }
+
+        $tokenHash = tokenRecuperacaoHash($tokenEmClaro);
+        $registro = $this->db
+            ->where('token', $tokenHash)
+            ->where('token_utilizado', 0)
+            ->where('data_expiracao >=', date('Y-m-d H:i:s'))
+            ->get('resets_de_senha')
+            ->row();
+
+        if (! $registro) {
+            $this->session->set_flashdata('error', 'Token inválido ou expirado. Solicite uma nova recuperação.');
+
+            return redirect(site_url('login'));
+        }
+
+        $senha = (string) $this->input->post('senha');
+        $senhaConfirmacao = (string) $this->input->post('senha_confirmacao');
+        $erros = [];
+
+        if (strlen($senha) < 8) {
+            $erros['senha'] = 'A senha deve ter no mínimo 8 caracteres.';
+        } elseif ($senha !== $senhaConfirmacao) {
+            $erros['senha_confirmacao'] = 'A confirmação de senha não confere.';
+        }
+
+        if ($erros !== []) {
+            return $this->load->view('mapos/nova_senha', [
+                'token' => $tokenEmClaro,
+                'erros' => $erros,
+            ]);
+        }
+
+        $user = $this->mapos_model->check_credentials($registro->email);
+        if (! $user) {
+            $this->session->set_flashdata('error', 'Usuário não encontrado.');
+
+            return redirect(site_url('login'));
+        }
+
+        // Atualiza a senha e invalida sessões antigas
+        $novaSenhaHash = password_hash($senha, PASSWORD_DEFAULT);
+        $novaVersao = (int) ($user->sessao_versao ?? 0) + 1;
+
+        $this->db->where('idUsuarios', $user->idUsuarios)->update('usuarios', [
+            'senha' => $novaSenhaHash,
+            'sessao_versao' => $novaVersao,
+        ]);
+
+        // Marca token como utilizado
+        $this->db->where('id', $registro->id)->update('resets_de_senha', ['token_utilizado' => 1]);
+
+        log_info("Senha do usuário {$user->idUsuarios} alterada via recuperação.");
+        $this->session->set_flashdata('success', 'Sua senha foi redefinida com sucesso! Entre agora com a nova senha.');
+
+        return redirect(site_url('login'));
+    }
+
+    /**
+     * Tela para colar o token manualmente.
+     */
+    public function tokenManual()
+    {
+        if ($this->input->method() === 'post') {
+            $token = trim((string) $this->input->post('token'));
+            if ($token !== '') {
+                return redirect(site_url('login/novaSenha?token=' . urlencode($token)));
+            }
+        }
+
+        $this->load->view('mapos/token_manual');
     }
 }
