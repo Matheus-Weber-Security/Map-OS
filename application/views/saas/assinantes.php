@@ -78,7 +78,7 @@ $colunas = [
 
             return $desc > 0
                 ? component('pill-status', ['label' => $desc . '% OFF', 'variant' => 'warning'])
-                : '<span class="text-caption text-muted">Sem desconto</span>';
+                : component('pill-status', ['label' => 'Sem desconto', 'variant' => 'neutral']);
         },
     ],
     [
@@ -93,34 +93,42 @@ $colunas = [
                     'label' => 'Adicionar dias para ' . $nome,
                     'icon' => 'plus',
                     'icon_only' => true,
-                    'variant' => 'ghost',
+                    'variant' => 'outline',
                     'size' => 'sm',
+                    'class' => 'border-border text-muted hover:text-success-ink hover:border-success-soft hover:bg-success-soft/20 shadow-2xs',
                     'attrs' => [
                         'data-modal-abrir' => 'modal-dias',
                         'data-valor-id' => (string) $e->id,
                         'data-valor-nome' => $nome,
+                        'title' => 'Adicionar dias de acesso',
                     ],
                 ]),
                 component('button', [
                     'label' => 'Ajustar desconto de ' . $nome,
                     'icon' => 'percent',
                     'icon_only' => true,
-                    'variant' => 'ghost',
+                    'variant' => 'outline',
                     'size' => 'sm',
+                    'class' => 'border-border text-muted hover:text-warning-ink hover:border-warning-soft hover:bg-warning-soft/20 shadow-2xs',
                     'attrs' => [
                         'data-modal-abrir' => 'modal-desconto',
                         'data-valor-id' => (string) $e->id,
                         'data-valor-nome' => $nome,
                         'data-valor-desconto' => (string) ($e->desconto_percentual ?? 0),
+                        'title' => 'Ajustar desconto comercial (%)',
                     ],
                 ]),
                 component('button', [
                     'label' => 'Acessar painel de ' . $nome,
                     'icon' => 'log-in',
                     'icon_only' => true,
-                    'variant' => 'ghost',
+                    'variant' => 'outline',
                     'size' => 'sm',
+                    'class' => 'border-border text-muted hover:text-primary hover:border-primary/40 hover:bg-primary-tint/20 shadow-2xs',
                     'href' => site_url('saas/trocarEmpresa/' . $e->id),
+                    'attrs' => [
+                        'title' => 'Acessar painel desta empresa',
+                    ],
                 ]),
             ];
         },
