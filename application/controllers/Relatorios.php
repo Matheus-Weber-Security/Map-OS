@@ -977,6 +977,152 @@ class Relatorios extends MY_Controller
         pdf_create($html, 'relatorio_vendas' . date('d/m/y'), true);
     }
 
+
+    public function compras()
+    {
+        if (! $this->permission->checkPermission($this->session->userdata('permissao'), 'rCompra')) {
+            $this->session->set_flashdata('error', 'Você não tem permissão para gerar relatórios de compras.');
+            redirect(base_url());
+        }
+
+        $this->data['relatorio'] = relatorioDefinicao('compras');
+        $this->data['view'] = 'relatorios/relatorio';
+
+        return $this->layout();
+    }
+
+    public function comprasRapid()
+    {
+        if (! $this->permission->checkPermission($this->session->userdata('permissao'), 'rCompra')) {
+            $this->session->set_flashdata('error', 'Você não tem permissão para gerar relatórios de compras.');
+            redirect(base_url());
+        }
+
+        $format = $this->input->get('format');
+        $isXls = $format === 'xls';
+        $compras = $this->Relatorios_model->comprasRapid($isXls);
+        $totalCompras = 0;
+        foreach ($compras as $compra) {
+            $totalCompras += $isXls ? floatval($compra['valorTotal']) : floatval($compra->valorTotal);
+        }
+
+        if ($isXls) {
+            $comprasFormatadas = array_map(function ($item) {
+                return [
+                    '#' => $item['idCompras'],
+                    'fornecedor' => $item['nomeCliente'] ?: 'Fornecedor avulso',
+                    'nfe' => $item['numero_nfe'] ?: '',
+                    'comprador' => $item['nome'] ?: '',
+                    'data' => $item['dataCompra'],
+                    'status' => $item['status'],
+                    'total' => $item['valorTotal'] ?: 0,
+                ];
+            }, $compras);
+
+            $cabecalho = [
+                '#' => 'string',
+                'Fornecedor' => 'string',
+                'NF-e' => 'string',
+                'Comprador' => 'string',
+                'Data' => 'YYYY-MM-DD',
+                'Situação' => 'string',
+                'Total' => 'price',
+            ];
+
+            $writer = new XLSXWriter();
+            $writer->writeSheetHeader('Sheet1', $cabecalho);
+            foreach ($comprasFormatadas as $c) {
+                $writer->writeSheetRow('Sheet1', planilhaCelulasSeguras($c));
+            }
+            $writer->writeSheetRow(null, []);
+            $writer->writeSheetRow('Sheet1', ['', '', '', '', '', 'TOTAL', $totalCompras]);
+
+            $arquivo = $writer->writeToString();
+            $this->load->helper('download');
+            force_download('relatorio_compras.xlsx', $arquivo);
+
+            return;
+        }
+
+        $data['compras'] = $compras;
+        $data['total_compras'] = $totalCompras;
+        $data['emitente'] = $this->Mapos_model->getEmitente();
+        $data['title'] = 'Relatório de Compras Rápido';
+
+        $this->load->helper('mpdf');
+        $html = $this->load->view('relatorios/imprimir/imprimirCompras', $data, true);
+        pdf_create($html, 'relatorio_compras_' . date('d_m_Y'), true);
+    }
+
+    public function comprasCustom()
+    {
+        if (! $this->permission->checkPermission($this->session->userdata('permissao'), 'rCompra')) {
+            $this->session->set_flashdata('error', 'Você não tem permissão para gerar relatórios de compras.');
+            redirect(base_url());
+        }
+
+        $dataInicial = $this->input->get('dataInicial');
+        $dataFinal = $this->input->get('dataFinal');
+        $fornecedor = $this->input->get('fornecedor');
+        $responsavel = $this->input->get('responsavel');
+        $status = $this->input->get('status');
+        $format = $this->input->get('format');
+        $isXls = $format === 'xls';
+
+        $compras = $this->Relatorios_model->comprasCustom($dataInicial, $dataFinal, $fornecedor, $responsavel, $status, $isXls);
+        $totalCompras = 0;
+        foreach ($compras as $compra) {
+            $totalCompras += $isXls ? floatval($compra['valorTotal']) : floatval($compra->valorTotal);
+        }
+
+        if ($isXls) {
+            $comprasFormatadas = array_map(function ($item) {
+                return [
+                    '#' => $item['idCompras'],
+                    'fornecedor' => $item['nomeCliente'] ?: 'Fornecedor avulso',
+                    'nfe' => $item['numero_nfe'] ?: '',
+                    'comprador' => $item['nome'] ?: '',
+                    'data' => $item['dataCompra'],
+                    'status' => $item['status'],
+                    'total' => $item['valorTotal'] ?: 0,
+                ];
+            }, $compras);
+
+            $cabecalho = [
+                '#' => 'string',
+                'Fornecedor' => 'string',
+                'NF-e' => 'string',
+                'Comprador' => 'string',
+                'Data' => 'YYYY-MM-DD',
+                'Situação' => 'string',
+                'Total' => 'price',
+            ];
+
+            $writer = new XLSXWriter();
+            $writer->writeSheetHeader('Sheet1', $cabecalho);
+            foreach ($comprasFormatadas as $c) {
+                $writer->writeSheetRow('Sheet1', planilhaCelulasSeguras($c));
+            }
+            $writer->writeSheetRow(null, []);
+            $writer->writeSheetRow('Sheet1', ['', '', '', '', '', 'TOTAL', $totalCompras]);
+
+            $arquivo = $writer->writeToString();
+            $this->load->helper('download');
+            force_download('relatorio_compras_custom.xlsx', $arquivo);
+
+            return;
+        }
+
+        $data['compras'] = $compras;
+        $data['total_compras'] = $totalCompras;
+        $data['emitente'] = $this->Mapos_model->getEmitente();
+        $data['title'] = 'Relatório de Compras Customizado';
+
+        $this->load->helper('mpdf');
+        $html = $this->load->view('relatorios/imprimir/imprimirCompras', $data, true);
+        pdf_create($html, 'relatorio_compras_custom_' . date('d_m_Y'), true);
+    }
+
     public function receitasBrutasMei()
     {
         if (! $this->permission->checkPermission($this->session->userdata('permissao'), 'rFinanceiro')) {

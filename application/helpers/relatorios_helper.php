@@ -109,6 +109,21 @@ if (! function_exists('relatorioDefinicao')) {
                     $formato(),
                 ],
             ],
+            'compras' => [
+                'titulo' => 'Relatórios de compras',
+                'descricao' => 'Compras e entradas de estoque por período, fornecedor e comprador.',
+                'icone' => 'package-plus',
+                'rapidos' => $pdfXls('comprasRapid', 'Todas as compras'),
+                'acao' => 'relatorios/comprasCustom',
+                'dica' => null,
+                'campos' => [
+                    ...$periodo('Data de'),
+                    ['tipo' => 'busca', 'name' => 'fornecedor', 'label' => 'Fornecedor', 'url' => 'financeiro/autoCompleteClienteFornecedor', 'placeholder' => 'Nome ou documento'],
+                    ['tipo' => 'busca', 'name' => 'responsavel', 'label' => 'Comprador', 'url' => 'os/autoCompleteUsuario', 'placeholder' => 'Nome do usuário'],
+                    ['tipo' => 'select', 'name' => 'status', 'label' => 'Situação', 'opcoes' => ['' => 'Todas', 'Concluída' => 'Concluída', 'Pendente' => 'Pendente', 'Cancelada' => 'Cancelada'], 'placeholder' => 'Todas'],
+                    $formato(),
+                ],
+            ],
             'financeiro' => [
                 'titulo' => 'Relatórios financeiros',
                 'descricao' => 'Receitas e despesas por vencimento.',

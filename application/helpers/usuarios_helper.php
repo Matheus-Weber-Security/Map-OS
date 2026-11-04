@@ -31,6 +31,7 @@ if (! defined('PERMISSOES_MODULOS')) {
         'Servico' => 'Serviços',
         'Os' => 'Ordens de serviço',
         'Venda' => 'Vendas',
+        'Compra' => 'Compras',
         'Garantia' => 'Termos de garantia',
         'Arquivo' => 'Arquivos',
         'Lancamento' => 'Lançamentos financeiros',
@@ -49,6 +50,7 @@ if (! defined('PERMISSOES_RELATORIOS')) {
         'rServico' => 'Serviços',
         'rOs' => 'Ordens de serviço',
         'rVenda' => 'Vendas',
+        'rCompra' => 'Compras',
         'rFinanceiro' => 'Financeiro',
     ]);
 }

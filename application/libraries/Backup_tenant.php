@@ -92,7 +92,7 @@ class Backup_tenant
             'equipamentos' => 'SELECT * FROM equipamentos',
 
             // 2. Usuários da empresa
-            'usuarios' => "SELECT * FROM usuarios WHERE idUsuarios IN (SELECT usuario_id FROM saas_empresa_usuarios WHERE empresa_id = {$empresaId}) OR idUsuarios IN (SELECT DISTINCT usuarios_id FROM os WHERE empresa_id = {$empresaId}) OR idUsuarios IN (SELECT DISTINCT usuarios_id FROM vendas WHERE empresa_id = {$empresaId})",
+            'usuarios' => "SELECT * FROM usuarios WHERE idUsuarios IN (SELECT usuario_id FROM saas_empresa_usuarios WHERE empresa_id = {$empresaId}) OR idUsuarios IN (SELECT DISTINCT usuarios_id FROM os WHERE empresa_id = {$empresaId}) OR idUsuarios IN (SELECT DISTINCT usuarios_id FROM vendas WHERE empresa_id = {$empresaId}) OR idUsuarios IN (SELECT DISTINCT usuarios_id FROM compras WHERE empresa_id = {$empresaId})",
 
             // 3. Cadastros Operacionais da Empresa
             'emitente' => "SELECT * FROM emitente WHERE empresa_id = {$empresaId}",
@@ -102,6 +102,8 @@ class Backup_tenant
             'garantias' => "SELECT * FROM garantias WHERE empresa_id = {$empresaId}",
             'os' => "SELECT * FROM os WHERE empresa_id = {$empresaId}",
             'vendas' => "SELECT * FROM vendas WHERE empresa_id = {$empresaId}",
+            'compras' => "SELECT * FROM compras WHERE empresa_id = {$empresaId}",
+            'produtos_fornecedores' => "SELECT * FROM produtos_fornecedores WHERE empresa_id = {$empresaId}",
             'lancamentos' => "SELECT * FROM lancamentos WHERE empresa_id = {$empresaId}",
             'cobrancas' => "SELECT * FROM cobrancas WHERE empresa_id = {$empresaId}",
             'arquivos' => "SELECT * FROM arquivos WHERE empresa_id = {$empresaId}",
@@ -116,6 +118,9 @@ class Backup_tenant
 
             // 5. Filhas de Vendas
             'itens_de_vendas' => "SELECT * FROM itens_de_vendas WHERE vendas_id IN (SELECT idVendas FROM vendas WHERE empresa_id = {$empresaId})",
+
+            // 6. Filhas de Compras
+            'itens_de_compras' => "SELECT * FROM itens_de_compras WHERE compras_id IN (SELECT idCompras FROM compras WHERE empresa_id = {$empresaId})",
         ];
 
         foreach ($tabelas as $tabela => $querySql) {

@@ -477,6 +477,63 @@ class Relatorios_model extends CI_Model
         return $result->result();
     }
 
+
+    public function comprasRapid(bool $array = false)
+    {
+        $empresaId = (int) ($this->session->userdata('empresa_id') ?: 1);
+
+        $this->db->select('compras.*, clientes.nomeCliente, clientes.documento, usuarios.nome');
+        $this->db->from('compras');
+        $this->db->join('clientes', 'clientes.idClientes = compras.fornecedores_id', 'left');
+        $this->db->join('usuarios', 'usuarios.idUsuarios = compras.usuarios_id', 'left');
+        $this->db->where('compras.empresa_id', $empresaId);
+        $this->db->order_by('compras.idCompras', 'ASC');
+
+        $result = $this->db->get();
+
+        return $array ? $result->result_array() : $result->result();
+    }
+
+    public function comprasCustom(?string $dataInicial = null, ?string $dataFinal = null, $fornecedor = null, $responsavel = null, ?string $status = null, bool $array = false)
+    {
+        $empresaId = (int) ($this->session->userdata('empresa_id') ?: 1);
+
+        $this->db->select('compras.*, clientes.nomeCliente, clientes.documento, usuarios.nome');
+        $this->db->from('compras');
+        $this->db->join('clientes', 'clientes.idClientes = compras.fornecedores_id', 'left');
+        $this->db->join('usuarios', 'usuarios.idUsuarios = compras.usuarios_id', 'left');
+        $this->db->where('compras.empresa_id', $empresaId);
+
+        if ($dataInicial) {
+            $this->db->where('compras.dataCompra >=', $dataInicial);
+        }
+        if ($dataFinal) {
+            $this->db->where('compras.dataCompra <=', $dataFinal);
+        }
+        if ($fornecedor) {
+            if (is_numeric($fornecedor)) {
+                $this->db->where('compras.fornecedores_id', (int) $fornecedor);
+            } else {
+                $this->db->like('clientes.nomeCliente', $fornecedor);
+            }
+        }
+        if ($responsavel) {
+            if (is_numeric($responsavel)) {
+                $this->db->where('compras.usuarios_id', (int) $responsavel);
+            } else {
+                $this->db->like('usuarios.nome', $responsavel);
+            }
+        }
+        if ($status) {
+            $this->db->where('compras.status', $status);
+        }
+
+        $this->db->order_by('compras.idCompras', 'ASC');
+        $result = $this->db->get();
+
+        return $array ? $result->result_array() : $result->result();
+    }
+
     public function receitasBrutasRapid()
     {
         $emitente = $this->db->query('SELECT * FROM emitente LIMIT 1')->row_array();

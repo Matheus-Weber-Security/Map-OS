@@ -227,6 +227,9 @@ $config['permissions_map'] = [
         'vendas' => 'rVenda',
         'vendasRapid' => 'rVenda',
         'vendasCustom' => 'rVenda',
+        'compras' => 'rCompra',
+        'comprasRapid' => 'rCompra',
+        'comprasCustom' => 'rCompra',
     ],
 
     'Servicos' => [
@@ -269,5 +272,20 @@ $config['permissions_map'] = [
         'validarCPF' => false,
         'validarCNPJ' => false,
         'formatarChave' => false,
+    ],
+
+    'Compras' => [
+        'index' => 'vCompra',
+        'gerenciar' => 'vCompra',
+        'visualizar' => 'vCompra',
+        'adicionar' => 'aCompra',
+        'editar' => 'eCompra',
+        'excluir' => 'dCompra',
+        'faturar' => 'eCompra',
+        'importarNfe' => 'aCompra',
+        'processarXmlNfe' => 'aCompra',
+        'conferirNfe' => 'aCompra',
+        'concluirImportacaoNfe' => 'aCompra',
+        'cadastrarProdutoRapido' => 'aCompra',
     ],
 ];
