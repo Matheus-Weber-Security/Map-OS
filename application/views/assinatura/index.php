@@ -110,7 +110,7 @@
         <!-- Botão Principal de Renovação -->
         <div class="pt-2">
             <button id="btn-pagar-assinatura" type="button" class="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary-hover active:bg-primary-hover text-on-primary font-bold py-3.5 px-6 shadow-sm transition-all text-body-lg">
-                <?= icon('credit-card', ['class' => 'size-5']) ?>
+                <?= icon('qr-code', ['class' => 'size-5']) ?>
                 <span id="btn-label">Pagar assinatura (<?= e($planoAtual->nome ?? 'Essencial') ?>) - R$ <?= number_format($valorFinal, 2, ',', '.') ?>/mês</span>
             </button>
         </div>

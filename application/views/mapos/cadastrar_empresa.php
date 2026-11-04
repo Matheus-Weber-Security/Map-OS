@@ -22,7 +22,7 @@ include APPPATH . 'views/entrada/inicio.php';
     <main class="mx-auto w-full max-w-3xl flex-1 px-4 py-6 lg:py-10" <?= js_module('clientes/formulario') ?>>
         <header class="mb-6">
             <div class="mb-3 inline-flex items-center gap-2 rounded-full border border-hairline-violet bg-night px-3.5 py-1 text-caption font-semibold text-accent-lime">
-                <?= icon('sparkles', ['class' => 'size-4']) ?> 10 dias grátis de assinatura sem compromisso
+                <?= icon('circle-check', ['class' => 'size-4']) ?> 10 dias grátis de assinatura sem compromisso
             </div>
             <h1 class="font-display text-display-hero-sm font-bold text-on-dark sm:text-display-large">
                 Cadastre sua <span class="rounded-xs bg-accent-lime px-3 text-ink">empresa</span>.
@@ -254,7 +254,7 @@ include APPPATH . 'views/entrada/inicio.php';
                         'label' => 'Criar empresa e iniciar teste grátis',
                         'type' => 'submit',
                         'size' => 'lg',
-                        'icon' => 'sparkles',
+                        'icon' => 'check',
                         'class' => 'w-full shadow-elev-3 sm:w-auto',
                         'attrs' => ['data-rotulo-carregando' => 'Criando ambiente da empresa…'],
                     ]) ?>
