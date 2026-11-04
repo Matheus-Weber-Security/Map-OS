@@ -12,6 +12,7 @@ $this->load->view('relatorios/imprimir/partes/inicio', ['tituloDoc' => ucfirst($
                 <th class="rel-th">Cliente</th>
                 <th class="rel-th">Vendedor</th>
                 <th class="rel-th">Data</th>
+                <th class="rel-th">Situação</th>
                 <th class="rel-th">Total</th>
                 <th class="rel-th">Desconto</th>
                 <th class="rel-th">Total com desconto</th>
@@ -24,13 +25,14 @@ $this->load->view('relatorios/imprimir/partes/inicio', ['tituloDoc' => ucfirst($
                     <td class="rel-td"><?= e($v->nomeCliente) ?></td>
                     <td class="rel-td text-center"><?= e($v->nome) ?></td>
                     <td class="rel-td text-center"><?= e(date('d/m/Y', strtotime($v->dataVenda))) ?></td>
+                    <td class="rel-td text-center"><?= e($v->status) ?></td>
                     <td class="rel-td text-center">R$: <?= number_format($v->valorTotal, 2, ',', '.') ?></td>
                     <td class="rel-td text-center"><?= e(($v->tipo_desconto == 'real' ? 'R$ ' : '') . $v->desconto . ($v->tipo_desconto == 'porcento' ? ' %' : '')) ?></td>
                     <td class="rel-td text-center">R$: <?= number_format($v->valor_desconto != 0 ? $v->valor_desconto : $v->valorTotal, 2, ',', '.') ?></td>
                 </tr>
             <?php endforeach; ?>
             <tr>
-                <td class="rel-total text-right" colspan="6">TOTAL</td>
+                <td class="rel-total text-right" colspan="7">TOTAL</td>
                 <td class="rel-total text-center">R$: <?= number_format($total, 2, ',', '.') ?></td>
             </tr>
         </tbody>

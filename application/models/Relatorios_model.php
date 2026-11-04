@@ -431,7 +431,9 @@ class Relatorios_model extends CI_Model
 
     public function vendasRapid($array = false)
     {
+        $empresaId = (int) ($this->session->userdata('empresa_id') ?: 1);
         $this->db->select('vendas.*,clientes.nomeCliente, usuarios.nome');
+        $this->db->where('vendas.empresa_id', $empresaId);
         $this->db->from('vendas');
         $this->db->join('clientes', 'clientes.idClientes = vendas.clientes_id');
         $this->db->join('usuarios', 'usuarios.idUsuarios = vendas.usuarios_id');
@@ -445,12 +447,16 @@ class Relatorios_model extends CI_Model
         return $result->result();
     }
 
-    public function vendasCustom($dataInicial = null, $dataFinal = null, $cliente = null, $responsavel = null, $array = false)
+    public function vendasCustom($dataInicial = null, $dataFinal = null, $cliente = null, $responsavel = null, $status = null, $array = false)
     {
+        $empresaId = (int) ($this->session->userdata('empresa_id') ?: 1);
         $whereData = '';
         $whereCliente = '';
         $whereResponsavel = '';
         $whereStatus = '';
+        if ($status != null && $status !== '') {
+            $whereStatus = 'AND vendas.status = ' . $this->db->escape($status);
+        }
         if ($dataInicial != null) {
             $whereData .= 'AND dataVenda >= ' . $this->db->escape($dataInicial);
         }
@@ -467,7 +473,7 @@ class Relatorios_model extends CI_Model
         $query = "SELECT vendas.*,clientes.nomeCliente, usuarios.nome FROM vendas
         LEFT JOIN clientes ON vendas.clientes_id = clientes.idClientes
         LEFT JOIN usuarios ON vendas.usuarios_id = usuarios.idUsuarios
-        WHERE idVendas != 0 $whereData $whereCliente $whereResponsavel ORDER BY vendas.idVendas";
+        WHERE idVendas != 0 AND vendas.empresa_id = {$empresaId} $whereData $whereCliente $whereResponsavel $whereStatus ORDER BY vendas.idVendas";
 
         $result = $this->db->query($query);
         if ($array) {

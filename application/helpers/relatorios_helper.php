@@ -106,6 +106,7 @@ if (! function_exists('relatorioDefinicao')) {
                     ...$periodo('Data de'),
                     ['tipo' => 'busca', 'name' => 'cliente', 'label' => 'Cliente', 'url' => 'os/autoCompleteCliente', 'placeholder' => 'Nome, documento ou telefone'],
                     ['tipo' => 'busca', 'name' => 'responsavel', 'label' => 'Vendedor', 'url' => 'os/autoCompleteUsuario', 'placeholder' => 'Nome do vendedor'],
+                    ['tipo' => 'select', 'name' => 'status', 'label' => 'Situação', 'opcoes' => $statusDaOs, 'placeholder' => 'Todas'],
                     $formato(),
                 ],
             ],

@@ -830,6 +830,7 @@ class Relatorios extends MY_Controller
                     'cliente' => $item['nomeCliente'],
                     'vendedor' => $item['nome'],
                     'data' => $item['dataVenda'],
+                    'status' => $item['status'],
                     'total' => $item['valorTotal'] ?: 0,
                     'totalDesconto' => $item['valor_desconto'] ?: 0,
                     'desconto' => $item['desconto'] ?: 0,
@@ -842,6 +843,7 @@ class Relatorios extends MY_Controller
                 'Cliente' => 'string',
                 'Vendedor' => 'string',
                 'Data' => 'DD-MM-YYYY',
+                'Situação' => 'string',
                 'Total' => 'price',
                 'Total Com Desconto' => 'price',
                 'Desconto' => 'number',
@@ -896,10 +898,11 @@ class Relatorios extends MY_Controller
         $dataFinal = $this->input->get('dataFinal');
         $cliente = $this->input->get('cliente');
         $responsavel = $this->input->get('responsavel');
+        $status = $this->input->get('status');
         $format = $this->input->get('format');
 
         $isXls = $format === 'xls';
-        $vendas = $this->Relatorios_model->vendasCustom($dataInicial, $dataFinal, $cliente, $responsavel, $isXls);
+        $vendas = $this->Relatorios_model->vendasCustom($dataInicial, $dataFinal, $cliente, $responsavel, $status, $isXls);
         $totalVendas = 0;
         $totalDesconto = 0;
         $totalValorDesconto = 0;
@@ -925,6 +928,7 @@ class Relatorios extends MY_Controller
                     'cliente' => $item['nomeCliente'],
                     'vendedor' => $item['nome'],
                     'data' => $item['dataVenda'],
+                    'status' => $item['status'],
                     'total' => $item['valorTotal'] ?: 0,
                     'totalDesconto' => $item['valor_desconto'] ?: 0,
                     'desconto' => $item['desconto'] ?: 0,
@@ -937,6 +941,7 @@ class Relatorios extends MY_Controller
                 'Cliente' => 'string',
                 'Vendedor' => 'string',
                 'Data' => 'DD-MM-YYYY',
+                'Situação' => 'string',
                 'Total' => 'price',
                 'Total Com Desconto' => 'price',
                 'Desconto' => 'number',
