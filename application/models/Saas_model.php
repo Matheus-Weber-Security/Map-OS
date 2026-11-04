@@ -25,10 +25,17 @@ class Saas_model extends CI_Model
         return $this->db->where('id', $id)->get('saas_planos')->row();
     }
 
+    public function atualizarPrecoAssinatura(float $valor): bool
+    {
+        $this->db->update('saas_planos', ['valor' => $valor]);
+
+        return true;
+    }
+
     public function atualizarPrecosPlanos(float $valorBasico, float $valorEssencial): bool
     {
-        $this->db->where('slug', 'basico')->update('saas_planos', ['valor' => $valorBasico]);
-        $this->db->where('slug', 'essencial')->update('saas_planos', ['valor' => $valorEssencial]);
+        return $this->atualizarPrecoAssinatura($valorEssencial ?: $valorBasico);
+
 
         return true;
     }
@@ -263,8 +270,9 @@ class Saas_model extends CI_Model
             ->result();
 
         // 7. Preços atuais dos planos
-        $planoBasico = $this->db->where('slug', 'basico')->get('saas_planos')->row();
-        $planoEssencial = $this->db->where('slug', 'essencial')->get('saas_planos')->row();
+        $planoAssinatura = $this->db->where('slug', 'essencial')->get('saas_planos')->row() ?: $this->db->order_by('id', 'ASC')->get('saas_planos')->row();
+        $valorAssinatura = (float) ($planoAssinatura->valor ?? 37.90);
+
 
         return [
             'assinantes_ativos' => $ativos,
@@ -274,8 +282,9 @@ class Saas_model extends CI_Model
             'forma_pix_percent' => round(($pagamentosPix / $totalPagamentos) * 100),
             'forma_manual_percent' => round(($pagamentosManual / $totalPagamentos) * 100),
             'ultimos_assinantes' => $ultimosAssinantes,
-            'valor_basico' => (float) ($planoBasico->valor ?? 10.00),
-            'valor_essencial' => (float) ($planoEssencial->valor ?? 37.90),
+            'valor_assinatura' => $valorAssinatura,
+            'valor_basico' => $valorAssinatura,
+            'valor_essencial' => $valorAssinatura,
         ];
     }
 

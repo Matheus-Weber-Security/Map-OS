@@ -19,7 +19,7 @@
     <header class="flex flex-wrap items-end justify-between gap-3">
         <div>
             <h1 class="font-display text-heading-xl text-text">Gerenciar SaaS</h1>
-            <p class="text-caption text-muted">Acompanhe métricas financeiras, evolução da receita e precificação dos planos.</p>
+            <p class="text-caption text-muted">Acompanhe métricas financeiras, evolução da receita e precificação da assinatura.</p>
         </div>
         <div>
             <?= component('button', [
@@ -163,34 +163,24 @@
                     <input type="hidden" name="<?= e($this->security->get_csrf_token_name()) ?>" value="<?= e($this->security->get_csrf_hash()) ?>">
 
                     <?= component('input', [
-                        'name' => 'valor_basico',
-                        'label' => 'Valor da Assinatura Básica (R$)',
+                        'name' => 'valor_assinatura',
+                        'label' => 'Valor da Assinatura Mensal (R$)',
                         'type' => 'text',
-                        'value' => number_format($metricas['valor_basico'], 2, ',', '.'),
-                        'required' => true,
-                        'class' => 'tabular-nums',
-                        'attrs' => ['data-mascara' => 'dinheiro', 'inputmode' => 'decimal', 'maxlength' => 20, 'data-msg-vazio' => 'Informe o valor.'],
-                    ]) ?>
-
-                    <?= component('input', [
-                        'name' => 'valor_essencial',
-                        'label' => '⭐ Valor da Assinatura Essencial (R$)',
-                        'type' => 'text',
-                        'value' => number_format($metricas['valor_essencial'], 2, ',', '.'),
+                        'value' => number_format($metricas['valor_assinatura'] ?? $metricas['valor_essencial'], 2, ',', '.'),
                         'required' => true,
                         'class' => 'tabular-nums',
                         'attrs' => ['data-mascara' => 'dinheiro', 'inputmode' => 'decimal', 'maxlength' => 20, 'data-msg-vazio' => 'Informe o valor.'],
                     ]) ?>
 
                     <?= component('button', [
-                        'label' => 'Salvar Preços',
+                        'label' => 'Salvar Preço da Assinatura',
                         'icon' => 'save',
                         'type' => 'submit',
                         'class' => 'mt-2 w-full',
                     ]) ?>
                 </form>
 
-                <p class="text-caption text-muted mt-3 text-center">Os novos preços serão aplicados para novas contratações e renovações.</p>
+                <p class="text-caption text-muted mt-3 text-center">O novo preço será aplicado para novas contratações e renovações.</p>
             </div>
         </section>
     </div>

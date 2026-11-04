@@ -63,7 +63,7 @@ class MY_Controller extends CI_Controller
         $diasRestantes = (int) ceil(($vencimento - $hoje) / 86400);
 
         if ($diasRestantes <= 0 || $empresa->status !== 'ativa') {
-            $this->session->set_flashdata('error', 'A assinatura da empresa está vencida. Renove o plano via PIX para reativar o acesso.');
+            $this->session->set_flashdata('error', 'A assinatura da empresa está vencida. Renove sua assinatura via PIX para reativar o acesso.');
             redirect('assinatura');
         }
     }

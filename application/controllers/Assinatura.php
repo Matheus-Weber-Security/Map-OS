@@ -28,28 +28,23 @@ class Assinatura extends MY_Controller
             $diasRestantes = 0;
         }
 
-        $planos = $this->saas_model->getPlanos();
-
-        // Determina plano atual
-        $planoAtual = null;
-        foreach ($planos as $p) {
-            if ((int) $p->id === (int) $empresa->plano_id) {
-                $planoAtual = $p;
-                break;
-            }
+        // Obtém a assinatura/plano configurado para a empresa ou o plano padrão
+        $plano = null;
+        if (! empty($empresa->plano_id)) {
+            $plano = $this->saas_model->getPlanoById((int) $empresa->plano_id);
         }
-        if (! $planoAtual && ! empty($planos)) {
-            $planoAtual = $planos[0];
+        if (! $plano) {
+            $planos = $this->saas_model->getPlanos();
+            $plano = ! empty($planos) ? $planos[0] : null;
         }
 
         // Aplica desconto da empresa se houver
         $descontoPercentual = (int) ($empresa->desconto_percentual ?? 0);
-        $valorOriginal = (float) ($planoAtual->valor ?? 37.90);
+        $valorOriginal = (float) ($plano->valor ?? 37.90);
         $valorFinal = $valorOriginal * (1 - ($descontoPercentual / 100));
 
         $this->data['empresa'] = $empresa;
-        $this->data['planos'] = $planos;
-        $this->data['planoAtual'] = $planoAtual;
+        $this->data['planoAtual'] = $plano;
         $this->data['diasRestantes'] = $diasRestantes;
         $this->data['valorOriginal'] = $valorOriginal;
         $this->data['valorFinal'] = $valorFinal;
@@ -72,23 +67,27 @@ class Assinatura extends MY_Controller
         }
 
         $empresaId = (int) ($this->session->userdata('empresa_id') ?: 1);
-        $planoId = (int) ($this->input->post('plano_id') ?: 2);
-
-        $plano = $this->saas_model->getPlanoById($planoId);
         $empresa = $this->saas_model->getEmpresaById($empresaId);
 
-        if (! $plano || ! $empresa) {
+        if (! $empresa) {
             return $this->output
                 ->set_status_header(404)
                 ->set_content_type('application/json')
-                ->set_output(json_encode(['result' => false, 'message' => 'Plano ou empresa não encontrados']));
+                ->set_output(json_encode(['result' => false, 'message' => 'Empresa não encontrada']));
+        }
+
+        $planoId = (int) ($empresa->plano_id ?: 2);
+        $plano = $this->saas_model->getPlanoById($planoId);
+        if (! $plano) {
+            $planos = $this->saas_model->getPlanos();
+            $plano = ! empty($planos) ? $planos[0] : (object) ['id' => 2, 'valor' => 37.90];
         }
 
         $descontoPercentual = (int) ($empresa->desconto_percentual ?? 0);
         $valorOriginal = (float) $plano->valor;
         $valorFinal = $valorOriginal * (1 - ($descontoPercentual / 100));
 
-        $assinaturaId = $this->saas_model->criarAssinatura($empresaId, $planoId, $valorFinal, 'PIX');
+        $assinaturaId = $this->saas_model->criarAssinatura($empresaId, (int) $plano->id, $valorFinal, 'PIX');
         $assinatura = $this->saas_model->getAssinaturaById($assinaturaId);
 
         return $this->output
@@ -99,7 +98,6 @@ class Assinatura extends MY_Controller
                 'txid' => $assinatura->txid,
                 'qr_code' => $assinatura->qr_code,
                 'valor' => number_format($valorFinal, 2, ',', '.'),
-                'plano_nome' => $plano->nome,
             ]));
     }
 

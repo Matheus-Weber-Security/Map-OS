@@ -48,12 +48,12 @@ class Saas extends MY_Controller
             return (float) $v;
         };
 
-        $valorBasico = $limparValor($this->input->post('valor_basico'));
-        $valorEssencial = $limparValor($this->input->post('valor_essencial'));
+        $valor = $limparValor($this->input->post('valor_assinatura') ?: $this->input->post('valor_essencial'));
 
-        $this->saas_model->atualizarPrecosPlanos($valorBasico, $valorEssencial);
 
-        $this->session->set_flashdata('success', 'Preços das assinaturas atualizados com sucesso!');
+        $this->saas_model->atualizarPrecoAssinatura($valor);
+
+        $this->session->set_flashdata('success', 'Preço da assinatura atualizado com sucesso!');
         redirect('saas/gerenciar');
     }
 

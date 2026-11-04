@@ -57,13 +57,17 @@ $colunas = [
             : component('pill-status', ['label' => '0 dias', 'variant' => 'danger']),
     ],
     [
-        'label' => 'Assinatura',
-        'align' => 'center',
+        'label' => 'Valor Mensal',
+        'align' => 'right',
         'nowrap' => true,
-        'render' => fn ($e) => component('pill-status', [
-            'label' => $e->plano_nome ?: 'Essencial',
-            'variant' => 'info',
-        ]),
+        'render' => function ($e) {
+            $valor = (float) ($e->plano_valor ?? 37.90);
+            $desc = (int) ($e->desconto_percentual ?? 0);
+            $final = $valor * (1 - ($desc / 100));
+
+            return html_purificado('<span class="font-semibold text-text">R$ ' . number_format($final, 2, ',', '.') . '</span>' .
+                ($desc > 0 ? ' <span class="text-caption text-muted line-through">R$ ' . number_format($valor, 2, ',', '.') . '</span>' : ''));
+        },
     ],
     [
         'label' => 'Desconto',

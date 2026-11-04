@@ -3,19 +3,19 @@
     <header class="flex flex-wrap items-end justify-between gap-3">
         <div>
             <h1 class="font-display text-heading-xl text-text">Assinatura</h1>
-            <p class="text-caption text-muted">Gerencie seu plano, tipo de assinatura, forma de pagamento e renovação.</p>
+            <p class="text-caption text-muted">Gerencie sua assinatura, vencimento e renovação.</p>
         </div>
     </header>
 
-    <!-- Card Principal: Status do Plano -->
+    <!-- Card Principal: Status da Assinatura -->
     <div class="rounded-xl border border-border bg-surface p-6 sm:p-8 shadow-2xs flex flex-col gap-6">
         <div class="flex items-center gap-2 pb-4 border-b border-border">
             <?= icon('banknote', ['class' => 'size-5 text-primary']) ?>
-            <h2 class="font-display text-heading-sm font-semibold text-text">Status do Plano</h2>
+            <h2 class="font-display text-heading-sm font-semibold text-text">Status da Assinatura</h2>
         </div>
 
-        <!-- Grade de Indicadores (Topo - 3 Cards) -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Grade de Indicadores (4 Cards) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <!-- 1. Status -->
             <div class="rounded-lg border border-border bg-surface-subtle p-4 flex flex-col justify-between">
                 <span class="text-caption font-bold uppercase tracking-wider text-muted">Status</span>
@@ -28,21 +28,7 @@
                 </div>
             </div>
 
-            <!-- 2. Tipo de Assinatura -->
-            <div class="rounded-lg border border-border bg-surface-subtle p-4 flex flex-col justify-between">
-                <span class="text-caption font-bold uppercase tracking-wider text-muted">Tipo de Assinatura</span>
-                <div class="mt-2">
-                    <select id="select-plano" class="w-full rounded-md border border-input bg-surface px-3 py-1.5 text-label-md font-semibold text-text focus:outline-none focus:ring-2 focus:ring-primary">
-                        <?php foreach ($planos as $p) { ?>
-                            <option value="<?= (int) $p->id ?>" data-valor="<?= number_format((float) $p->valor, 2, '.', '') ?>" data-nome="<?= e($p->nome) ?>" <?= ((int) $p->id === (int) ($planoAtual->id ?? 0)) ? 'selected' : '' ?>>
-                                ⭐ <?= e($p->nome) ?> (R$ <?= number_format((float) $p->valor, 2, ',', '.') ?>/mês)
-                            </option>
-                        <?php } ?>
-                    </select>
-                </div>
-            </div>
-
-            <!-- 3. Dias Restantes -->
+            <!-- 2. Dias Restantes -->
             <div class="rounded-lg border border-border bg-surface-subtle p-4 flex flex-col justify-between">
                 <span class="text-caption font-bold uppercase tracking-wider text-muted">Dias Restantes</span>
                 <div class="mt-2">
@@ -51,48 +37,49 @@
                     </span>
                 </div>
             </div>
-        </div>
 
-        <!-- Grade Secundária (Meio - 2 Cards) -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Forma de Pagamento -->
-            <div class="rounded-lg border border-border bg-surface-subtle p-4 flex flex-col justify-between gap-3">
-                <div>
-                    <span class="text-caption font-bold uppercase tracking-wider text-muted">Forma de Pagamento</span>
-                    <div class="mt-2 flex items-center gap-2">
-                        <?= icon('qr-code', ['class' => 'size-5 text-success-ink']) ?>
-                        <span class="font-display text-heading-sm font-bold text-text">PIX</span>
-                    </div>
-                </div>
-                <div>
-                    <span class="inline-block text-caption text-muted bg-surface px-2.5 py-1 rounded border border-border">
-                        Compensação automática e imediata
+            <!-- 3. Próximo Vencimento -->
+            <div class="rounded-lg border border-border bg-surface-subtle p-4 flex flex-col justify-between">
+                <span class="text-caption font-bold uppercase tracking-wider text-muted">Próximo Vencimento</span>
+                <div class="mt-2">
+                    <span class="font-display text-heading-sm font-bold text-text">
+                        <?= ! empty($empresa->data_vencimento) ? e(date('d/m/Y', strtotime($empresa->data_vencimento))) : 'Não definido' ?>
                     </span>
                 </div>
             </div>
 
-            <!-- Vencimento da Assinatura -->
-            <div class="rounded-lg border border-border bg-surface-subtle p-4 flex flex-col justify-between gap-3">
-                <div>
-                    <span class="text-caption font-bold uppercase tracking-wider text-muted">Vencimento da Assinatura</span>
-                    <div class="mt-2">
-                        <span class="font-display text-heading-sm font-bold text-text">
-                            <?= ! empty($empresa->data_vencimento) ? e(date('d/m/Y', strtotime($empresa->data_vencimento))) : 'Não definido' ?>
-                        </span>
-                    </div>
-                </div>
-                <div class="flex items-center justify-between text-body-md border-t border-border pt-2">
-                    <span class="text-caption text-muted">Valor do Plano (<?= e($planoAtual->nome ?? 'Essencial') ?>):</span>
-                    <span class="font-bold text-text">
-                        <?php if ($descontoPercentual > 0) { ?>
-                            <span class="line-through text-muted text-caption mr-1">R$ <?= number_format($valorOriginal, 2, ',', '.') ?></span>
-                            <span class="text-success-ink font-bold">R$ <?= number_format($valorFinal, 2, ',', '.') ?>/mês</span>
+            <!-- 4. Valor da Assinatura -->
+            <div class="rounded-lg border border-border bg-surface-subtle p-4 flex flex-col justify-between">
+                <span class="text-caption font-bold uppercase tracking-wider text-muted">Valor da Assinatura</span>
+                <div class="mt-2 flex flex-col gap-1">
+                    <?php if ($descontoPercentual > 0) { ?>
+                        <div class="flex items-center gap-2">
+                            <span class="line-through text-muted text-caption">R$ <?= number_format($valorOriginal, 2, ',', '.') ?></span>
                             <?= component('pill-status', ['label' => $descontoPercentual . '% OFF', 'variant' => 'warning']) ?>
-                        <?php } else { ?>
-                            <span class="text-success-ink font-bold">R$ <?= number_format($valorFinal, 2, ',', '.') ?>/mês</span>
-                        <?php } ?>
-                    </span>
+                        </div>
+                        <span class="text-success-ink font-bold text-heading-xs">R$ <?= number_format($valorFinal, 2, ',', '.') ?>/mês</span>
+                    <?php } else { ?>
+                        <span class="text-success-ink font-bold text-heading-xs">R$ <?= number_format($valorFinal, 2, ',', '.') ?>/mês</span>
+                    <?php } ?>
                 </div>
+            </div>
+        </div>
+
+        <!-- Forma de Pagamento -->
+        <div class="rounded-lg border border-border bg-surface-subtle p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="p-2 rounded-lg bg-surface border border-border text-success-ink">
+                    <?= icon('qr-code', ['class' => 'size-6']) ?>
+                </div>
+                <div>
+                    <span class="text-caption font-bold uppercase tracking-wider text-muted block">Forma de Pagamento</span>
+                    <span class="font-display text-heading-sm font-bold text-text">PIX Instantâneo</span>
+                </div>
+            </div>
+            <div>
+                <span class="inline-block text-caption text-muted bg-surface px-3 py-1.5 rounded-md border border-border font-medium">
+                    ⚡ Compensação automática e liberação imediata
+                </span>
             </div>
         </div>
 
@@ -111,7 +98,7 @@
         <div class="pt-2">
             <button id="btn-pagar-assinatura" type="button" class="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary-hover active:bg-primary-hover text-on-primary font-bold py-3.5 px-6 shadow-sm transition-all text-body-lg">
                 <?= icon('qr-code', ['class' => 'size-5']) ?>
-                <span id="btn-label">Pagar assinatura (<?= e($planoAtual->nome ?? 'Essencial') ?>) - R$ <?= number_format($valorFinal, 2, ',', '.') ?>/mês</span>
+                <span id="btn-label">Renovar assinatura via PIX - R$ <?= number_format($valorFinal, 2, ',', '.') ?>/mês</span>
             </button>
         </div>
     </div>
@@ -170,9 +157,7 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const selectPlano = document.getElementById('select-plano');
     const btnPagar = document.getElementById('btn-pagar-assinatura');
-    const btnLabel = document.getElementById('btn-label');
     const modalPix = document.getElementById('modal-pix');
     const btnFecharModal = document.getElementById('btn-fechar-modal');
     const qrImg = document.getElementById('pix-qrcode-img');
@@ -185,21 +170,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentAssinaturaId = null;
     let pollingInterval = null;
 
-    selectPlano.addEventListener('change', () => {
-        const opt = selectPlano.options[selectPlano.selectedIndex];
-        const nome = opt.getAttribute('data-nome');
-        const valor = parseFloat(opt.getAttribute('data-valor')).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-        btnLabel.textContent = `Pagar assinatura (${nome}) - R$ ${valor}/mês`;
-    });
-
     btnPagar.addEventListener('click', async () => {
-        const planoId = selectPlano.value;
         btnPagar.disabled = true;
         btnPagar.classList.add('opacity-75');
 
         try {
             const formData = new FormData();
-            formData.append('plano_id', planoId);
             formData.append('<?= e($this->security->get_csrf_token_name()) ?>', '<?= e($this->security->get_csrf_hash()) ?>');
 
             const res = await fetch('<?= site_url('assinatura/gerarPix') ?>', {
