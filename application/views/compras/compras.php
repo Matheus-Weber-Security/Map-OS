@@ -130,6 +130,6 @@ $vazio = $temFiltro
             new HtmlSeguro('Deseja realmente excluir a compra <strong class="font-semibold text-text" data-modal-valor="numero"></strong> do fornecedor <strong class="font-semibold text-text" data-modal-valor="fornecedor"></strong>? Caso a compra tenha entrado no estoque, a quantidade será estornada automaticamente.'),
         ],
         'confirm_label' => 'Excluir compra',
-        'form' => 'form-excluir-compra',
+        'confirm_attrs' => ['form' => 'form-excluir-compra'],
     ]) ?>
 <?php } ?>

@@ -195,6 +195,6 @@ $faturada = (int) $compra->faturado === 1;
             new HtmlSeguro('Deseja realmente excluir a compra <strong class="font-semibold text-text" data-modal-valor="numero"></strong>? Se a compra entrou no estoque, o saldo dos produtos será estornado automaticamente.'),
         ],
         'confirm_label' => 'Excluir compra',
-        'form' => 'form-excluir-compra',
+        'confirm_attrs' => ['form' => 'form-excluir-compra'],
     ]) ?>
 <?php } ?>
