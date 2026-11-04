@@ -16,7 +16,7 @@
             </div>
         <?php } else { ?>
             <div class="doc-cabecalho">
-                <div class="w-1/4"><img src="<?php echo e($emitente->url_logo); ?>" alt=""></div>
+                <div class="w-1/4"><img src="<?= e(emitenteLogoSrc($emitente->url_logo ?? null)) ?>" alt=""></div>
                 <div class="flex-1">
                     <span class="text-xl"><?php echo e($emitente->nome); ?></span><br>
                     <span>

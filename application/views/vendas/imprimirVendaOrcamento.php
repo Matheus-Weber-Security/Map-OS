@@ -19,7 +19,7 @@ $totalProdutos = 0;
                     </div>
                 <?php else : ?>
                     <div class="flex items-center">
-                        <img src="<?= e($emitente->url_logo) ?>" class="h-auto w-[140px] max-w-full" alt="">
+                        <img src="<?= e(emitenteLogoSrc($emitente->url_logo ?? null)) ?>" class="h-auto w-[140px] max-w-full" alt="">
                     </div>
                     <div class="mt-0.5 px-2.5">
                         <span class="text-base"><b><?= e($emitente->nome) ?></b></span><br>

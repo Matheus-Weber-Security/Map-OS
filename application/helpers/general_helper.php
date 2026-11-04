@@ -13,6 +13,67 @@ if (! function_exists('convertUrlToUploadsPath')) {
     }
 }
 
+if (! function_exists('emitenteLogoSrc')) {
+    /**
+     * Retorna a fonte (src) da imagem do logo do emitente:
+     * - Se o arquivo existir localmente em assets/uploads e $base64 for true,
+     *   retorna como Data URI base64, garantindo exibição instantânea sem
+     *   depender de rede em impressões, celular, APKs e WebViews.
+     * - Se não for em base64 ou se a conversão falhar, reconstrói a URL
+     *   usando o base_url() dinâmico atual, evitando que 'localhost' quebre
+     *   quando o sistema for acessado por outro IP ou domínio.
+     *
+     * @param  string|null  $urlLogo  Valor gravado em emitente.url_logo
+     * @param  bool         $base64   Se true, embute o conteúdo em base64
+     */
+    function emitenteLogoSrc(?string $urlLogo, bool $base64 = true): string
+    {
+        if (empty($urlLogo)) {
+            return '';
+        }
+
+        $nome = basename((string) parse_url((string) $urlLogo, PHP_URL_PATH));
+        if ($nome === '' || $nome === '.' || $nome === '..') {
+            return (string) $urlLogo;
+        }
+
+        $caminho = FCPATH . 'assets' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . $nome;
+        if (is_file($caminho) && is_readable($caminho)) {
+            if ($base64) {
+                $ext = strtolower(pathinfo($nome, PATHINFO_EXTENSION));
+                $mime = match ($ext) {
+                    'png' => 'image/png',
+                    'gif' => 'image/gif',
+                    'webp' => 'image/webp',
+                    'svg' => 'image/svg+xml',
+                    'bmp' => 'image/bmp',
+                    default => 'image/jpeg',
+                };
+                if (function_exists('finfo_open')) {
+                    $finfo = @finfo_open(FILEINFO_MIME_TYPE);
+                    if ($finfo) {
+                        $detectado = @finfo_file($finfo, $caminho);
+                        @finfo_close($finfo);
+                        if (! empty($detectado) && str_starts_with($detectado, 'image/')) {
+                            $mime = $detectado;
+                        }
+                    }
+                }
+                $conteudo = @file_get_contents($caminho);
+                if ($conteudo !== false && strlen($conteudo) <= 2 * 1024 * 1024) {
+                    return 'data:' . $mime . ';base64,' . base64_encode($conteudo);
+                }
+            }
+
+            return base_url('assets/uploads/' . $nome);
+        }
+
+        return str_starts_with($urlLogo, 'http://') || str_starts_with($urlLogo, 'https://')
+            ? $urlLogo
+            : base_url('assets/uploads/' . $nome);
+    }
+}
+
 if (! function_exists('apiHabilitada')) {
     /**
      * A API só existe quando API_ENABLED está ligada: as rotas (routes.php) e a

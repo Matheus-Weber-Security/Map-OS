@@ -17,7 +17,7 @@
             </div>
         <?php } else { ?>
             <div class="text-center">
-                <img class="mx-auto max-h-[100px]" src="<?php echo e($emitente->url_logo); ?>" alt="">
+                <img class="mx-auto max-h-[100px]" src="<?= e(emitenteLogoSrc($emitente->url_logo ?? null)) ?>" alt="">
             </div>
             <div class="mt-1 text-center">
                 <span class="text-xl"><b><?php echo e($emitente->nome); ?></b></span><br>

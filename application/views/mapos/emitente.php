@@ -85,7 +85,7 @@ $logo = (string) ($emitente->url_logo ?? '');
             <h2 id="secao-logo" class="text-heading-sm text-text">Logo</h2>
             <div class="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start">
                 <?php if ($logo !== '') { ?>
-                    <img src="<?= e($logo) ?>" alt="Logo atual do emitente" class="h-24 w-auto max-w-56 shrink-0 rounded-md border border-border bg-field object-contain p-2">
+                    <img src="<?= e(emitenteLogoSrc($logo)) ?>" alt="Logo atual do emitente" class="h-24 w-auto max-w-56 shrink-0 rounded-md border border-border bg-field object-contain p-2">
                 <?php } ?>
                 <div class="flex min-w-0 flex-1 flex-col gap-1.5">
                     <label for="emitente-logo" class="text-label-md text-text"><?= e($logo !== '' ? 'Trocar o logo' : 'Logo') ?></label>
