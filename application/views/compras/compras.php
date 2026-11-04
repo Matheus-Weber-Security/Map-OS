@@ -66,8 +66,7 @@ $vazio = $temFiltro
         </div>
         <?php if ($pode['adicionar']) { ?>
             <div class="flex items-center gap-2">
-                <?= component('button', ['label' => 'Nova compra manual', 'icon' => 'plus', 'variant' => 'outline', 'href' => site_url('compras/adicionar')]) ?>
-                <?= component('button', ['label' => 'Importar NF-e (XML)', 'icon' => 'upload', 'variant' => 'primary', 'href' => site_url('compras/importarNfe')]) ?>
+                <?= component('button', ['label' => 'Importar NF-e (XML)', 'icon' => 'upload', 'variant' => 'outline', 'href' => site_url('compras/importarNfe')]) ?>
             </div>
         <?php } ?>
     </header>

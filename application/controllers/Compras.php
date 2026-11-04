@@ -55,7 +55,7 @@ class Compras extends MY_Controller
         ];
 
         if ($this->data['pode']['adicionar']) {
-            $this->data['topbar_acao'] = ['label' => 'Importar NF-e', 'icon' => 'upload', 'href' => site_url('compras/importarNfe')];
+            $this->data['topbar_acao'] = ['label' => 'Nova Compra', 'icon' => 'plus', 'href' => site_url('compras/adicionar')];
         }
 
         $this->data['view'] = 'compras/compras';
