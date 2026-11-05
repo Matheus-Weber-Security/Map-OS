@@ -7,6 +7,26 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="<?= base_url() ?>assets/dist/imprimir.css">
+    <style>
+        @page {
+            size: 80mm auto;
+            margin: 0;
+        }
+        @media print {
+            body {
+                margin: 0;
+                padding: 0;
+                background-color: transparent;
+            }
+            .cupom {
+                width: 80mm !important;
+                max-width: 80mm !important;
+                margin: 0 auto !important;
+                padding: 2mm !important;
+                box-shadow: none !important;
+            }
+        }
+    </style>
 </head>
 
 <body>
