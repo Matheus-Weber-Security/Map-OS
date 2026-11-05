@@ -227,6 +227,7 @@ class Saas_model extends CI_Model
     {
         // 1. Assinantes Ativos
         $ativos = $this->db
+            ->where('id >', 1)
             ->where('status', 'ativa')
             ->where('dias_restantes >', 0)
             ->count_all_results('saas_empresas');
@@ -234,6 +235,7 @@ class Saas_model extends CI_Model
         // 2. Novos Assinantes (últimos 30 dias)
         $trintaDiasAtras = date('Y-m-d H:i:s', strtotime('-30 days'));
         $novos = $this->db
+            ->where('id >', 1)
             ->where('criado_em >=', $trintaDiasAtras)
             ->count_all_results('saas_empresas');
 
@@ -242,6 +244,7 @@ class Saas_model extends CI_Model
             ->select('e.desconto_percentual, p.valor as plano_valor')
             ->from('saas_empresas e')
             ->join('saas_planos p', 'p.id = e.plano_id')
+            ->where('e.id >', 1)
             ->where('e.status', 'ativa')
             ->where('e.dias_restantes >', 0)
             ->get()
@@ -255,8 +258,9 @@ class Saas_model extends CI_Model
         }
 
         // 4. Cancelamentos (Inativos / Churn)
-        $totalEmpresas = max(1, $this->db->count_all_results('saas_empresas'));
+        $totalEmpresas = max(1, $this->db->where('id >', 1)->count_all_results('saas_empresas'));
         $inativos = $this->db
+            ->where('id >', 1)
             ->group_start()
             ->where('status !=', 'ativa')
             ->or_where('dias_restantes <=', 0)

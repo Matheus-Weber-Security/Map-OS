@@ -13,6 +13,7 @@ class Assinatura extends MY_Controller
     public function index()
     {
         $empresaId = (int) ($this->session->userdata('empresa_id') ?: 1);
+        $ehMaster = ($empresaId === 1 || (bool) $this->session->userdata('is_superadmin'));
         $empresa = $this->saas_model->getEmpresaById($empresaId);
 
         if (! $empresa) {
@@ -44,6 +45,7 @@ class Assinatura extends MY_Controller
         $valorFinal = $valorOriginal * (1 - ($descontoPercentual / 100));
 
         $this->data['empresa'] = $empresa;
+        $this->data['ehMaster'] = $ehMaster;
         $this->data['planoAtual'] = $plano;
         $this->data['diasRestantes'] = $diasRestantes;
         $this->data['valorOriginal'] = $valorOriginal;

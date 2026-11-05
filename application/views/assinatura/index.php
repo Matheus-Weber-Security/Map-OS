@@ -20,7 +20,9 @@
             <div class="rounded-lg border border-border bg-surface-subtle p-4 flex flex-col justify-between">
                 <span class="text-caption font-bold uppercase tracking-wider text-muted">Status</span>
                 <div class="mt-2">
-                    <?php if ($diasRestantes > 0) { ?>
+                    <?php if (! empty($ehMaster)) { ?>
+                        <?= component('pill-status', ['label' => 'Ativa (Master)', 'variant' => 'success']) ?>
+                    <?php } elseif ($diasRestantes > 0) { ?>
                         <?= component('pill-status', ['label' => 'Ativa', 'variant' => 'success']) ?>
                     <?php } else { ?>
                         <?= component('pill-status', ['label' => 'Vencida', 'variant' => 'danger']) ?>
@@ -32,9 +34,15 @@
             <div class="rounded-lg border border-border bg-surface-subtle p-4 flex flex-col justify-between">
                 <span class="text-caption font-bold uppercase tracking-wider text-muted">Dias Restantes</span>
                 <div class="mt-2">
-                    <span class="font-display text-display-small font-bold <?= $diasRestantes > 0 ? 'text-success-ink' : 'text-danger-ink' ?>">
-                        <?= (int) $diasRestantes ?> dias
-                    </span>
+                    <?php if (! empty($ehMaster)) { ?>
+                        <span class="font-display text-display-small font-bold text-success-ink">
+                            Ilimitado
+                        </span>
+                    <?php } else { ?>
+                        <span class="font-display text-display-small font-bold <?= $diasRestantes > 0 ? 'text-success-ink' : 'text-danger-ink' ?>">
+                            <?= (int) $diasRestantes ?> dias
+                        </span>
+                    <?php } ?>
                 </div>
             </div>
 
@@ -43,7 +51,7 @@
                 <span class="text-caption font-bold uppercase tracking-wider text-muted">Próximo Vencimento</span>
                 <div class="mt-2">
                     <span class="font-display text-heading-sm font-bold text-text">
-                        <?= ! empty($empresa->data_vencimento) ? e(date('d/m/Y', strtotime($empresa->data_vencimento))) : 'Não definido' ?>
+                        <?= ! empty($ehMaster) ? 'Vitalício' : (! empty($empresa->data_vencimento) ? e(date('d/m/Y', strtotime($empresa->data_vencimento))) : 'Não definido') ?>
                     </span>
                 </div>
             </div>
@@ -52,7 +60,9 @@
             <div class="rounded-lg border border-border bg-surface-subtle p-4 flex flex-col justify-between">
                 <span class="text-caption font-bold uppercase tracking-wider text-muted">Valor da Assinatura</span>
                 <div class="mt-2 flex flex-col gap-1">
-                    <?php if ($descontoPercentual > 0) { ?>
+                    <?php if (! empty($ehMaster)) { ?>
+                        <span class="text-success-ink font-bold text-heading-xs">Isento (Master)</span>
+                    <?php } elseif ($descontoPercentual > 0) { ?>
                         <div class="flex items-center gap-2">
                             <span class="line-through text-muted text-caption">R$ <?= number_format($valorOriginal, 2, ',', '.') ?></span>
                             <?= component('pill-status', ['label' => $descontoPercentual . '% OFF', 'variant' => 'warning']) ?>
@@ -65,42 +75,64 @@
             </div>
         </div>
 
-        <!-- Forma de Pagamento -->
-        <div class="rounded-lg border border-border bg-surface-subtle p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div class="flex items-center gap-3">
-                <div class="p-2 rounded-lg bg-surface border border-border text-success-ink">
-                    <?= icon('qr-code', ['class' => 'size-6']) ?>
+        <?php if (! empty($ehMaster)) { ?>
+            <!-- Card Informativo Empresa Master -->
+            <div class="rounded-lg border border-border bg-surface-subtle p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div class="flex items-center gap-3.5">
+                    <div class="p-2.5 rounded-lg bg-surface border border-border text-primary shadow-2xs">
+                        <?= icon('shield-check', ['class' => 'size-6']) ?>
+                    </div>
+                    <div>
+                        <h3 class="font-display text-base font-semibold text-text">Ambiente Master / Administrador Geral</h3>
+                        <p class="text-caption text-muted">Esta é a empresa proprietária do sistema. O acesso a este painel é vitalício, permanente e isento de mensalidades.</p>
+                    </div>
                 </div>
                 <div>
-                    <span class="text-caption font-bold uppercase tracking-wider text-muted block">Forma de Pagamento</span>
-                    <span class="font-display text-heading-sm font-bold text-text">PIX Instantâneo</span>
+                    <?= component('button', [
+                        'label' => 'Gerenciar SaaS e Assinantes',
+                        'icon' => 'settings',
+                        'href' => site_url('saas/gerenciar'),
+                    ]) ?>
                 </div>
             </div>
-            <div>
-                <span class="inline-block text-caption text-muted bg-surface px-3 py-1.5 rounded-md border border-border font-medium">
-                    ⚡ Compensação automática e liberação imediata
-                </span>
-            </div>
-        </div>
-
-        <!-- Checkbox de Cobrança Automática -->
-        <div class="pt-1">
-            <label class="flex items-start gap-3 cursor-pointer">
-                <input type="checkbox" checked class="mt-0.5 size-4 rounded border-input text-primary focus:ring-primary">
-                <div class="flex flex-col">
-                    <span class="text-label-md font-semibold text-text">Cobrança e lembrete</span>
-                    <span class="text-caption text-muted">Você receberá um lembrete no sistema e por e-mail 3 dias e 1 dia antes do vencimento da sua assinatura.</span>
+        <?php } else { ?>
+            <!-- Forma de Pagamento -->
+            <div class="rounded-lg border border-border bg-surface-subtle p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 rounded-lg bg-surface border border-border text-success-ink">
+                        <?= icon('qr-code', ['class' => 'size-6']) ?>
+                    </div>
+                    <div>
+                        <span class="text-caption font-bold uppercase tracking-wider text-muted block">Forma de Pagamento</span>
+                        <span class="font-display text-heading-sm font-bold text-text">PIX Instantâneo</span>
+                    </div>
                 </div>
-            </label>
-        </div>
+                <div>
+                    <span class="inline-block text-caption text-muted bg-surface px-3 py-1.5 rounded-md border border-border font-medium">
+                        ⚡ Compensação automática e liberação imediata
+                    </span>
+                </div>
+            </div>
 
-        <!-- Botão Principal de Renovação -->
-        <div class="pt-2">
-            <button id="btn-pagar-assinatura" type="button" class="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary-hover active:bg-primary-hover text-on-primary font-bold py-3.5 px-6 shadow-sm transition-all text-body-lg">
-                <?= icon('qr-code', ['class' => 'size-5']) ?>
-                <span id="btn-label">Renovar assinatura via PIX - R$ <?= number_format($valorFinal, 2, ',', '.') ?>/mês</span>
-            </button>
-        </div>
+            <!-- Checkbox de Cobrança Automática -->
+            <div class="pt-1">
+                <label class="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" checked class="mt-0.5 size-4 rounded border-input text-primary focus:ring-primary">
+                    <div class="flex flex-col">
+                        <span class="text-label-md font-semibold text-text">Cobrança e lembrete</span>
+                        <span class="text-caption text-muted">Você receberá um lembrete no sistema e por e-mail 3 dias e 1 dia antes do vencimento da sua assinatura.</span>
+                    </div>
+                </label>
+            </div>
+
+            <!-- Botão Principal de Renovação -->
+            <div class="pt-2">
+                <button id="btn-pagar-assinatura" type="button" class="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary-hover active:bg-primary-hover text-on-primary font-bold py-3.5 px-6 shadow-sm transition-all text-body-lg">
+                    <?= icon('qr-code', ['class' => 'size-5']) ?>
+                    <span id="btn-label">Renovar assinatura via PIX - R$ <?= number_format($valorFinal, 2, ',', '.') ?>/mês</span>
+                </button>
+            </div>
+        <?php } ?>
     </div>
 </div>
 

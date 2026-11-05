@@ -46,11 +46,13 @@ class MY_Controller extends CI_Controller
             return;
         }
 
-        if ($this->session->userdata('is_superadmin')) {
+        $empresaId = (int) ($this->session->userdata('empresa_id') ?: 1);
+
+        // A Empresa Master (empresa_id == 1) e Super Administradores nunca são bloqueados
+        if ($empresaId === 1 || (bool) $this->session->userdata('is_superadmin')) {
             return;
         }
 
-        $empresaId = (int) ($this->session->userdata('empresa_id') ?: 1);
         $this->load->model('saas_model');
         $empresa = $this->saas_model->getEmpresaById($empresaId);
 
