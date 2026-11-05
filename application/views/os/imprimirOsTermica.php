@@ -172,10 +172,10 @@ if (!empty($result->cidade) || !empty($result->estado) || !empty($result->cep)) 
                 <table class="cupom-tabela cupom-tabela-grade" id="tblProdutos">
                     <thead>
                         <tr>
-                            <th class="text-left">Qtd</th>
+                            <th class="text-center">Qtd</th>
                             <th class="text-left">Produto</th>
-                            <th class="text-left">Unitário</th>
-                            <th class="text-left">Subtotal</th>
+                            <th class="text-right whitespace-nowrap">Unitário</th>
+                            <th class="text-right whitespace-nowrap">Subtotal</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -183,15 +183,15 @@ if (!empty($result->cidade) || !empty($result->estado) || !empty($result->cep)) 
             foreach ($produtos as $p) {
                 $totalProdutos = $totalProdutos + $p->subTotal;
                 echo '<tr>';
-                echo '<td>' . e($p->quantidade) . '</td>';
+                echo '<td class="text-center">' . e($p->quantidade) . '</td>';
                 echo '<td>' . e($p->descricao) . osDescontoItemNota($p) . '</td>';
-                echo '<td>R$ ' . e($p->preco ?: $p->precoVenda) . '</td>';
-                echo '<td>R$ ' . number_format($p->subTotal, 2, ',', '.') . '</td>';
+                echo '<td class="text-right whitespace-nowrap">R$ ' . number_format((float) ($p->preco ?: $p->precoVenda), 2, ',', '.') . '</td>';
+                echo '<td class="text-right whitespace-nowrap">R$ ' . number_format($p->subTotal, 2, ',', '.') . '</td>';
                 echo '</tr>';
             } ?>
                         <tr class="cupom-totais-linha">
                             <td colspan="3" class="text-right"><strong>Total:</strong></td>
-                            <td><strong>R$ <?php echo number_format($totalProdutos, 2, ',', '.'); ?></strong></td>
+                            <td class="text-right whitespace-nowrap"><strong>R$ <?php echo number_format($totalProdutos, 2, ',', '.'); ?></strong></td>
                         </tr>
                     </tbody>
                 </table>
@@ -201,10 +201,10 @@ if (!empty($result->cidade) || !empty($result->estado) || !empty($result->cep)) 
                 <table class="cupom-tabela cupom-tabela-grade">
                     <thead>
                         <tr>
-                            <th class="text-left">Qtd</th>
+                            <th class="text-center">Qtd</th>
                             <th class="text-left">Serviço</th>
-                            <th class="text-left">Unitário</th>
-                            <th class="text-left">Subtotal</th>
+                            <th class="text-right whitespace-nowrap">Unitário</th>
+                            <th class="text-right whitespace-nowrap">Subtotal</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -214,15 +214,15 @@ if (!empty($result->cidade) || !empty($result->estado) || !empty($result->cep)) 
                     $subtotal = osValorDoItem($s);
                     $totalServico = $totalServico + $subtotal;
                     echo '<tr>';
-                    echo '<td>' . e(($s->quantidade ?: 1)) . '</td>';
+                    echo '<td class="text-center">' . e(($s->quantidade ?: 1)) . '</td>';
                     echo '<td>' . e($s->nome) . osDescontoItemNota($s) . '</td>';
-                    echo '<td>R$ ' . e($preco) . '</td>';
-                    echo '<td>R$ ' . number_format($subtotal, 2, ',', '.') . '</td>';
+                    echo '<td class="text-right whitespace-nowrap">R$ ' . number_format((float) $preco, 2, ',', '.') . '</td>';
+                    echo '<td class="text-right whitespace-nowrap">R$ ' . number_format($subtotal, 2, ',', '.') . '</td>';
                     echo '</tr>';
                 } ?>
                         <tr class="cupom-totais-linha">
                             <td colspan="3" class="text-right"><strong>Total:</strong></td>
-                            <td><strong>R$ <?php echo number_format($totalServico, 2, ',', '.'); ?></strong></td>
+                            <td class="text-right whitespace-nowrap"><strong>R$ <?php echo number_format($totalServico, 2, ',', '.'); ?></strong></td>
                         </tr>
                     </tbody>
                 </table>
@@ -364,10 +364,10 @@ if (!empty($result->cidade) || !empty($result->estado) || !empty($result->cep)) 
                 <table class="cupom-tabela cupom-tabela-grade" id="tblProdutos">
                     <thead>
                         <tr>
-                            <th class="text-left">Qtd</th>
+                            <th class="text-center">Qtd</th>
                             <th class="text-left">Produto</th>
-                            <th class="text-left">Unitário</th>
-                            <th class="text-left">Subtotal</th>
+                            <th class="text-right whitespace-nowrap">Unitário</th>
+                            <th class="text-right whitespace-nowrap">Subtotal</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -375,15 +375,15 @@ if (!empty($result->cidade) || !empty($result->estado) || !empty($result->cep)) 
             foreach ($produtos as $p) {
                 $totalProdutos = $totalProdutos + $p->subTotal;
                 echo '<tr>';
-                echo '<td>' . e($p->quantidade) . '</td>';
+                echo '<td class="text-center">' . e($p->quantidade) . '</td>';
                 echo '<td>' . e($p->descricao) . osDescontoItemNota($p) . '</td>';
-                echo '<td>R$ ' . e($p->preco ?: $p->precoVenda) . '</td>';
-                echo '<td>R$ ' . number_format($p->subTotal, 2, ',', '.') . '</td>';
+                echo '<td class="text-right whitespace-nowrap">R$ ' . number_format((float) ($p->preco ?: $p->precoVenda), 2, ',', '.') . '</td>';
+                echo '<td class="text-right whitespace-nowrap">R$ ' . number_format($p->subTotal, 2, ',', '.') . '</td>';
                 echo '</tr>';
             } ?>
                         <tr class="cupom-totais-linha">
                             <td colspan="3" class="text-right"><strong>Total:</strong></td>
-                            <td><strong>R$ <?php echo number_format($totalProdutos, 2, ',', '.'); ?></strong></td>
+                            <td class="text-right whitespace-nowrap"><strong>R$ <?php echo number_format($totalProdutos, 2, ',', '.'); ?></strong></td>
                         </tr>
                     </tbody>
                 </table>
@@ -393,10 +393,10 @@ if (!empty($result->cidade) || !empty($result->estado) || !empty($result->cep)) 
                 <table class="cupom-tabela cupom-tabela-grade">
                     <thead>
                         <tr>
-                            <th class="text-left">Qtd</th>
+                            <th class="text-center">Qtd</th>
                             <th class="text-left">Serviço</th>
-                            <th class="text-left">Unitário</th>
-                            <th class="text-left">Subtotal</th>
+                            <th class="text-right whitespace-nowrap">Unitário</th>
+                            <th class="text-right whitespace-nowrap">Subtotal</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -406,15 +406,15 @@ if (!empty($result->cidade) || !empty($result->estado) || !empty($result->cep)) 
                     $subtotal = osValorDoItem($s);
                     $totalServico = $totalServico + $subtotal;
                     echo '<tr>';
-                    echo '<td>' . e(($s->quantidade ?: 1)) . '</td>';
+                    echo '<td class="text-center">' . e(($s->quantidade ?: 1)) . '</td>';
                     echo '<td>' . e($s->nome) . osDescontoItemNota($s) . '</td>';
-                    echo '<td>R$ ' . e($preco) . '</td>';
-                    echo '<td>R$ ' . number_format($subtotal, 2, ',', '.') . '</td>';
+                    echo '<td class="text-right whitespace-nowrap">R$ ' . number_format((float) $preco, 2, ',', '.') . '</td>';
+                    echo '<td class="text-right whitespace-nowrap">R$ ' . number_format($subtotal, 2, ',', '.') . '</td>';
                     echo '</tr>';
                 } ?>
                         <tr class="cupom-totais-linha">
                             <td colspan="3" class="text-right"><strong>Total:</strong></td>
-                            <td><strong>R$ <?php echo number_format($totalServico, 2, ',', '.'); ?></strong></td>
+                            <td class="text-right whitespace-nowrap"><strong>R$ <?php echo number_format($totalServico, 2, ',', '.'); ?></strong></td>
                         </tr>
                     </tbody>
                 </table>

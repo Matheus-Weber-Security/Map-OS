@@ -119,9 +119,9 @@
                 <thead>
                     <tr>
                         <th class="text-left text-xs">Produto</th>
-                        <th class="text-left text-xs">Quantidade</th>
-                        <th class="text-left text-xs">Preço unit.</th>
-                        <th class="text-left text-xs">Sub-total</th>
+                        <th class="text-center text-xs">Qtd</th>
+                        <th class="text-right text-xs whitespace-nowrap">Preço unit.</th>
+                        <th class="text-right text-xs whitespace-nowrap">Sub-total</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -130,15 +130,15 @@
                             $totalProdutos = $totalProdutos + $p->subTotal;
                             echo '<tr>';
                             echo '<td>' . e($p->descricao) . osDescontoItemNota($p) . '</td>';
-                            echo '<td>' . e($p->quantidade) . '</td>';
-                            echo '<td>R$ ' . e(($p->preco ?: $p->precoVenda)) . '</td>';
-                            echo '<td>R$ ' . number_format($p->subTotal, 2, ',', '.') . '</td>';
+                            echo '<td class="text-center">' . e($p->quantidade) . '</td>';
+                            echo '<td class="text-right whitespace-nowrap">R$ ' . number_format((float) ($p->preco ?: $p->precoVenda), 2, ',', '.') . '</td>';
+                            echo '<td class="text-right whitespace-nowrap">R$ ' . number_format($p->subTotal, 2, ',', '.') . '</td>';
                             echo '</tr>';
                         } ?>
                     <?php if ($result->valor_desconto != 0 && $result->desconto != 0) { ?>
                         <tr class="cupom-totais-linha">
                             <td colspan="3" class="text-right"><strong>Total: R$</strong></td>
-                            <td>
+                            <td class="text-right whitespace-nowrap">
                                 <strong>
                                     <?php echo number_format($totalProdutos, 2, ',', '.'); ?>
                                 </strong>
@@ -146,7 +146,7 @@
                         </tr>
                         <tr>
                             <td colspan="3" class="text-right"><strong>Desconto: R$</strong></td>
-                            <td>
+                            <td class="text-right whitespace-nowrap">
                                 <strong>
                                     <?php echo number_format($result->valor_desconto - $totalProdutos, 2, ',', '.'); ?>
                                 </strong>
