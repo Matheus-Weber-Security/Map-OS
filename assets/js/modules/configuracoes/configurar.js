@@ -14,24 +14,6 @@ export default function iniciar(raiz, { doc = document } = {}) {
     // área visível (celular, ou as últimas abas a 1280px).
     raiz.querySelector('nav [aria-current="page"]')?.scrollIntoView?.({ block: 'nearest', inline: 'center' });
 
-    const form = raiz.querySelector('form');
-    if (form) {
-        form.addEventListener('submit', () => {
-            const modoSelect = doc.getElementById('config-app_tema_modo');
-            if (modoSelect?.value) {
-                try {
-                    localStorage.setItem('mapos:tema-modo', modoSelect.value);
-                } catch {}
-            }
-            const corSelect = doc.getElementById('config-app_tema_cor');
-            if (corSelect?.value) {
-                try {
-                    localStorage.setItem('mapos:tema-cor', corSelect.value);
-                } catch {}
-            }
-        });
-    }
-
     raiz.addEventListener('click', (evento) => {
         const botao = evento.target.closest?.('[data-marcador]');
         const campo = botao ? doc.getElementById(botao.dataset.marcadorAlvo) : null;
