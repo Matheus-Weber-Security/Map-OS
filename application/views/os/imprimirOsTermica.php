@@ -185,8 +185,8 @@ if (!empty($result->cidade) || !empty($result->estado) || !empty($result->cep)) 
                 echo '<tr>';
                 echo '<td class="text-center">' . e($p->quantidade) . '</td>';
                 echo '<td>' . e($p->descricao) . osDescontoItemNota($p) . '</td>';
-                echo '<td class="text-right whitespace-nowrap">R$ ' . number_format((float) ($p->preco ?: $p->precoVenda), 2, ',', '.') . '</td>';
-                echo '<td class="text-right whitespace-nowrap">R$ ' . number_format($p->subTotal, 2, ',', '.') . '</td>';
+                echo '<td class="text-right whitespace-nowrap">' . number_format((float) ($p->preco ?: $p->precoVenda), 2, ',', '.') . '</td>';
+                echo '<td class="text-right whitespace-nowrap">' . number_format($p->subTotal, 2, ',', '.') . '</td>';
                 echo '</tr>';
             } ?>
                         <tr class="cupom-totais-linha">
@@ -216,8 +216,8 @@ if (!empty($result->cidade) || !empty($result->estado) || !empty($result->cep)) 
                     echo '<tr>';
                     echo '<td class="text-center">' . e(($s->quantidade ?: 1)) . '</td>';
                     echo '<td>' . e($s->nome) . osDescontoItemNota($s) . '</td>';
-                    echo '<td class="text-right whitespace-nowrap">R$ ' . number_format((float) $preco, 2, ',', '.') . '</td>';
-                    echo '<td class="text-right whitespace-nowrap">R$ ' . number_format($subtotal, 2, ',', '.') . '</td>';
+                    echo '<td class="text-right whitespace-nowrap">' . number_format((float) $preco, 2, ',', '.') . '</td>';
+                    echo '<td class="text-right whitespace-nowrap">' . number_format($subtotal, 2, ',', '.') . '</td>';
                     echo '</tr>';
                 } ?>
                         <tr class="cupom-totais-linha">
@@ -377,8 +377,8 @@ if (!empty($result->cidade) || !empty($result->estado) || !empty($result->cep)) 
                 echo '<tr>';
                 echo '<td class="text-center">' . e($p->quantidade) . '</td>';
                 echo '<td>' . e($p->descricao) . osDescontoItemNota($p) . '</td>';
-                echo '<td class="text-right whitespace-nowrap">R$ ' . number_format((float) ($p->preco ?: $p->precoVenda), 2, ',', '.') . '</td>';
-                echo '<td class="text-right whitespace-nowrap">R$ ' . number_format($p->subTotal, 2, ',', '.') . '</td>';
+                echo '<td class="text-right whitespace-nowrap">' . number_format((float) ($p->preco ?: $p->precoVenda), 2, ',', '.') . '</td>';
+                echo '<td class="text-right whitespace-nowrap">' . number_format($p->subTotal, 2, ',', '.') . '</td>';
                 echo '</tr>';
             } ?>
                         <tr class="cupom-totais-linha">
@@ -408,8 +408,8 @@ if (!empty($result->cidade) || !empty($result->estado) || !empty($result->cep)) 
                     echo '<tr>';
                     echo '<td class="text-center">' . e(($s->quantidade ?: 1)) . '</td>';
                     echo '<td>' . e($s->nome) . osDescontoItemNota($s) . '</td>';
-                    echo '<td class="text-right whitespace-nowrap">R$ ' . number_format((float) $preco, 2, ',', '.') . '</td>';
-                    echo '<td class="text-right whitespace-nowrap">R$ ' . number_format($subtotal, 2, ',', '.') . '</td>';
+                    echo '<td class="text-right whitespace-nowrap">' . number_format((float) $preco, 2, ',', '.') . '</td>';
+                    echo '<td class="text-right whitespace-nowrap">' . number_format($subtotal, 2, ',', '.') . '</td>';
                     echo '</tr>';
                 } ?>
                         <tr class="cupom-totais-linha">

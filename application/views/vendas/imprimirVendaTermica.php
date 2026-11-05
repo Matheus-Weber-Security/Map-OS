@@ -131,8 +131,8 @@
                             echo '<tr>';
                             echo '<td>' . e($p->descricao) . osDescontoItemNota($p) . '</td>';
                             echo '<td class="text-center">' . e($p->quantidade) . '</td>';
-                            echo '<td class="text-right whitespace-nowrap">R$ ' . number_format((float) ($p->preco ?: $p->precoVenda), 2, ',', '.') . '</td>';
-                            echo '<td class="text-right whitespace-nowrap">R$ ' . number_format($p->subTotal, 2, ',', '.') . '</td>';
+                            echo '<td class="text-right whitespace-nowrap">' . number_format((float) ($p->preco ?: $p->precoVenda), 2, ',', '.') . '</td>';
+                            echo '<td class="text-right whitespace-nowrap">' . number_format($p->subTotal, 2, ',', '.') . '</td>';
                             echo '</tr>';
                         } ?>
                     <?php if ($result->valor_desconto != 0 && $result->desconto != 0) { ?>
