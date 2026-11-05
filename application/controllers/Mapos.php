@@ -708,6 +708,16 @@ class Mapos extends MY_Controller
             }
 
             if ($erros === [] && ($config === [] || $this->mapos_model->saveConfiguracao($config))) {
+                if ($aba === 'geral') {
+                    if (isset($config['app_tema_modo'])) {
+                        $this->mapos_model->salvarTemaModo((int) $this->session->userdata('id_admin'), $config['app_tema_modo']);
+                        $this->session->set_userdata('tema_modo_admin', $config['app_tema_modo']);
+                    }
+                    if (isset($config['app_tema_cor'])) {
+                        $this->mapos_model->salvarTemaCor((int) $this->session->userdata('id_admin'), $config['app_tema_cor']);
+                        $this->session->set_userdata('tema_cor_admin', $config['app_tema_cor']);
+                    }
+                }
                 log_info('Alterou as configurações do sistema (' . CONFIG_ABAS[$aba] . ').');
                 $this->session->set_flashdata('success', 'Configurações salvas.');
 
