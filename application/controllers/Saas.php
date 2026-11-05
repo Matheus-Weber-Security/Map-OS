@@ -49,6 +49,8 @@ class Saas extends MY_Controller
         $this->data['metricas'] = $metricas;
         $this->data['podeAlterarPreco'] = $isSuper || $this->permite('eSaasPreco');
         $this->data['podeAssinantes'] = $isSuper || $this->permite('vSaasAssinantes');
+        $this->data['formasPagamento'] = $this->saas_model->getFormasPagamento();
+        $this->data['podeGerenciarPagamentos'] = $isSuper || $this->permite('eSaasPreco');
         $this->data['view'] = 'saas/gerenciar';
 
         return $this->layout();
@@ -316,5 +318,169 @@ class Saas extends MY_Controller
         }
 
         redirect('mapos');
+    }
+
+    /**
+     * Alternar status (Ativar/Desativar) da Forma de Pagamento via AJAX.
+     */
+    public function alternarFormaPagamento()
+    {
+        if ($this->input->method() !== 'post') {
+            return $this->output
+                ->set_status_header(405)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['result' => false, 'message' => 'Método não permitido']));
+        }
+
+        $isSuper = (bool) ($this->session->userdata('is_superadmin') ?? false);
+        if (! $isSuper && ! $this->permite('eSaasPreco')) {
+            return $this->output
+                ->set_status_header(403)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['result' => false, 'message' => 'Você não tem permissão para alterar formas de pagamento.']));
+        }
+
+        $id = (int) $this->input->post('id');
+        $ativo = (bool) $this->input->post('ativo');
+
+        $forma = $this->saas_model->getFormaPagamentoById($id);
+        if (! $forma) {
+            return $this->output
+                ->set_status_header(404)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['result' => false, 'message' => 'Forma de pagamento não encontrada.']));
+        }
+
+        $sucesso = $this->saas_model->alternarStatusFormaPagamento($id, $ativo);
+
+        if ($sucesso) {
+            $msg = $ativo
+                ? "Forma de pagamento '{$forma->nome}' ativada com sucesso!"
+                : "Forma de pagamento '{$forma->nome}' desativada.";
+
+            return $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode([
+                    'result' => true,
+                    'message' => $msg,
+                    'ativo' => $ativo,
+                ]));
+        }
+
+        return $this->output
+            ->set_status_header(500)
+            ->set_content_type('application/json')
+            ->set_output(json_encode(['result' => false, 'message' => 'Erro ao atualizar status.']));
+    }
+
+    /**
+     * Tela de Edição e Configurações de uma Forma de Pagamento.
+     */
+    public function editarFormaPagamento(int $id)
+    {
+        $isSuper = (bool) ($this->session->userdata('is_superadmin') ?? false);
+        if (! $isSuper && ! $this->permite('eSaasPreco')) {
+            $this->session->set_flashdata('error', 'Você não tem permissão para editar formas de pagamento.');
+
+            return redirect('saas/gerenciar');
+        }
+
+        $forma = $this->saas_model->getFormaPagamentoById($id);
+        if (! $forma) {
+            $this->session->set_flashdata('error', 'Forma de pagamento não encontrada.');
+
+            return redirect('saas/gerenciar');
+        }
+
+        $this->data['forma'] = $forma;
+        $this->data['configuracoes'] = $forma->config ?? [];
+        $this->data['view'] = 'saas/forma_pagamento_formulario';
+
+        return $this->layout();
+    }
+
+    /**
+     * Salvar Configurações da Forma de Pagamento.
+     */
+    public function salvarFormaPagamento(int $id)
+    {
+        if ($this->input->method() !== 'post') {
+            return redirect('saas/gerenciar');
+        }
+
+        $isSuper = (bool) ($this->session->userdata('is_superadmin') ?? false);
+        if (! $isSuper && ! $this->permite('eSaasPreco')) {
+            $this->session->set_flashdata('error', 'Você não tem permissão para salvar formas de pagamento.');
+
+            return redirect('saas/gerenciar');
+        }
+
+        $forma = $this->saas_model->getFormaPagamentoById($id);
+        if (! $forma) {
+            $this->session->set_flashdata('error', 'Forma de pagamento não encontrada.');
+
+            return redirect('saas/gerenciar');
+        }
+
+        $nome = trim((string) $this->input->post('nome'));
+        $descricao = trim((string) $this->input->post('descricao'));
+        $provedor = trim((string) $this->input->post('provedor'));
+        $ativo = (int) $this->input->post('ativo') === 1 ? 1 : 0;
+        $instrucoes = trim((string) $this->input->post('instrucoes'));
+
+        // Monta o array de configurações de acordo com o tipo
+        $configuracoes = $forma->config ?? [];
+        $usarEnv = (int) $this->input->post('usar_env') === 1 ? 1 : 0;
+        $configuracoes['usar_env'] = $usarEnv;
+
+        if ($forma->codigo === 'pix') {
+            $configuracoes['tipo_pix'] = $this->input->post('tipo_pix') ?: 'dinamico';
+            $configuracoes['chave_pix'] = trim((string) $this->input->post('chave_pix'));
+            $configuracoes['tipo_chave'] = trim((string) $this->input->post('tipo_chave'));
+            $configuracoes['titular'] = trim((string) $this->input->post('titular'));
+            $configuracoes['expiracao_minutos'] = max(5, (int) ($this->input->post('expiracao_minutos') ?: 60));
+            if (! $usarEnv) {
+                $configuracoes['access_token'] = trim((string) $this->input->post('access_token'));
+                $configuracoes['public_key'] = trim((string) $this->input->post('public_key'));
+                $configuracoes['client_id'] = trim((string) $this->input->post('client_id'));
+                $configuracoes['client_secret'] = trim((string) $this->input->post('client_secret'));
+            }
+        } elseif ($forma->codigo === 'boleto') {
+            $configuracoes['dias_vencimento'] = max(1, min(30, (int) ($this->input->post('dias_vencimento') ?: 3)));
+            if (! $usarEnv) {
+                $configuracoes['api_key'] = trim((string) $this->input->post('api_key'));
+                $configuracoes['client_id'] = trim((string) $this->input->post('client_id'));
+                $configuracoes['client_secret'] = trim((string) $this->input->post('client_secret'));
+                $configuracoes['access_token'] = trim((string) $this->input->post('access_token'));
+            }
+        } elseif ($forma->codigo === 'cartao_credito') {
+            $configuracoes['modo'] = $this->input->post('modo') ?: 'transparente';
+            $configuracoes['max_parcelas'] = max(1, min(12, (int) ($this->input->post('max_parcelas') ?: 1)));
+            if (! $usarEnv) {
+                $configuracoes['public_key'] = trim((string) $this->input->post('public_key'));
+                $configuracoes['access_token'] = trim((string) $this->input->post('access_token'));
+                $configuracoes['api_key'] = trim((string) $this->input->post('api_key'));
+            }
+        } elseif ($forma->codigo === 'cartao_debito') {
+            $configuracoes['modo'] = 'link';
+            if (! $usarEnv) {
+                $configuracoes['public_key'] = trim((string) $this->input->post('public_key'));
+                $configuracoes['access_token'] = trim((string) $this->input->post('access_token'));
+            }
+        }
+
+        $dadosAtualizar = [
+            'nome' => $nome ?: $forma->nome,
+            'descricao' => $descricao,
+            'provedor' => $provedor ?: $forma->provedor,
+            'ativo' => $ativo,
+            'instrucoes' => $instrucoes,
+            'configuracoes' => json_encode($configuracoes),
+        ];
+
+        $this->saas_model->salvarFormaPagamento($id, $dadosAtualizar);
+
+        $this->session->set_flashdata('success', "Configurações de '{$forma->nome}' salvas com sucesso!");
+        return redirect('saas/gerenciar');
     }
 }

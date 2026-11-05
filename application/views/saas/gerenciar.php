@@ -14,7 +14,7 @@
     'manual' => (int) $metricas['forma_manual_percent'],
 ]) ?>
 
-<div class="flex flex-col gap-6 pt-2 pb-8" <?= js_module('saas/gerenciar') ?>>
+<div class="flex flex-col gap-6 pt-2 pb-8" <?= js_module('saas/gerenciar') ?> data-url-alternar="<?= e(site_url('saas/alternarFormaPagamento')) ?>">
     <!-- Cabeçalho (Padrão Oficial Map-OS v5) -->
     <header class="flex flex-wrap items-end justify-between gap-3">
         <div>
@@ -196,4 +196,108 @@
             </div>
         </section>
     </div>
+
+    <!-- Card: Formas de Pagamento para Assinatura (+30 dias) -->
+    <section class="flex flex-col rounded-xl border border-border bg-surface p-5 shadow-card">
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
+            <div>
+                <h2 class="font-display text-base font-semibold text-text flex items-center gap-2">
+                    <?= icon('banknote', ['class' => 'size-5 text-primary']) ?>
+                    <span>Formas de Pagamento da Assinatura</span>
+                </h2>
+                <p class="text-caption text-muted">Gerencie os métodos que as empresas utilizam para comprar mais 30 dias na tela de assinaturas.</p>
+            </div>
+            <div>
+                <?php
+                $ativasCount = 0;
+                if (! empty($formasPagamento)) {
+                    foreach ($formasPagamento as $f) {
+                        if (! empty($f->ativo)) {
+                            $ativasCount++;
+                        }
+                    }
+                }
+                ?>
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-surface-subtle border border-border px-3 py-1 text-xs font-semibold text-text">
+                    <span id="indicador-bolinha" class="size-2 rounded-full <?= $ativasCount > 0 ? 'bg-success' : 'bg-neutral' ?>"></span>
+                    <span id="contador-formas-ativas"><?= (int) $ativasCount ?> <?= $ativasCount === 1 ? 'forma ativa' : 'formas ativas' ?></span>
+                </span>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse text-left text-sm" id="tabela-formas-pagamento">
+                <thead>
+                    <tr class="border-b border-border text-xs font-semibold uppercase tracking-wider text-muted">
+                        <th class="py-2.5 px-3">Forma de Pagamento</th>
+                        <th class="py-2.5 px-3">Provedor / Gateway</th>
+                        <th class="py-2.5 px-3 text-center">Status</th>
+                        <th class="py-2.5 px-3 text-center">Ativar</th>
+                        <th class="py-2.5 px-3 text-right">Ações</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-border">
+                    <?php if (empty($formasPagamento)) { ?>
+                        <tr>
+                            <td colspan="5" class="py-8 text-center text-caption text-muted font-medium">Nenhuma forma de pagamento cadastrada.</td>
+                        </tr>
+                    <?php } else { ?>
+                        <?php foreach ($formasPagamento as $forma) { ?>
+                            <tr class="hover:bg-surface-subtle transition-colors" data-forma-id="<?= (int) $forma->id ?>">
+                                <td class="py-3 px-3">
+                                    <div class="flex items-center gap-3">
+                                        <div class="p-2 rounded-lg bg-surface-subtle border border-border text-primary shrink-0">
+                                            <?= icon($forma->icone ?: 'banknote', ['class' => 'size-5']) ?>
+                                        </div>
+                                        <div>
+                                            <span class="font-semibold text-text block"><?= e($forma->nome) ?></span>
+                                            <span class="text-caption text-muted block"><?= e($forma->descricao) ?></span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-3">
+                                    <span class="font-medium text-text capitalize">
+                                        <?= e($forma->provedor === 'mercadopago' ? 'Mercado Pago' : ($forma->provedor === 'gerencianet' ? 'Efí / Gerencianet' : ($forma->provedor === 'asaas' ? 'Asaas' : $forma->provedor))) ?>
+                                    </span>
+                                    <?php if (! empty($forma->config['usar_env'])) { ?>
+                                        <span class="text-caption text-muted block">Credenciais globais (.env)</span>
+                                    <?php } ?>
+                                </td>
+                                <td class="py-3 px-3 text-center status-col">
+                                    <?= component('pill-status', [
+                                        'label' => ! empty($forma->ativo) ? 'Ativo' : 'Inativo',
+                                        'variant' => ! empty($forma->ativo) ? 'success' : 'neutral',
+                                    ]) ?>
+                                </td>
+                                <td class="py-3 px-3 text-center">
+                                    <label class="inline-flex cursor-pointer items-center justify-center">
+                                        <input type="checkbox"
+                                               role="switch"
+                                               class="forma-toggle peer h-6 w-10 cursor-pointer appearance-none rounded-full bg-input transition-colors checked:bg-primary focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-60"
+                                               data-id="<?= (int) $forma->id ?>"
+                                               data-nome="<?= e($forma->nome) ?>"
+                                               <?= ! empty($forma->ativo) ? 'checked' : '' ?>
+                                               <?= empty($podeAlterarPreco) ? 'disabled' : '' ?>>
+                                    </label>
+                                </td>
+                                <td class="py-3 px-3 text-right">
+                                    <?php if (! empty($podeAlterarPreco)) { ?>
+                                        <?= component('button', [
+                                            'label' => 'Editar',
+                                            'icon' => 'pencil',
+                                            'variant' => 'ghost',
+                                            'size' => 'sm',
+                                            'href' => site_url('saas/editarFormaPagamento/' . $forma->id),
+                                        ]) ?>
+                                    <?php } else { ?>
+                                        <span class="text-caption text-muted">-</span>
+                                    <?php } ?>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                    <?php } ?>
+                </tbody>
+            </table>
+        </div>
+    </section>
 </div>

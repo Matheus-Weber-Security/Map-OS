@@ -37,38 +37,187 @@ class MY_Controller extends CI_Controller
     }
 
     /**
-     * Interceptador de expiração de assinatura do SaaS.
-     * Quando a assinatura da empresa vence (dias <= 0), restringe o acesso à tela de Assinatura.
+     * Situação da assinatura do tenant:
+     * - 'ativa': em dia ou vence hoje ($diasRestantes >= 0)
+     * - 'carencia': vencida há até 2 dias ($diasRestantes >= -2 e status = 'ativa')
+     * - 'somente_leitura': carência encerrada ($diasRestantes < -2 ou status != 'ativa')
+     *
+     * @return array{status: 'ativa'|'carencia'|'somente_leitura', dias_restantes: int, dias_carencia: int, eh_master: bool}
      */
-    protected function verificarAssinaturaDaEmpresa(): void
+    public function obterSituacaoAssinaturaEmpresa(): array
     {
-        $controller = strtolower($this->router->class);
-        if (in_array($controller, ['assinatura', 'saas', 'login'], true)) {
-            return;
-        }
-
         $empresaId = (int) ($this->session->userdata('empresa_id') ?: 1);
+        $ehMaster = ($empresaId === 1 || (bool) $this->session->userdata('is_superadmin'));
 
-        // A Empresa Master (empresa_id == 1) e Super Administradores nunca são bloqueados
-        if ($empresaId === 1 || (bool) $this->session->userdata('is_superadmin')) {
-            return;
+        if ($ehMaster) {
+            return [
+                'status' => 'ativa',
+                'dias_restantes' => 9999,
+                'dias_carencia' => 0,
+                'eh_master' => true,
+            ];
         }
 
         $this->load->model('saas_model');
         $empresa = $this->saas_model->getEmpresaById($empresaId);
 
         if (! $empresa) {
-            return;
+            return [
+                'status' => 'ativa',
+                'dias_restantes' => 0,
+                'dias_carencia' => 0,
+                'eh_master' => false,
+            ];
         }
 
         $hoje = strtotime('today');
         $vencimento = $empresa->data_vencimento ? strtotime($empresa->data_vencimento) : $hoje;
         $diasRestantes = (int) ceil(($vencimento - $hoje) / 86400);
 
-        if ($diasRestantes <= 0 || $empresa->status !== 'ativa') {
-            $this->session->set_flashdata('error', 'A assinatura da empresa está vencida. Renove sua assinatura via PIX para reativar o acesso.');
-            redirect('assinatura');
+        if ($empresa->status !== 'ativa') {
+            return [
+                'status' => 'somente_leitura',
+                'dias_restantes' => $diasRestantes,
+                'dias_carencia' => 0,
+                'eh_master' => false,
+            ];
         }
+
+        if ($diasRestantes >= 0) {
+            return [
+                'status' => 'ativa',
+                'dias_restantes' => $diasRestantes,
+                'dias_carencia' => 0,
+                'eh_master' => false,
+            ];
+        }
+
+        // Carência de 2 dias após o vencimento
+        // $diasRestantes == -1 -> 1º dia após vencimento (restam 2 dias de carência)
+        // $diasRestantes == -2 -> 2º dia após vencimento (resta 1 dia de carência / último dia)
+        if ($diasRestantes >= -2) {
+            $diasCarenciaRestantes = 2 + ($diasRestantes + 1);
+            return [
+                'status' => 'carencia',
+                'dias_restantes' => $diasRestantes,
+                'dias_carencia' => max(1, $diasCarenciaRestantes),
+                'eh_master' => false,
+            ];
+        }
+
+        return [
+            'status' => 'somente_leitura',
+            'dias_restantes' => $diasRestantes,
+            'dias_carencia' => 0,
+            'eh_master' => false,
+        ];
+    }
+
+    /**
+     * Determina se a rota atual é segura para acesso em modo somente leitura
+     * (consultas, listagens, detalhes, relatórios e impressões térmicas/A4).
+     */
+    protected function ehRotaSomenteLeitura(string $controller, string $metodo): bool
+    {
+        $controller = strtolower($controller);
+        $metodo = strtolower($metodo);
+
+        // Controladores administrativos e de pagamento sempre permitidos
+        if (in_array($controller, ['assinatura', 'saas', 'login', 'componentes'], true)) {
+            return true;
+        }
+
+        // Preferências de tela do usuário e 2FA no Mapos
+        if ($controller === 'mapos') {
+            return in_array($metodo, [
+                'index',
+                'minhaconta',
+                'salvartemamodo',
+                'salvartemacor',
+                'doisfatores',
+                'ativardoisfatores',
+                'novoscodigosdoisfatores',
+                'desativardoisfatores',
+                'pesquisar',
+                'buscarapida',
+                'calendario',
+            ], true);
+        }
+
+        // Relatórios são todos apenas de consulta e impressão
+        if ($controller === 'relatorios') {
+            return true;
+        }
+
+        // Rotas universais de consulta, listagem e download
+        if (in_array($metodo, [
+            'index',
+            'gerenciar',
+            'visualizar',
+            'lancamentos',
+            'cobrancas',
+            'download',
+            'downloadanexo',
+            'anexo',
+            'pesquisar',
+            'buscarapida',
+            'calendario',
+        ], true)) {
+            return true;
+        }
+
+        // Impressões (imprimir, imprimirTermica, imprimirA4, imprimirGarantiaOs, etc.)
+        if (str_starts_with($metodo, 'imprimir')) {
+            return true;
+        }
+
+        // Autocompletes de busca
+        if (str_starts_with($metodo, 'autocomplete')) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Interceptador de expiração de assinatura do SaaS.
+     * - Carência de 2 dias: acesso permitido com banner informativo no layout.
+     * - Somente Leitura (após carência): permite consultas e impressões, bloqueando mutações.
+     */
+    protected function verificarAssinaturaDaEmpresa(): void
+    {
+        $situacao = $this->obterSituacaoAssinaturaEmpresa();
+        $this->data['saas_assinatura'] = $situacao;
+
+        if ($situacao['status'] !== 'somente_leitura') {
+            return;
+        }
+
+        $controller = (string) $this->router->class;
+        $metodo = (string) $this->router->method;
+
+        if ($this->ehRotaSomenteLeitura($controller, $metodo)) {
+            return;
+        }
+
+        // Ação mutável bloqueada em modo somente leitura
+        if ($this->input->is_ajax_request()) {
+            $this->output
+                ->set_status_header(403)
+                ->set_content_type('application/json', 'utf-8')
+                ->set_output(json_encode([
+                    'result' => false,
+                    'message' => 'O período de carência da sua assinatura encerrou. O sistema está em modo de consulta para garantir a segurança dos seus dados. Renove sua assinatura via PIX para realizar alterações.',
+                    'bloqueado_assinatura' => true,
+                ]));
+            $this->output->_display();
+            exit;
+        }
+
+        $this->session->set_flashdata('error', 'O período de carência da sua assinatura encerrou. O sistema está em modo de consulta para que você possa consultar e imprimir seu histórico com segurança. Para criar ou editar registros, renove sua assinatura via PIX.');
+
+        $redirecionarPara = method_exists($this, 'index') ? $this->router->class : 'mapos';
+        redirect($redirecionarPara);
     }
 
     /**
@@ -505,6 +654,16 @@ class MY_Controller extends CI_Controller
         $avatar = layoutAvatarUrl($this->session->userdata('url_image_user_admin'), FCPATH . 'assets/userImage', base_url());
         $acao = $this->data['topbar_acao'] ?? null;
 
+        $situacaoAssinatura = $this->data['saas_assinatura'] ?? $this->obterSituacaoAssinaturaEmpresa();
+        $somenteLeitura = ($situacaoAssinatura['status'] === 'somente_leitura');
+
+        if ($somenteLeitura && is_array($acao)) {
+            $acao['attrs'] = array_merge($acao['attrs'] ?? [], [
+                'data-modal-abrir' => 'modal-bloqueio-assinatura',
+            ]);
+            $acao['href'] = '#';
+        }
+
         return [
             'assets' => layoutAssets(),
             'menu' => $menu,
@@ -520,6 +679,10 @@ class MY_Controller extends CI_Controller
             'acao' => is_array($acao) ? $acao : null,
             'atalhos' => layoutAtalhos($menu, $siteUrl),
             'flash' => $flash,
+            'saas_status' => $situacaoAssinatura['status'],
+            'saas_dias_restantes' => $situacaoAssinatura['dias_restantes'],
+            'saas_dias_carencia' => $situacaoAssinatura['dias_carencia'],
+            'saas_somente_leitura' => $somenteLeitura,
         ];
     }
 }

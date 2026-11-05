@@ -420,4 +420,242 @@ class Saas_model extends CI_Model
             'usuario' => $usuario,
         ];
     }
+    // --- Formas de Pagamento SaaS (+30 dias) ---
+
+    /**
+     * Garante que a tabela saas_formas_pagamento exista com os dados iniciais.
+     */
+    public function garantirTabelaFormasPagamento(): void
+    {
+        if ($this->db->table_exists('saas_formas_pagamento')) {
+            return;
+        }
+
+        $this->load->dbforge();
+        $this->dbforge->add_field([
+            'id' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'unsigned' => true,
+                'auto_increment' => true,
+            ],
+            'codigo' => [
+                'type' => 'VARCHAR',
+                'constraint' => 30,
+            ],
+            'nome' => [
+                'type' => 'VARCHAR',
+                'constraint' => 100,
+            ],
+            'descricao' => [
+                'type' => 'VARCHAR',
+                'constraint' => 255,
+                'null' => true,
+            ],
+            'icone' => [
+                'type' => 'VARCHAR',
+                'constraint' => 50,
+                'default' => 'banknote',
+            ],
+            'provedor' => [
+                'type' => 'VARCHAR',
+                'constraint' => 50,
+                'default' => 'mercadopago',
+            ],
+            'ativo' => [
+                'type' => 'TINYINT',
+                'constraint' => 1,
+                'default' => 0,
+            ],
+            'ordem' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'default' => 1,
+            ],
+            'instrucoes' => [
+                'type' => 'TEXT',
+                'null' => true,
+            ],
+            'configuracoes' => [
+                'type' => 'TEXT',
+                'null' => true,
+            ],
+            'criado_em' => [
+                'type' => 'DATETIME',
+                'null' => true,
+            ],
+            'atualizado_em' => [
+                'type' => 'DATETIME',
+                'null' => true,
+            ],
+        ]);
+
+        $this->dbforge->add_key('id', true);
+        $this->dbforge->add_key('codigo');
+        $this->dbforge->create_table('saas_formas_pagamento', true, ['ENGINE' => 'InnoDB']);
+
+        $agora = date('Y-m-d H:i:s');
+        $this->db->insert_batch('saas_formas_pagamento', [
+            [
+                'codigo' => 'pix',
+                'nome' => 'PIX Instantâneo',
+                'descricao' => 'Compensação automática e liberação imediata',
+                'icone' => 'qr-code',
+                'provedor' => 'mercadopago',
+                'ativo' => 1,
+                'ordem' => 1,
+                'instrucoes' => 'Pague escaneando o QR Code ou copiando o código PIX no aplicativo do seu banco.',
+                'configuracoes' => json_encode([
+                    'tipo_pix' => 'dinamico',
+                    'chave_pix' => '',
+                    'tipo_chave' => 'aleatoria',
+                    'titular' => '',
+                    'expiracao_minutos' => 60,
+                    'usar_env' => 1,
+                ]),
+                'criado_em' => $agora,
+                'atualizado_em' => $agora,
+            ],
+            [
+                'codigo' => 'boleto',
+                'nome' => 'Boleto Bancário',
+                'descricao' => 'Compensação bancária em até 3 dias úteis',
+                'icone' => 'barcode',
+                'provedor' => 'asaas',
+                'ativo' => 0,
+                'ordem' => 2,
+                'instrucoes' => 'Pague até a data de vencimento em qualquer agência bancária ou internet banking.',
+                'configuracoes' => json_encode([
+                    'dias_vencimento' => 3,
+                    'usar_env' => 1,
+                ]),
+                'criado_em' => $agora,
+                'atualizado_em' => $agora,
+            ],
+            [
+                'codigo' => 'cartao_credito',
+                'nome' => 'Cartão de Crédito',
+                'descricao' => 'Aprovação imediata e renovação de +30 dias',
+                'icone' => 'banknote',
+                'provedor' => 'mercadopago',
+                'ativo' => 0,
+                'ordem' => 3,
+                'instrucoes' => 'Pagamento à vista no cartão de crédito com liberação imediata.',
+                'configuracoes' => json_encode([
+                    'modo' => 'transparente',
+                    'max_parcelas' => 1,
+                    'usar_env' => 1,
+                ]),
+                'criado_em' => $agora,
+                'atualizado_em' => $agora,
+            ],
+            [
+                'codigo' => 'cartao_debito',
+                'nome' => 'Cartão de Débito',
+                'descricao' => 'Débito online com autenticação 3DS no banco',
+                'icone' => 'receipt',
+                'provedor' => 'mercadopago',
+                'ativo' => 0,
+                'ordem' => 4,
+                'instrucoes' => 'Débito em conta com autenticação segura no app do seu banco.',
+                'configuracoes' => json_encode([
+                    'modo' => 'link',
+                    'usar_env' => 1,
+                ]),
+                'criado_em' => $agora,
+                'atualizado_em' => $agora,
+            ],
+        ]);
+    }
+
+    /**
+     * Retorna todas as formas de pagamento cadastradas.
+     */
+    public function getFormasPagamento(bool $apenasAtivas = false): array
+    {
+        $this->garantirTabelaFormasPagamento();
+
+        if ($apenasAtivas) {
+            $this->db->where('ativo', 1);
+        }
+
+        $formas = $this->db
+            ->order_by('ordem', 'ASC')
+            ->order_by('id', 'ASC')
+            ->get('saas_formas_pagamento')
+            ->result();
+
+        foreach ($formas as $forma) {
+            $forma->config = json_decode($forma->configuracoes ?? '{}', true) ?: [];
+        }
+
+        return $formas;
+    }
+
+    /**
+     * Retorna uma forma de pagamento por ID.
+     */
+    public function getFormaPagamentoById(int $id): ?object
+    {
+        $this->garantirTabelaFormasPagamento();
+
+        $forma = $this->db
+            ->where('id', $id)
+            ->get('saas_formas_pagamento')
+            ->row();
+
+        if ($forma) {
+            $forma->config = json_decode($forma->configuracoes ?? '{}', true) ?: [];
+        }
+
+        return $forma;
+    }
+
+    /**
+     * Retorna uma forma de pagamento pelo código identificador.
+     */
+    public function getFormaPagamentoByCodigo(string $codigo): ?object
+    {
+        $this->garantirTabelaFormasPagamento();
+
+        $forma = $this->db
+            ->where('codigo', $codigo)
+            ->get('saas_formas_pagamento')
+            ->row();
+
+        if ($forma) {
+            $forma->config = json_decode($forma->configuracoes ?? '{}', true) ?: [];
+        }
+
+        return $forma;
+    }
+
+    /**
+     * Alterna o status ativo/inativo de uma forma de pagamento.
+     */
+    public function alternarStatusFormaPagamento(int $id, bool $ativo): bool
+    {
+        $this->garantirTabelaFormasPagamento();
+
+        return $this->db
+            ->where('id', $id)
+            ->update('saas_formas_pagamento', [
+                'ativo' => $ativo ? 1 : 0,
+                'atualizado_em' => date('Y-m-d H:i:s'),
+            ]);
+    }
+
+    /**
+     * Atualiza dados e configurações de uma forma de pagamento.
+     */
+    public function salvarFormaPagamento(int $id, array $dados): bool
+    {
+        $this->garantirTabelaFormasPagamento();
+
+        $dados['atualizado_em'] = date('Y-m-d H:i:s');
+
+        return $this->db
+            ->where('id', $id)
+            ->update('saas_formas_pagamento', $dados);
+    }
 }

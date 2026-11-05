@@ -139,6 +139,23 @@
       <div class="v5-shell mb-2 <?= $larguraLimitada ? 'max-w-4xl mx-auto w-full' : '' ?>">
         <?= component('breadcrumb', ['items' => $layout['breadcrumb']]) ?>
       </div>
+      <?php if ($this->router->class !== 'assinatura' && ! empty($layout['saas_status']) && $layout['saas_status'] === 'carencia') { ?>
+        <div class="v5-shell mb-4 <?= $larguraLimitada ? 'max-w-4xl mx-auto w-full' : '' ?>">
+          <?= component('alert', [
+              'variant' => 'warning',
+              'title' => 'Período de Carência da Assinatura',
+              'message' => html_purificado('Sua assinatura venceu. Você está no período de carência (' . ($layout['saas_dias_carencia'] > 1 ? 'restam <b>' . $layout['saas_dias_carencia'] . ' dias</b>' : '<b>último dia</b>') . ') para renovar antes do modo de consulta somente leitura. <a href="' . site_url('assinatura') . '" class="font-bold underline ml-1 hover:text-text">Renovar assinatura via PIX &rarr;</a>'),
+          ]) ?>
+        </div>
+      <?php } elseif ($this->router->class !== 'assinatura' && ! empty($layout['saas_somente_leitura'])) { ?>
+        <div class="v5-shell mb-4 <?= $larguraLimitada ? 'max-w-4xl mx-auto w-full' : '' ?>">
+          <?= component('alert', [
+              'variant' => 'info',
+              'title' => 'Modo de Consulta Ativo',
+              'message' => html_purificado('O período de carência da sua assinatura encerrou. Mantivemos seu histórico seguro para consultas e impressões. <a href="' . site_url('assinatura') . '" class="font-bold underline ml-1 hover:text-text">Renove via PIX</a> para reativar novas criações e edições a qualquer momento.'),
+          ]) ?>
+        </div>
+      <?php } ?>
       <?php if (isset($view)) {
           $this->load->view($view);
       } ?>

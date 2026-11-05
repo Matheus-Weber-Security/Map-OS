@@ -355,4 +355,69 @@ export default function iniciar(corpo) {
     marcarModo();
     marcarCor();
     marcarBotoes();
+
+    if (corpo.dataset.assinaturaBloqueada === '1') {
+        const abrirModalBloqueio = () => {
+            const modal = document.getElementById('modal-bloqueio-assinatura');
+            if (modal && typeof modal.showModal === 'function' && !modal.open) {
+                modal.showModal();
+            }
+        };
+
+        corpo.addEventListener('click', (evento) => {
+            const elemento = evento.target.closest?.('a, button');
+            if (!elemento) return;
+
+            if (elemento.closest('#modal-bloqueio-assinatura')) {
+                return;
+            }
+
+            if (
+                elemento.closest('[data-sidebar-alternar], [data-busca-abrir], [data-tema-escolher], [data-tema-cor-escolher], details[data-menu-suspenso]') ||
+                elemento.hasAttribute('data-sidebar-alternar') ||
+                elemento.hasAttribute('data-busca-abrir') ||
+                elemento.hasAttribute('data-tema-escolher') ||
+                elemento.hasAttribute('data-tema-cor-escolher')
+            ) {
+                return;
+            }
+
+            const href = (elemento.getAttribute('href') || '').toLowerCase();
+            const dataModal = (elemento.getAttribute('data-modal-abrir') || '').toLowerCase();
+
+            const rotasSeguras = ['/assinatura', '/login', '/mine', '/imprimir', '/download', '/visualizar', '/pesquisar', '/calendario'];
+            if (rotasSeguras.some((rota) => href.includes(rota))) {
+                return;
+            }
+
+            const acoesMutaveis = ['/adicionar', '/editar', '/excluir', '/faturar', '/cancelar', '/desfaturar', '/anexar', '/cadastrar'];
+            const ehAcaoMutavelHref = acoesMutaveis.some((acao) => href.includes(acao));
+            const ehAcaoMutavelModal = ['excluir', 'cancelar', 'faturar'].some((termo) => dataModal.includes(termo));
+            const ehBotaoSubmit = elemento.type === 'submit' && elemento.closest('form');
+
+            if (ehBotaoSubmit) {
+                const action = (elemento.closest('form')?.getAttribute('action') || '').toLowerCase();
+                if (action.includes('/pesquisar')) {
+                    return;
+                }
+            }
+
+            if (ehAcaoMutavelHref || ehAcaoMutavelModal || ehBotaoSubmit || dataModal === 'modal-bloqueio-assinatura') {
+                evento.preventDefault();
+                evento.stopPropagation();
+                abrirModalBloqueio();
+            }
+        }, true);
+
+        corpo.addEventListener('submit', (evento) => {
+            const form = evento.target;
+            const action = (form.getAttribute('action') || '').toLowerCase();
+            if (action.includes('/pesquisar')) {
+                return;
+            }
+            evento.preventDefault();
+            evento.stopPropagation();
+            abrirModalBloqueio();
+        }, true);
+    }
 }

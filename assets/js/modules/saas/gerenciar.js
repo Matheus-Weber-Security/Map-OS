@@ -5,6 +5,8 @@
 
 import { lerJson } from '../../lib/dados.js';
 import { carregarScript } from '../../lib/script.js';
+import { post } from '../../lib/http.js';
+import { mostrarToast } from '../../lib/toast.js';
 
 const VENDOR = new URL('../../../vendor/', import.meta.url);
 
@@ -128,4 +130,55 @@ export default async function iniciar(raiz, { doc = document } = {}) {
 
     desenhar();
     new MutationObserver(desenhar).observe(doc.documentElement, { attributes: true, attributeFilter: ['class', 'data-tema-modo'] });
+
+    // Alternar status das formas de pagamento via switch AJAX
+    const tabelaFormas = raiz.querySelector('#tabela-formas-pagamento');
+    const urlAlternar = raiz.dataset.urlAlternar;
+
+    if (tabelaFormas && urlAlternar) {
+        tabelaFormas.addEventListener('change', async (e) => {
+            const toggle = e.target.closest('.forma-toggle');
+            if (!toggle) return;
+
+            const id = toggle.dataset.id;
+            const ativo = toggle.checked ? 1 : 0;
+            const linha = toggle.closest('tr');
+            const statusCol = linha ? linha.querySelector('.status-col') : null;
+            const contadorEl = doc.querySelector('#contador-formas-ativas');
+            const bolinhaEl = doc.querySelector('#indicador-bolinha');
+
+            toggle.disabled = true;
+
+            try {
+                const res = await post(urlAlternar, { id, ativo });
+                const json = await res.json();
+
+                if (json.result) {
+                    if (statusCol) {
+                        statusCol.innerHTML = ativo
+                            ? '<span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-caption font-semibold bg-success-soft text-success-ink"><span class="size-1.5 rounded-full bg-success"></span>Ativo</span>'
+                            : '<span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-caption font-semibold bg-surface-subtle text-muted"><span class="size-1.5 rounded-full bg-border"></span>Inativo</span>';
+                    }
+
+                    // Recalcula total de formas ativas
+                    const totalAtivas = raiz.querySelectorAll('.forma-toggle:checked').length;
+                    if (contadorEl) {
+                        contadorEl.textContent = `${totalAtivas} ${totalAtivas === 1 ? 'forma ativa' : 'formas ativas'}`;
+                    }
+                    if (bolinhaEl) {
+                        bolinhaEl.className = `size-2 rounded-full ${totalAtivas > 0 ? 'bg-success' : 'bg-neutral'}`;
+                    }
+
+                    mostrarToast({ mensagem: json.message || 'Status atualizado com sucesso!', variante: 'success' }, doc);
+                } else {
+                    throw new Error(json.message || 'Falha ao atualizar status.');
+                }
+            } catch (err) {
+                toggle.checked = !ativo;
+                mostrarToast({ mensagem: err.message || 'Erro ao comunicar com o servidor.', variante: 'danger' }, doc);
+            } finally {
+                toggle.disabled = false;
+            }
+        });
+    }
 }

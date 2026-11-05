@@ -20,6 +20,36 @@
 
 <?php $this->load->view('tema/busca'); ?>
 
+<?php if (! empty($layout['saas_somente_leitura'])) { ?>
+  <div class="v5-shell">
+    <?= component('modal', [
+        'id' => 'modal-bloqueio-assinatura',
+        'title' => 'Recurso pausado temporariamente',
+        'body' => html_purificado(
+            '<div class="space-y-3 text-text leading-relaxed">'
+            . '<p class="font-medium text-[0.9375rem]">Olá! O período de carência da sua assinatura encerrou, por isso as criações e alterações estão pausadas temporariamente.</p>'
+            . '<p class="text-muted text-sm">Mas fique tranquilo: <strong>todo o seu histórico continua seguro</strong> e disponível para consulta e impressão a qualquer momento (ordens de serviço, vendas, clientes, relatórios e comprovantes fiscais/térmicos).</p>'
+            . '<p class="text-muted text-sm">Para liberar as novas criações, edições e cadastros imediatamente, basta renovar sua assinatura via PIX. A liberação é rápida e automática!</p>'
+            . '</div>'
+        ),
+        'footer' => [
+            component('button', [
+                'label' => 'Continuar consultando',
+                'variant' => 'outline',
+                'attrs' => ['data-modal-fechar' => true],
+            ]),
+            component('button', [
+                'label' => 'Renovar Assinatura via PIX',
+                'variant' => 'primary',
+                'icon' => 'banknote',
+                'href' => site_url('assinatura'),
+            ]),
+        ],
+        'size' => 'md',
+    ]) ?>
+  </div>
+<?php } ?>
+
 <div class="v5-shell">
   <div data-toast-region class="pointer-events-none fixed right-4 bottom-4 z-50 flex flex-col items-end gap-2">
     <?php foreach ($layout['flash'] as $mensagem) { ?>

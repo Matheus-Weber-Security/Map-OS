@@ -37,6 +37,8 @@ $config['permissions_map'] = [
         'gerarPix' => '*',
         'verificarPix' => '*',
         'confirmarPixTeste' => '*',
+        'gerarBoleto' => '*',
+        'gerarCartao' => '*',
     ],
 
     'Saas' => [
@@ -49,6 +51,9 @@ $config['permissions_map'] = [
         'trocarEmpresa' => '*',
         'alterarStatus' => '*',
         'cadastrarEmpresa' => '*',
+        'alternarFormaPagamento' => '*',
+        'editarFormaPagamento' => '*',
+        'salvarFormaPagamento' => '*',
     ],
 
     'Arquivos' => [
