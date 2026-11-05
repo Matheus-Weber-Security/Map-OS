@@ -356,6 +356,22 @@ export default function iniciar(corpo) {
     marcarCor();
     marcarBotoes();
 
+    try {
+        if (sessionStorage.getItem('mapos:banner-carencia-dispensado') === '1') {
+            corpo.querySelector('#banner-alerta-carencia')?.remove();
+        }
+    } catch {
+        // sessionStorage bloqueado
+    }
+
+    corpo.querySelector('#banner-alerta-carencia')?.addEventListener('dispensado', () => {
+        try {
+            sessionStorage.setItem('mapos:banner-carencia-dispensado', '1');
+        } catch {
+            // sessionStorage bloqueado
+        }
+    });
+
     if (corpo.dataset.assinaturaBloqueada === '1') {
         const abrirModalBloqueio = () => {
             const modal = document.getElementById('modal-bloqueio-assinatura');

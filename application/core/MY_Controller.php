@@ -207,14 +207,14 @@ class MY_Controller extends CI_Controller
                 ->set_content_type('application/json', 'utf-8')
                 ->set_output(json_encode([
                     'result' => false,
-                    'message' => 'O período de carência da sua assinatura encerrou. O sistema está em modo de consulta para garantir a segurança dos seus dados. Renove sua assinatura via PIX para realizar alterações.',
+                    'message' => 'O período de carência da sua assinatura encerrou. O sistema está em modo de consulta para garantir a segurança dos seus dados. Renove sua assinatura para realizar alterações.',
                     'bloqueado_assinatura' => true,
                 ]));
             $this->output->_display();
             exit;
         }
 
-        $this->session->set_flashdata('error', 'O período de carência da sua assinatura encerrou. O sistema está em modo de consulta para que você possa consultar e imprimir seu histórico com segurança. Para criar ou editar registros, renove sua assinatura via PIX.');
+        $this->session->set_flashdata('error', 'O período de carência da sua assinatura encerrou. O sistema está em modo de consulta para que você possa consultar e imprimir seu histórico com segurança. Para criar ou editar registros, renove sua assinatura.');
 
         $redirecionarPara = method_exists($this, 'index') ? $this->router->class : 'mapos';
         redirect($redirecionarPara);
@@ -656,6 +656,29 @@ class MY_Controller extends CI_Controller
 
         $situacaoAssinatura = $this->data['saas_assinatura'] ?? $this->obterSituacaoAssinaturaEmpresa();
         $somenteLeitura = ($situacaoAssinatura['status'] === 'somente_leitura');
+        $diasRestantes = (int) $situacaoAssinatura['dias_restantes'];
+        $ehMaster = (bool) $situacaoAssinatura['eh_master'];
+        $statusAssinatura = (string) $situacaoAssinatura['status'];
+
+        $abrirModalPreVencimento = false;
+        $abrirModalCarencia = false;
+
+        if (! $ehMaster && strtolower((string) $this->router->class) !== 'assinatura') {
+            // Modal no Login: 3 dias antes de vencer até o dia do vencimento (3, 2, 1, 0 dias)
+            if ($statusAssinatura === 'ativa' && $diasRestantes <= 3 && $diasRestantes >= 0) {
+                if (! $this->session->userdata('saas_modal_prevencimento_visto')) {
+                    $abrirModalPreVencimento = true;
+                    $this->session->set_userdata('saas_modal_prevencimento_visto', true);
+                }
+            }
+            // Modal no Login: Durante o período de carência de 2 dias
+            elseif ($statusAssinatura === 'carencia') {
+                if (! $this->session->userdata('saas_modal_carencia_visto')) {
+                    $abrirModalCarencia = true;
+                    $this->session->set_userdata('saas_modal_carencia_visto', true);
+                }
+            }
+        }
 
         if ($somenteLeitura && is_array($acao)) {
             $acao['attrs'] = array_merge($acao['attrs'] ?? [], [
@@ -683,6 +706,8 @@ class MY_Controller extends CI_Controller
             'saas_dias_restantes' => $situacaoAssinatura['dias_restantes'],
             'saas_dias_carencia' => $situacaoAssinatura['dias_carencia'],
             'saas_somente_leitura' => $somenteLeitura,
+            'saas_modal_prevencimento' => $abrirModalPreVencimento,
+            'saas_modal_carencia' => $abrirModalCarencia,
         ];
     }
 }

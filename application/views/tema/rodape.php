@@ -20,6 +20,67 @@
 
 <?php $this->load->view('tema/busca'); ?>
 
+<?php if (! empty($layout['saas_modal_prevencimento'])) { ?>
+  <div class="v5-shell">
+    <?= component('modal', [
+        'id' => 'modal-aviso-prevencimento',
+        'title' => ((int) $layout['saas_dias_restantes'] === 0) ? 'Sua assinatura vence hoje' : 'Sua assinatura vence em ' . (int) $layout['saas_dias_restantes'] . ' dias',
+        'open' => true,
+        'body' => html_purificado(
+            '<div class="space-y-3 text-text leading-relaxed">'
+            . '<p class="font-medium text-[0.9375rem]">' . (((int) $layout['saas_dias_restantes'] === 0) ? 'A assinatura da sua empresa vence hoje.' : 'A assinatura da sua empresa vence nos próximos dias.') . '</p>'
+            . '<p class="text-muted text-sm">Para continuar usando todos os recursos com tranquilidade e sem risco de interrupção, você já pode renovar com a forma de pagamento de sua preferência.</p>'
+            . '</div>'
+        ),
+        'footer' => [
+            component('button', [
+                'label' => 'Lembrar mais tarde',
+                'variant' => 'outline',
+                'attrs' => ['data-modal-fechar' => true],
+            ]),
+            component('button', [
+                'label' => 'Renovar assinatura',
+                'variant' => 'primary',
+                'icon' => 'banknote',
+                'href' => site_url('assinatura'),
+            ]),
+        ],
+        'size' => 'md',
+    ]) ?>
+  </div>
+<?php } ?>
+
+<?php if (! empty($layout['saas_modal_carencia'])) { ?>
+  <div class="v5-shell">
+    <?= component('modal', [
+        'id' => 'modal-aviso-carencia',
+        'title' => 'Período de Carência Ativo (' . ($layout['saas_dias_carencia'] > 1 ? $layout['saas_dias_carencia'] . ' dias restantes' : 'último dia') . ')',
+        'open' => true,
+        'body' => html_purificado(
+            '<div class="space-y-3 text-text leading-relaxed">'
+            . '<p class="font-medium text-[0.9375rem]">Sua assinatura venceu, mas seu acesso continua 100% liberado!</p>'
+            . '<p class="text-muted text-sm">Você está no <strong>período de tolerância de 2 dias</strong> para emitir ordens de serviço, realizar vendas e cadastros normalmente.</p>'
+            . '<p class="text-muted text-sm">Aproveite para renovar sua assinatura agora com a forma de pagamento de sua preferência e evitar que o sistema entre em modo de consulta.</p>'
+            . '</div>'
+        ),
+        'footer' => [
+            component('button', [
+                'label' => 'Continuar para o sistema',
+                'variant' => 'outline',
+                'attrs' => ['data-modal-fechar' => true],
+            ]),
+            component('button', [
+                'label' => 'Renovar assinatura',
+                'variant' => 'primary',
+                'icon' => 'banknote',
+                'href' => site_url('assinatura'),
+            ]),
+        ],
+        'size' => 'md',
+    ]) ?>
+  </div>
+<?php } ?>
+
 <?php if (! empty($layout['saas_somente_leitura'])) { ?>
   <div class="v5-shell">
     <?= component('modal', [
@@ -29,7 +90,7 @@
             '<div class="space-y-3 text-text leading-relaxed">'
             . '<p class="font-medium text-[0.9375rem]">Olá! O período de carência da sua assinatura encerrou, por isso as criações e alterações estão pausadas temporariamente.</p>'
             . '<p class="text-muted text-sm">Mas fique tranquilo: <strong>todo o seu histórico continua seguro</strong> e disponível para consulta e impressão a qualquer momento (ordens de serviço, vendas, clientes, relatórios e comprovantes fiscais/térmicos).</p>'
-            . '<p class="text-muted text-sm">Para liberar as novas criações, edições e cadastros imediatamente, basta renovar sua assinatura via PIX. A liberação é rápida e automática!</p>'
+            . '<p class="text-muted text-sm">Para liberar as novas criações, edições e cadastros imediatamente, basta renovar sua assinatura com a forma de pagamento de sua preferência.</p>'
             . '</div>'
         ),
         'footer' => [
@@ -39,7 +100,7 @@
                 'attrs' => ['data-modal-fechar' => true],
             ]),
             component('button', [
-                'label' => 'Renovar Assinatura via PIX',
+                'label' => 'Renovar assinatura',
                 'variant' => 'primary',
                 'icon' => 'banknote',
                 'href' => site_url('assinatura'),
