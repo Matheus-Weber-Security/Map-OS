@@ -105,11 +105,6 @@ class GerencianetSdk extends BasePaymentGateway
             throw new \Exception('Erro ao chamar GerenciaNet!');
         }
 
-        // Cobrança foi paga ou foi confirmada de forma manual, então damos baixa
-        if ($result['data']['status'] == 'paid' || $result['data']['status'] == 'settled') {
-            // TODO: dar baixa no lançamento caso exista
-        }
-
         $databaseResult = $this->ci->cobrancas_model->edit(
             'cobrancas',
             [
@@ -118,6 +113,11 @@ class GerencianetSdk extends BasePaymentGateway
             'idCobranca',
             $id
         );
+
+        // Cobrança foi paga ou foi confirmada de forma manual, então damos baixa se configurado
+        if ($result['data']['status'] == 'paid' || $result['data']['status'] == 'settled') {
+            $this->ci->cobrancas_model->darBaixaAutomatica($id, $result['data']['status']);
+        }
 
         if ($databaseResult == true) {
             $this->ci->session->set_flashdata('success', 'Cobrança atualizada com sucesso!');

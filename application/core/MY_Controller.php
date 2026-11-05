@@ -16,6 +16,7 @@ class MY_Controller extends CI_Controller
             'control_edit_pago' => '0',
             'control_del_pago' => '0',
             'control_editos' => '1',
+            'baixa_auto_cobranca' => '0',
             'pix_key' => '',
         ],
     ];

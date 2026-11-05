@@ -112,11 +112,6 @@ class Asaas extends BasePaymentGateway
             $result->status = 'DELETED';
         }
         
-        // Cobrança foi paga ou foi confirmada de forma manual, então damos baixa
-        if ($result->status == 'RECEIVED' || $result->status == 'CONFIRMED' || $result->status == 'DUNNING_RECEIVED') {
-            // TODO: dar baixa no lançamento caso exista
-        }
-
         $databaseResult = $this->ci->cobrancas_model->edit(
             'cobrancas',
             [
@@ -125,6 +120,11 @@ class Asaas extends BasePaymentGateway
             'idCobranca',
             $id
         );
+
+        // Cobrança foi paga ou foi confirmada de forma manual, então damos baixa se configurado
+        if ($result->status == 'RECEIVED' || $result->status == 'CONFIRMED' || $result->status == 'DUNNING_RECEIVED') {
+            $this->ci->cobrancas_model->darBaixaAutomatica($id, $result->status);
+        }
 
         if ($databaseResult == true) {
             $this->ci->session->set_flashdata('success', 'Cobrança atualizada com sucesso!');

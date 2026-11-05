@@ -111,6 +111,11 @@ class MercadoPago extends BasePaymentGateway
             $id
         );
 
+        // Cobrança foi paga ou foi confirmada de forma manual, então damos baixa se configurado
+        if ($payment->status === 'approved') {
+            $this->ci->cobrancas_model->darBaixaAutomatica($id, $payment->status);
+        }
+
         $this->ci->session->set_flashdata('success', 'Cobrança atualizada com sucesso!');
         log_info('Atualizou cobrança Mercado Pago. ID: ' . $id);
     }

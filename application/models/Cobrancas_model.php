@@ -158,6 +158,8 @@ class Cobrancas_model extends CI_Model
 
         $result = $this->PaymentGateway->atualizarDados($cobranca->idCobranca);
 
+        $this->darBaixaAutomatica($cobranca->idCobranca);
+
         return $result;
     }
 
@@ -172,6 +174,8 @@ class Cobrancas_model extends CI_Model
         $this->carregarGateway($gatewayDePagamento);
 
         $result = $this->PaymentGateway->confirmarPagamento($cobranca->idCobranca);
+
+        $this->darBaixaAutomatica($cobranca->idCobranca);
 
         return $result;
     }
@@ -222,5 +226,244 @@ class Cobrancas_model extends CI_Model
         }
 
         $this->load->library("Gateways/$nome", null, 'PaymentGateway');
+    }
+
+    /**
+     * Dá baixa automática no financeiro se a configuração baixa_auto_cobranca estiver ativa
+     * e a cobrança tiver sido quitada/paga.
+     * Caso a venda ou OS ainda não esteja faturada, cria o lançamento e fatura automaticamente.
+     *
+     * @param int|object $idCobranca
+     * @param string|null $novoStatus
+     * @return bool
+     */
+    public function darBaixaAutomatica($idCobranca, ?string $novoStatus = null): bool
+    {
+        $id = is_object($idCobranca) ? (int) ($idCobranca->idCobranca ?? 0) : (int) $idCobranca;
+        if ($id <= 0) {
+            return false;
+        }
+
+        // Verifica se a flag está ativada nas configurações
+        $config = $this->db->where('config', 'baixa_auto_cobranca')->get('configuracoes')->row();
+        if (! $config || (string) $config->valor !== '1') {
+            return false;
+        }
+
+        $cobranca = is_object($idCobranca) && isset($idCobranca->total) ? $idCobranca : $this->getById($id);
+        if (! $cobranca) {
+            return false;
+        }
+
+        // Verifica se o status atual da cobrança é de pagamento confirmado
+        $statusPagos = ['paid', 'approved', 'settled', 'received', 'confirmed', 'received_in_cash', 'dunning_received'];
+        $statusAtual = strtolower(trim((string) ($novoStatus ?? $cobranca->status ?? '')));
+        if (! in_array($statusAtual, $statusPagos, true)) {
+            return false;
+        }
+
+        // Identifica forma de pagamento para o Contas a Receber
+        $metodo = strtolower(trim((string) ($cobranca->payment_method ?: ($cobranca->payment ?? ''))));
+        $formaPgto = match (true) {
+            str_contains($metodo, 'pix') => 'Pix',
+            str_contains($metodo, 'cred') || str_contains($metodo, 'card') => 'Cartão de Crédito',
+            str_contains($metodo, 'deb') => 'Cartão de Débito',
+            default => 'Boleto',
+        };
+
+        $hoje = date('Y-m-d');
+        $alterou = false;
+
+        // Venda vinculada
+        if (! empty($cobranca->vendas_id)) {
+            $idVenda = (int) $cobranca->vendas_id;
+            $venda = $this->db->where('idVendas', $idVenda)->get('vendas')->row();
+
+            if ($venda && $venda->status !== 'Cancelado') {
+                $this->load->helper('vendas');
+                $this->load->helper('os');
+                $this->load->model('vendas_model');
+
+                // Procura lançamento existente
+                $lancamentos = [];
+                if (! empty($venda->lancamentos_id)) {
+                    $l = $this->db->where('idLancamentos', (int) $venda->lancamentos_id)->get('lancamentos')->row();
+                    if ($l) {
+                        $lancamentos[] = $l;
+                    }
+                }
+                if (empty($lancamentos)) {
+                    $lancamentos = $this->db->where('vendas_id', $idVenda)->get('lancamentos')->result();
+                }
+                if (empty($lancamentos)) {
+                    $descricoes = vendaDescricoesDaFatura($idVenda);
+                    $lancamentos = $this->db->where_in('descricao', $descricoes)->get('lancamentos')->result();
+                }
+
+                if (! empty($lancamentos)) {
+                    foreach ($lancamentos as $lanc) {
+                        if ((int) ($lanc->baixado ?? 0) === 0) {
+                            $this->db->where('idLancamentos', $lanc->idLancamentos)->update('lancamentos', [
+                                'baixado' => 1,
+                                'data_pagamento' => $hoje,
+                                'forma_pgto' => $formaPgto,
+                            ]);
+                            $alterou = true;
+                            log_info("Baixa automática realizada no lançamento #{$lanc->idLancamentos} da Venda #{$idVenda} via cobrança #{$id}.");
+                        }
+                    }
+                    if ((int) $venda->faturado === 0) {
+                        $this->db->where('idVendas', $idVenda)->update('vendas', [
+                            'faturado' => 1,
+                            'status' => 'Faturado',
+                            'lancamentos_id' => $lancamentos[0]->idLancamentos,
+                        ]);
+                    }
+                } else {
+                    // Não possui lançamento ainda: fatura automaticamente
+                    $totais = $this->vendas_model->totais($venda);
+                    $valorTotal = (float) ($totais['total'] ?? 0);
+                    if ($valorTotal <= 0 && ! empty($cobranca->total)) {
+                        $valorTotal = (float) $cobranca->total / 100;
+                    }
+                    $valorBruto = (float) ($totais['bruto'] ?? 0);
+                    if ($valorBruto <= 0) {
+                        $valorBruto = $valorTotal;
+                    }
+                    $desconto = (float) ($totais['desconto'] ?? 0);
+
+                    $cliente = $this->db->select('nomeCliente')->where('idClientes', $venda->clientes_id)->get('clientes')->row();
+                    $nomeCliente = $cliente->nomeCliente ?? ($venda->nomeCliente ?? '');
+                    $usuarioId = $venda->usuarios_id ?? $this->session->userdata('id_usuarios');
+
+                    $dadosLancamento = [
+                        'descricao' => "Fatura de Venda Nº: {$idVenda}",
+                        'valor' => $valorBruto,
+                        'tipo_desconto' => 'real',
+                        'desconto' => $desconto,
+                        'valor_desconto' => $valorTotal,
+                        'clientes_id' => $venda->clientes_id,
+                        'cliente_fornecedor' => $nomeCliente,
+                        'data_vencimento' => ! empty($cobranca->expire_at) ? $cobranca->expire_at : $hoje,
+                        'data_pagamento' => $hoje,
+                        'baixado' => 1,
+                        'forma_pgto' => $formaPgto,
+                        'tipo' => 'receita',
+                        'vendas_id' => $idVenda,
+                        'observacoes' => 'Baixa automática via cobrança #' . $id,
+                        'usuarios_id' => $usuarioId,
+                    ];
+
+                    $this->db->insert('lancamentos', $dadosLancamento);
+                    $idNovoLancamento = $this->db->insert_id();
+
+                    $this->db->where('idVendas', $idVenda)->update('vendas', [
+                        'faturado' => 1,
+                        'valorTotal' => $valorBruto,
+                        'valor_desconto' => $valorTotal,
+                        'lancamentos_id' => $idNovoLancamento,
+                        'status' => 'Faturado',
+                    ]);
+                    $alterou = true;
+                    log_info("Venda #{$idVenda} faturada automaticamente e baixada no financeiro via cobrança #{$id}.");
+                }
+            }
+        }
+
+        // OS vinculada
+        if (! empty($cobranca->os_id)) {
+            $idOs = (int) $cobranca->os_id;
+            $os = $this->db->where('idOs', $idOs)->get('os')->row();
+
+            if ($os && $os->status !== 'Cancelado') {
+                $this->load->helper('os');
+                $this->load->model('os_model');
+
+                // Procura lançamento existente
+                $lancamentos = [];
+                if (! empty($os->lancamento)) {
+                    $l = $this->db->where('idLancamentos', (int) $os->lancamento)->get('lancamentos')->row();
+                    if ($l) {
+                        $lancamentos[] = $l;
+                    }
+                }
+                if (empty($lancamentos)) {
+                    $descricoes = osDescricoesDaFatura($idOs);
+                    $lancamentos = $this->db->where_in('descricao', $descricoes)->get('lancamentos')->result();
+                }
+
+                if (! empty($lancamentos)) {
+                    foreach ($lancamentos as $lanc) {
+                        if ((int) ($lanc->baixado ?? 0) === 0) {
+                            $this->db->where('idLancamentos', $lanc->idLancamentos)->update('lancamentos', [
+                                'baixado' => 1,
+                                'data_pagamento' => $hoje,
+                                'forma_pgto' => $formaPgto,
+                            ]);
+                            $alterou = true;
+                            log_info("Baixa automática realizada no lançamento #{$lanc->idLancamentos} da OS #{$idOs} via cobrança #{$id}.");
+                        }
+                    }
+                    if ((int) $os->faturado === 0) {
+                        $this->db->where('idOs', $idOs)->update('os', [
+                            'faturado' => 1,
+                            'status' => 'Faturado',
+                            'lancamento' => $lancamentos[0]->idLancamentos,
+                        ]);
+                        $this->os_model->registrarStatus($idOs, (string) $os->status, 'Faturado', $os->usuarios_id);
+                    }
+                } else {
+                    // Não possui lançamento ainda: fatura automaticamente
+                    $totais = $this->os_model->totais($os);
+                    $valorTotal = (float) ($totais['total'] ?? 0);
+                    if ($valorTotal <= 0 && ! empty($cobranca->total)) {
+                        $valorTotal = (float) $cobranca->total / 100;
+                    }
+                    $valorBruto = (float) ($totais['bruto'] ?? 0);
+                    if ($valorBruto <= 0) {
+                        $valorBruto = $valorTotal;
+                    }
+                    $desconto = (float) ($totais['desconto'] ?? 0);
+
+                    $cliente = $this->db->select('nomeCliente')->where('idClientes', $os->clientes_id)->get('clientes')->row();
+                    $nomeCliente = $cliente->nomeCliente ?? ($os->nomeCliente ?? '');
+                    $usuarioId = $os->usuarios_id ?? $this->session->userdata('id_usuarios');
+
+                    $dadosLancamento = [
+                        'descricao' => "Fatura de OS Nº: {$idOs}",
+                        'valor' => $valorBruto,
+                        'tipo_desconto' => 'real',
+                        'desconto' => $desconto,
+                        'valor_desconto' => $valorTotal,
+                        'clientes_id' => $os->clientes_id,
+                        'cliente_fornecedor' => $nomeCliente,
+                        'data_vencimento' => ! empty($cobranca->expire_at) ? $cobranca->expire_at : $hoje,
+                        'data_pagamento' => $hoje,
+                        'baixado' => 1,
+                        'forma_pgto' => $formaPgto,
+                        'tipo' => 'receita',
+                        'observacoes' => 'Baixa automática via cobrança #' . $id,
+                        'usuarios_id' => $usuarioId,
+                    ];
+
+                    $this->db->insert('lancamentos', $dadosLancamento);
+                    $idNovoLancamento = $this->db->insert_id();
+
+                    $this->db->where('idOs', $idOs)->update('os', [
+                        'faturado' => 1,
+                        'valorTotal' => $valorBruto,
+                        'desconto' => $desconto,
+                        'valor_desconto' => $valorTotal,
+                        'lancamento' => $idNovoLancamento,
+                        'status' => 'Faturado',
+                    ]);
+                    $this->os_model->registrarStatus($idOs, (string) $os->status, 'Faturado', $usuarioId);
+                    $alterou = true;
+                    log_info("OS #{$idOs} faturada automaticamente e baixada no financeiro via cobrança #{$id}.");
+                }
+            }
+        }
+
+        return $alterou;
     }
 }
