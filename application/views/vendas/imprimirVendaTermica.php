@@ -6,7 +6,7 @@
     <title>Map_Vendas_<?php echo e($result->idVendas);?>_<?php echo e($result->nomeCliente);?></title>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="<?= base_url() ?>assets/dist/imprimir.css">
+    <link rel="stylesheet" href="<?= base_url('assets/dist/imprimir.css') ?>?v=<?= file_exists(FCPATH . 'assets/dist/imprimir.css') ? filemtime(FCPATH . 'assets/dist/imprimir.css') : '1' ?>">
     <style>
         @page {
             size: 80mm auto;
@@ -25,6 +25,50 @@
                 padding: 2mm !important;
                 box-shadow: none !important;
             }
+        }
+        /* Estilo limpo do cupom termico: sem caixas fechadas, sem linhas verticais e sem cor de fundo */
+        .cupom-tabela,
+        .cupom-tabela-grade {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            border: none !important;
+            background: transparent !important;
+            background-color: transparent !important;
+        }
+        .cupom-tabela th,
+        .cupom-tabela td,
+        .cupom-tabela-grade th,
+        .cupom-tabela-grade td {
+            border-left: none !important;
+            border-right: none !important;
+            background: transparent !important;
+            background-color: transparent !important;
+            padding-inline: 4px !important;
+        }
+        .cupom-tabela thead th,
+        .cupom-tabela-grade thead th {
+            border-top: 1px solid #1f1633 !important;
+            border-bottom: 1px solid #1f1633 !important;
+            border-left: none !important;
+            border-right: none !important;
+            padding-top: 4px !important;
+            padding-bottom: 4px !important;
+            font-weight: 700 !important;
+            background: transparent !important;
+            background-color: transparent !important;
+        }
+        .cupom-tabela-grade tbody td {
+            border-top: none !important;
+            border-bottom: none !important;
+            border-left: none !important;
+            border-right: none !important;
+            padding-top: 3px !important;
+            padding-bottom: 3px !important;
+        }
+        .cupom-totais-linha td,
+        .cupom-tabela tbody tr.cupom-totais-linha td {
+            border-top: 1px solid #1f1633 !important;
+            padding-top: 4px !important;
         }
     </style>
 </head>
@@ -73,7 +117,7 @@
         <?php if ($produtos != null) { ?>
             <table class="cupom-tabela cupom-tabela-grade mt-2" id="tblProdutos">
                 <thead>
-                    <tr class="bg-surface-subtle">
+                    <tr>
                         <th class="text-left text-xs">Produto</th>
                         <th class="text-left text-xs">Quantidade</th>
                         <th class="text-left text-xs">Preço unit.</th>
@@ -82,17 +126,17 @@
                 </thead>
                 <tbody>
                     <?php
-                                foreach ($produtos as $p) {
-                                    $totalProdutos = $totalProdutos + $p->subTotal;
-                                    echo '<tr>';
-                                    echo '<td>' . e($p->descricao) . osDescontoItemNota($p) . '</td>';
-                                    echo '<td>' . e($p->quantidade) . '</td>';
-                                    echo '<td>R$ ' . e(($p->preco ?: $p->precoVenda)) . '</td>';
-                                    echo '<td>R$ ' . number_format($p->subTotal, 2, ',', '.') . '</td>';
-                                    echo '</tr>';
-                                } ?>
+                        foreach ($produtos as $p) {
+                            $totalProdutos = $totalProdutos + $p->subTotal;
+                            echo '<tr>';
+                            echo '<td>' . e($p->descricao) . osDescontoItemNota($p) . '</td>';
+                            echo '<td>' . e($p->quantidade) . '</td>';
+                            echo '<td>R$ ' . e(($p->preco ?: $p->precoVenda)) . '</td>';
+                            echo '<td>R$ ' . number_format($p->subTotal, 2, ',', '.') . '</td>';
+                            echo '</tr>';
+                        } ?>
                     <?php if ($result->valor_desconto != 0 && $result->desconto != 0) { ?>
-                        <tr>
+                        <tr class="cupom-totais-linha">
                             <td colspan="3" class="text-right"><strong>Total: R$</strong></td>
                             <td>
                                 <strong>
@@ -108,14 +152,22 @@
                                 </strong>
                             </td>
                         </tr>
+                        <tr class="cupom-totais-linha">
+                            <td colspan="4" class="text-right">
+                                <h4 class="text-right text-base font-bold">Total: R$
+                                    <?php echo number_format($result->valor_desconto, 2, ',', '.'); ?>
+                                </h4>
+                            </td>
+                        </tr>
+                    <?php } else { ?>
+                        <tr class="cupom-totais-linha">
+                            <td colspan="4" class="text-right">
+                                <h4 class="text-right text-base font-bold">Total: R$
+                                    <?php echo number_format($totalProdutos, 2, ',', '.'); ?>
+                                </h4>
+                            </td>
+                        </tr>
                     <?php } ?>
-                    <tr>
-                        <td colspan="4" class="text-right">
-                            <h4 class="text-right text-base font-bold">Total: R$
-                                <?php echo number_format($result->desconto != 0 && $result->valor_desconto != 0 ? $result->valor_desconto : $totalProdutos, 2, ',', '.'); ?>
-                            </h4>
-                        </td>
-                    </tr>
                 </tbody>
                 <?php if (in_array($result->status, ['Finalizado', 'Orçamento', 'Faturado', 'Aberto', 'Em Andamento', 'Aguardando Peças']) && $qrCode): ?>
                     <tr>

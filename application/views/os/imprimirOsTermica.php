@@ -7,7 +7,7 @@ $totalProdutos = 0; ?>
     <title>Map_OS_<?php echo e($result->idOs);?>_<?php echo e($result->nomeCliente);?></title>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="<?= base_url() ?>assets/dist/imprimir.css">
+    <link rel="stylesheet" href="<?= base_url('assets/dist/imprimir.css') ?>?v=<?= file_exists(FCPATH . 'assets/dist/imprimir.css') ? filemtime(FCPATH . 'assets/dist/imprimir.css') : '1' ?>">
     <style>
         @page {
             size: 80mm auto;
@@ -26,6 +26,50 @@ $totalProdutos = 0; ?>
                 padding: 2mm !important;
                 box-shadow: none !important;
             }
+        }
+        /* Estilo limpo do cupom termico: sem caixas fechadas, sem linhas verticais e sem cor de fundo */
+        .cupom-tabela,
+        .cupom-tabela-grade {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            border: none !important;
+            background: transparent !important;
+            background-color: transparent !important;
+        }
+        .cupom-tabela th,
+        .cupom-tabela td,
+        .cupom-tabela-grade th,
+        .cupom-tabela-grade td {
+            border-left: none !important;
+            border-right: none !important;
+            background: transparent !important;
+            background-color: transparent !important;
+            padding-inline: 4px !important;
+        }
+        .cupom-tabela thead th,
+        .cupom-tabela-grade thead th {
+            border-top: 1px solid #1f1633 !important;
+            border-bottom: 1px solid #1f1633 !important;
+            border-left: none !important;
+            border-right: none !important;
+            padding-top: 4px !important;
+            padding-bottom: 4px !important;
+            font-weight: 700 !important;
+            background: transparent !important;
+            background-color: transparent !important;
+        }
+        .cupom-tabela-grade tbody td {
+            border-top: none !important;
+            border-bottom: none !important;
+            border-left: none !important;
+            border-right: none !important;
+            padding-top: 3px !important;
+            padding-bottom: 3px !important;
+        }
+        .cupom-totais-linha td,
+        .cupom-tabela tbody tr.cupom-totais-linha td {
+            border-top: 1px solid #1f1633 !important;
+            padding-top: 4px !important;
         }
     </style>
 </head>
@@ -127,7 +171,7 @@ if (!empty($result->cidade) || !empty($result->estado) || !empty($result->cep)) 
             <?php if ($produtos != null) { ?>
                 <table class="cupom-tabela cupom-tabela-grade" id="tblProdutos">
                     <thead>
-                        <tr class="bg-surface-subtle">
+                        <tr>
                             <th class="text-left">Qtd</th>
                             <th class="text-left">Produto</th>
                             <th class="text-left">Unitário</th>
@@ -145,7 +189,7 @@ if (!empty($result->cidade) || !empty($result->estado) || !empty($result->cep)) 
                 echo '<td>R$ ' . number_format($p->subTotal, 2, ',', '.') . '</td>';
                 echo '</tr>';
             } ?>
-                        <tr>
+                        <tr class="cupom-totais-linha">
                             <td colspan="3" class="text-right"><strong>Total:</strong></td>
                             <td><strong>R$ <?php echo number_format($totalProdutos, 2, ',', '.'); ?></strong></td>
                         </tr>
@@ -156,7 +200,7 @@ if (!empty($result->cidade) || !empty($result->estado) || !empty($result->cep)) 
             <?php if ($servicos != null) { ?>
                 <table class="cupom-tabela cupom-tabela-grade">
                     <thead>
-                        <tr class="bg-surface-subtle">
+                        <tr>
                             <th class="text-left">Qtd</th>
                             <th class="text-left">Serviço</th>
                             <th class="text-left">Unitário</th>
@@ -176,7 +220,7 @@ if (!empty($result->cidade) || !empty($result->estado) || !empty($result->cep)) 
                     echo '<td>R$ ' . number_format($subtotal, 2, ',', '.') . '</td>';
                     echo '</tr>';
                 } ?>
-                        <tr>
+                        <tr class="cupom-totais-linha">
                             <td colspan="3" class="text-right"><strong>Total:</strong></td>
                             <td><strong>R$ <?php echo number_format($totalServico, 2, ',', '.'); ?></strong></td>
                         </tr>
@@ -186,7 +230,7 @@ if (!empty($result->cidade) || !empty($result->estado) || !empty($result->cep)) 
 
             <table class="cupom-tabela cupom-tabela-grade">
                 <tbody>
-                    <tr>
+                    <tr class="cupom-totais-linha">
                         <td colspan="5"> <?php
                 if ($totalProdutos != 0 || $totalServico != 0) {
                     if ($result->valor_desconto != 0) {
@@ -319,7 +363,7 @@ if (!empty($result->cidade) || !empty($result->estado) || !empty($result->cep)) 
             <?php if ($produtos != null) { ?>
                 <table class="cupom-tabela cupom-tabela-grade" id="tblProdutos">
                     <thead>
-                        <tr class="bg-surface-subtle">
+                        <tr>
                             <th class="text-left">Qtd</th>
                             <th class="text-left">Produto</th>
                             <th class="text-left">Unitário</th>
@@ -337,7 +381,7 @@ if (!empty($result->cidade) || !empty($result->estado) || !empty($result->cep)) 
                 echo '<td>R$ ' . number_format($p->subTotal, 2, ',', '.') . '</td>';
                 echo '</tr>';
             } ?>
-                        <tr>
+                        <tr class="cupom-totais-linha">
                             <td colspan="3" class="text-right"><strong>Total:</strong></td>
                             <td><strong>R$ <?php echo number_format($totalProdutos, 2, ',', '.'); ?></strong></td>
                         </tr>
@@ -348,7 +392,7 @@ if (!empty($result->cidade) || !empty($result->estado) || !empty($result->cep)) 
             <?php if ($servicos != null) { ?>
                 <table class="cupom-tabela cupom-tabela-grade">
                     <thead>
-                        <tr class="bg-surface-subtle">
+                        <tr>
                             <th class="text-left">Qtd</th>
                             <th class="text-left">Serviço</th>
                             <th class="text-left">Unitário</th>
@@ -368,7 +412,7 @@ if (!empty($result->cidade) || !empty($result->estado) || !empty($result->cep)) 
                     echo '<td>R$ ' . number_format($subtotal, 2, ',', '.') . '</td>';
                     echo '</tr>';
                 } ?>
-                        <tr>
+                        <tr class="cupom-totais-linha">
                             <td colspan="3" class="text-right"><strong>Total:</strong></td>
                             <td><strong>R$ <?php echo number_format($totalServico, 2, ',', '.'); ?></strong></td>
                         </tr>
@@ -378,7 +422,7 @@ if (!empty($result->cidade) || !empty($result->estado) || !empty($result->cep)) 
 
             <table class="cupom-tabela cupom-tabela-grade">
                 <tbody>
-                    <tr>
+                    <tr class="cupom-totais-linha">
                         <td colspan="5"> <?php
                 if ($totalProdutos != 0 || $totalServico != 0) {
                     if ($result->valor_desconto != 0) {
