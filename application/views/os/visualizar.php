@@ -136,10 +136,10 @@ $textos = [
             <section class="<?= e($caixa) ?>" aria-labelledby="secao-adicionar-item">
                 <h2 id="secao-adicionar-item" class="text-heading-sm text-text"><?= e($produto ? 'Adicionar produto' : 'Adicionar serviço') ?></h2>
                 <form method="post" action="<?= e(site_url($produto ? 'os/adicionarProduto' : 'os/adicionarServico')) ?>" novalidate
-                      class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_7rem_9rem_auto] lg:items-start"
+                      class="mt-4 grid gap-4 sm:grid-cols-3 lg:grid-cols-[minmax(0,1fr)_7rem_9rem_9rem] lg:items-start"
                       data-os-acao="<?= e($produto ? 'produto' : 'servico') ?>" data-os-limpar>
                     <input type="hidden" name="idOs" value="<?= e($idOs) ?>">
-                    <div class="relative sm:col-span-2 lg:col-span-1"<?= componenteAtributos([
+                    <div class="relative sm:col-span-3 lg:col-span-1"<?= componenteAtributos([
                         'data-autocomplete' => site_url($produto ? 'os/autoCompleteProduto' : 'os/autoCompleteServico'),
                         'data-autocomplete-alvo' => 'item-id',
                         'data-os-preco' => 'item-preco',
@@ -189,9 +189,20 @@ $textos = [
                             'data-msg-vazio' => 'Informe o preço.',
                         ],
                     ]) ?>
-                    <div class="lg:pt-7">
-                        <?= component('button', ['label' => 'Adicionar', 'icon' => 'plus', 'variant' => 'outline', 'type' => 'submit', 'attrs' => ['data-rotulo-carregando' => 'Adicionando…']]) ?>
-                    </div>
+                    <?= component('input', [
+                        'name' => 'total_item',
+                        'id' => 'item-total',
+                        'label' => 'Total (R$)',
+                        'placeholder' => '0,00',
+                        'value' => '0,00',
+                        'readonly' => true,
+                        'help' => 'Calculado automaticamente.',
+                        'class' => 'font-semibold text-text',
+                        'attrs' => [
+                            'tabindex' => '-1',
+                            'aria-live' => 'polite',
+                        ],
+                    ]) ?>
                     <?php $this->load->view('os/partes/desconto-item-campos'); ?>
                 </form>
             </section>

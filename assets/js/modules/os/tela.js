@@ -65,6 +65,45 @@ export function formatarMoeda(valor) {
 }
 
 /**
+ * Calcula e atualiza em tempo real o total do item no formulário de adicionar
+ * produto/serviço, considerando quantidade x preço unitário menos desconto.
+ */
+export function atualizarTotalItem(form) {
+    if (!form) {
+        return;
+    }
+
+    const campoTotal = form.querySelector('#item-total');
+    if (!campoTotal) {
+        return;
+    }
+
+    const campoQtd = form.querySelector('#item-quantidade') ?? form.querySelector('[name="quantidade"]');
+    const campoPreco = form.querySelector('#item-preco') ?? form.querySelector('[name="preco"]');
+    if (!campoQtd || !campoPreco) {
+        return;
+    }
+
+    const qtd = Number(String(campoQtd.value ?? '').replace(',', '.')) || 0;
+    const preco = Number(String(campoPreco.value ?? '').replace(/\./g, '').replace(',', '.')) || 0;
+    let total = qtd * preco;
+
+    const campoTipoDesc = form.querySelector('#item-desconto-tipo') ?? form.querySelector('[name="tipoDescontoItem"]');
+    const campoDesc = form.querySelector('#item-desconto-valor') ?? form.querySelector('[name="descontoItem"]');
+    if (campoDesc && String(campoDesc.value ?? '').trim() !== '') {
+        const descValor = Number(String(campoDesc.value).replace(/\./g, '').replace(',', '.')) || 0;
+        if (campoTipoDesc?.value === 'porcento') {
+            total -= total * (descValor / 100);
+        } else {
+            total -= descValor;
+        }
+    }
+
+    total = Math.max(0, total);
+    campoTotal.value = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(total);
+}
+
+/**
  * Atualiza o modal de faturamento em tempo real quando totais mudam via AJAX
  * (produtos/serviços adicionados ou excluídos, descontos alterados).
  */
@@ -246,6 +285,9 @@ export default function iniciar(raiz, { post = postPadrao, doc = document, naveg
         // módulos das abas (componentes/abas), que só rodam no carregamento.
         iniciarAutocompletes(alvo);
         iniciarModulos(alvo);
+        for (const form of alvo.querySelectorAll('form[data-os-acao]')) {
+            atualizarTotalItem(form);
+        }
     };
 
     async function enviar(form, evento) {
@@ -298,6 +340,7 @@ export default function iniciar(raiz, { post = postPadrao, doc = document, naveg
                 raiz.querySelectorAll('[data-os-estoque-texto]').forEach((aviso) => {
                     aviso.textContent = '';
                 });
+                atualizarTotalItem(form);
                 limparErros(form, doc);
                 camposValidaveis(form)[0]?.focus();
             }
@@ -338,11 +381,21 @@ export default function iniciar(raiz, { post = postPadrao, doc = document, naveg
         enviar(form, evento);
     });
 
-    // Revalida o campo enquanto a pessoa corrige o erro.
+    // Revalida o campo enquanto a pessoa corrige o erro e atualiza o total do item.
     doc.addEventListener('input', (evento) => {
         const campo = evento.target;
         if (campo?.form?.dataset?.osAcao && campo.getAttribute?.('aria-invalid') === 'true') {
             mostrarErroDoCampo(campo, campo.checkValidity() ? '' : mensagemDoCampo(campo), doc);
+        }
+        if (campo?.form?.dataset?.osAcao && (campo.name === 'quantidade' || campo.name === 'preco' || campo.name === 'descontoItem')) {
+            atualizarTotalItem(campo.form);
+        }
+    });
+
+    doc.addEventListener('change', (evento) => {
+        const campo = evento.target;
+        if (campo?.form?.dataset?.osAcao && (campo.name === 'tipoDescontoItem' || campo.name === 'quantidade' || campo.name === 'preco' || campo.name === 'descontoItem')) {
+            atualizarTotalItem(campo.form);
         }
     });
 
@@ -363,7 +416,13 @@ export default function iniciar(raiz, { post = postPadrao, doc = document, naveg
             aviso.setAttribute('data-os-estoque-texto', '');
             aviso.textContent = dados.estoque !== undefined ? `Em estoque: ${dados.estoque}` : '';
         }
+
+        atualizarTotalItem(wrapper.closest('form'));
     });
+
+    for (const form of raiz.querySelectorAll('form[data-os-acao]')) {
+        atualizarTotalItem(form);
+    }
 
     // Copiar o PIX copia e cola.
     doc.addEventListener('click', async (evento) => {
