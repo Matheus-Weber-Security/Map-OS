@@ -163,7 +163,7 @@
                     <h2 class="font-display text-base font-semibold text-text">Gerenciar Preço da Assinatura</h2>
                 </div>
 
-                <form method="post" action="<?= site_url('saas/salvarPrecos') ?>" class="flex flex-col gap-4">
+                <form method="post" action="<?= site_url('saas/salvarPrecos') ?>" novalidate class="flex flex-col gap-4" <?= js_module('formulario/padrao') ?>>
                     <input type="hidden" name="<?= e($this->security->get_csrf_token_name()) ?>" value="<?= e($this->security->get_csrf_hash()) ?>">
 
                     <?= component('input', [
@@ -183,6 +183,7 @@
                             'icon' => 'save',
                             'type' => 'submit',
                             'class' => 'mt-2 w-full',
+                            'attrs' => ['data-rotulo-carregando' => 'Salvando...'],
                         ]) ?>
                     <?php } else { ?>
                         <div class="mt-2 rounded-lg border border-border bg-surface-subtle p-3 text-center text-caption text-muted">

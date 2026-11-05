@@ -18,6 +18,7 @@
 // erros, ou redireciona com o toast de sucesso.
 
 import { marcarCarregando, mensagemDoCampo, mostrarErroDoCampo } from '../../lib/formulario.js';
+import { atualizarCamposCsrf } from '../../lib/http.js';
 import { MASCARAS } from '../../lib/mascaras.js';
 
 const CAMPOS = 'input:not([type=hidden]):not([type=button]):not([type=submit]), select, textarea';
@@ -73,6 +74,8 @@ export default function iniciar(formulario) {
     });
 
     formulario.addEventListener('submit', (evento) => {
+        atualizarCamposCsrf(formulario);
+
         let primeiro = null;
 
         for (const campo of formulario.querySelectorAll(CAMPOS)) {
@@ -99,8 +102,9 @@ export default function iniciar(formulario) {
     // marcado, e não para o primeiro do formulário (autofocus).
     formulario.querySelector('[aria-invalid="true"]')?.focus();
 
-    // Voltar pelo histórico (bfcache) não pode deixar o botão travado.
+    // Voltar pelo histórico (bfcache) não pode deixar o botão travado e atualiza o CSRF.
     window.addEventListener('pageshow', () => {
+        atualizarCamposCsrf(formulario);
         for (const botao of formulario.querySelectorAll('[type=submit][aria-busy=true]')) {
             marcarCarregando(botao, false);
         }

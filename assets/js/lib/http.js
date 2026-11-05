@@ -18,7 +18,8 @@ export class ErroHttp extends Error {
 }
 
 function meta(nome, raiz) {
-    return raiz.querySelector(`meta[name="${nome}"]`)?.content ?? null;
+    const doc = raiz?.ownerDocument ?? (raiz?.querySelector ? raiz : document);
+    return doc.querySelector(`meta[name="${nome}"]`)?.content ?? null;
 }
 
 export function lerCookie(nome, cookies) {
@@ -33,14 +34,15 @@ export function lerCookie(nome, cookies) {
 }
 
 export function tokenCsrf(raiz = document) {
-    const campo = meta('csrf-token-name', raiz);
-    const cookie = meta('csrf-cookie-name', raiz);
+    const doc = raiz?.ownerDocument ?? (raiz?.cookie !== undefined ? raiz : document);
+    const campo = meta('csrf-token-name', doc);
+    const cookie = meta('csrf-cookie-name', doc);
 
     if (!campo || !cookie) {
         return null;
     }
 
-    const valor = lerCookie(cookie, raiz.cookie ?? '');
+    const valor = lerCookie(cookie, doc.cookie ?? '');
 
     return valor === null ? null : { campo, valor };
 }
@@ -61,11 +63,13 @@ export function corpoComCsrf(dados, csrf) {
     return corpo;
 }
 
-function atualizarCamposCsrf(raiz = document) {
-    const csrf = tokenCsrf(raiz);
+export function atualizarCamposCsrf(raiz = document) {
+    const doc = raiz?.ownerDocument ?? (raiz?.cookie !== undefined ? raiz : document);
+    const csrf = tokenCsrf(doc);
     if (!csrf) return;
 
-    raiz.querySelectorAll(`input[name="${csrf.campo}"]`).forEach((campo) => {
+    const alvo = raiz?.querySelectorAll ? raiz : doc;
+    alvo.querySelectorAll(`input[name="${csrf.campo}"]`).forEach((campo) => {
         campo.value = csrf.valor;
     });
 }
