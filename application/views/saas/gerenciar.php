@@ -21,14 +21,16 @@
             <h1 class="font-display text-heading-xl text-text">Gerenciar SaaS</h1>
             <p class="text-caption text-muted">Acompanhe métricas financeiras, evolução da receita e precificação da assinatura.</p>
         </div>
-        <div>
-            <?= component('button', [
-                'label' => 'Ver Todos os Assinantes',
-                'icon' => 'users',
-                'variant' => 'outline',
-                'href' => site_url('saas/assinantes'),
-            ]) ?>
-        </div>
+        <?php if (! empty($podeAssinantes)) { ?>
+            <div>
+                <?= component('button', [
+                    'label' => 'Ver Todos os Assinantes',
+                    'icon' => 'users',
+                    'variant' => 'outline',
+                    'href' => site_url('saas/assinantes'),
+                ]) ?>
+            </div>
+        <?php } ?>
     </header>
 
     <!-- KPIs Executivos do Topo (kpi-card) -->
@@ -107,12 +109,14 @@
         <section class="flex flex-col justify-between rounded-xl border border-border bg-surface p-5 shadow-card lg:col-span-2">
             <div class="mb-4 flex items-center justify-between border-b border-border pb-3">
                 <h2 class="font-display text-base font-semibold text-text">Últimos Assinantes</h2>
-                <?= component('button', [
-                    'label' => 'Ver todos os assinantes',
-                    'variant' => 'ghost',
-                    'size' => 'sm',
-                    'href' => site_url('saas/assinantes'),
-                ]) ?>
+                <?php if (! empty($podeAssinantes)) { ?>
+                    <?= component('button', [
+                        'label' => 'Ver todos os assinantes',
+                        'variant' => 'ghost',
+                        'size' => 'sm',
+                        'href' => site_url('saas/assinantes'),
+                    ]) ?>
+                <?php } ?>
             </div>
 
             <div class="overflow-x-auto">
@@ -168,16 +172,23 @@
                         'type' => 'text',
                         'value' => number_format($metricas['valor_assinatura'] ?? $metricas['valor_essencial'], 2, ',', '.'),
                         'required' => true,
+                        'disabled' => empty($podeAlterarPreco),
                         'class' => 'tabular-nums',
-                        'attrs' => ['data-mascara' => 'dinheiro', 'inputmode' => 'decimal', 'maxlength' => 20, 'data-msg-vazio' => 'Informe o valor.'],
+                        'attrs' => empty($podeAlterarPreco) ? [] : ['data-mascara' => 'dinheiro', 'inputmode' => 'decimal', 'maxlength' => 20, 'data-msg-vazio' => 'Informe o valor.'],
                     ]) ?>
 
-                    <?= component('button', [
-                        'label' => 'Salvar Preço da Assinatura',
-                        'icon' => 'save',
-                        'type' => 'submit',
-                        'class' => 'mt-2 w-full',
-                    ]) ?>
+                    <?php if (! empty($podeAlterarPreco)) { ?>
+                        <?= component('button', [
+                            'label' => 'Salvar Preço da Assinatura',
+                            'icon' => 'save',
+                            'type' => 'submit',
+                            'class' => 'mt-2 w-full',
+                        ]) ?>
+                    <?php } else { ?>
+                        <div class="mt-2 rounded-lg border border-border bg-surface-subtle p-3 text-center text-caption text-muted">
+                            Visualização apenas: seu perfil de acesso não possui permissão para alterar o preço da assinatura.
+                        </div>
+                    <?php } ?>
                 </form>
 
                 <p class="text-caption text-muted mt-3 text-center">O novo preço será aplicado para novas contratações e renovações.</p>

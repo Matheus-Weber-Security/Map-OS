@@ -125,6 +125,30 @@ $caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
             </div>
         </section>
 
+        <?php if (! empty($eh_master)) { ?>
+            <section class="<?= e($caixa) ?>" aria-labelledby="secao-suporte">
+                <div class="flex items-center gap-2 border-b border-border pb-3">
+                    <?= icon('wrench', ['class' => 'size-5 text-primary']) ?>
+                    <div>
+                        <h2 id="secao-suporte" class="text-heading-sm font-semibold text-text">Suporte e Gestão de Assinantes (Exclusivo Master)</h2>
+                        <p class="text-caption text-muted">Permissões administrativas para atendimento, suporte técnico e gestão de empresas no SaaS.</p>
+                    </div>
+                </div>
+                <div class="mt-4 grid gap-4 sm:grid-cols-2">
+                    <?php foreach (PERMISSOES_SUPORTE as $codigo => [$rotulo, $ajuda]) { ?>
+                        <?= component('checkbox', [
+                            'name' => 'permissoes[]',
+                            'id' => 'permissao-' . $codigo,
+                            'value' => $codigo,
+                            'label' => $rotulo,
+                            'help' => $ajuda,
+                            'checked' => $marcada($codigo),
+                        ]) ?>
+                    <?php } ?>
+                </div>
+            </section>
+        <?php } ?>
+
         <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <?= component('button', ['label' => 'Cancelar', 'variant' => 'ghost', 'href' => site_url('permissoes')]) ?>
             <?= component('button', ['label' => $editando ? 'Salvar alterações' : 'Criar grupo', 'icon' => 'save', 'type' => 'submit', 'attrs' => ['data-rotulo-carregando' => 'Salvando…']]) ?>

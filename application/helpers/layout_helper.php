@@ -165,7 +165,12 @@ if (! function_exists('layoutMenuVisivel')) {
 
             if ($item['rota'][0] === 'Saas') {
                 $ci = &get_instance();
-                if (! ($ci->session->userdata('is_superadmin') ?? false)) {
+                $isSuper = (bool) ($ci->session->userdata('is_superadmin') ?? false);
+                $empresaId = (int) ($ci->session->userdata('empresa_id') ?: 1);
+                $podeSaas = (bool) ($ci->permission->checkPermission($ci->session->userdata('permissao'), 'vSaasDashboard')
+                    || $ci->permission->checkPermission($ci->session->userdata('permissao'), 'vSaasAssinantes'));
+
+                if (! $isSuper && (! ($empresaId === 1 && $podeSaas))) {
                     continue;
                 }
             }

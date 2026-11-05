@@ -47,6 +47,8 @@ $config['permissions_map'] = [
         'ajustarDesconto' => '*',
         'alterarPlano' => '*',
         'trocarEmpresa' => '*',
+        'alterarStatus' => '*',
+        'cadastrarEmpresa' => '*',
     ],
 
     'Arquivos' => [

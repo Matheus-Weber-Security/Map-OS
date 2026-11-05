@@ -73,8 +73,22 @@ class Permissoes extends MY_Controller
         // ser desativados nem perder o acesso a usuários e permissões.
         $protegido = $doLogado || ($grupo !== null && (int) $grupo->idPermissao === PERMISSAO_ADMIN);
 
+        $empresaId = (int) ($this->session->userdata('empresa_id') ?: 1);
+        $ehMaster = ($empresaId === 1 || (bool) $this->session->userdata('is_superadmin'));
+
         if ($this->input->method() === 'post') {
             [$dados, $erros] = permissaoDadosDoFormulario($this->input->post(), $grupo === null);
+
+            // Garante que permissões de suporte do SaaS só possam ser concedidas na Empresa Master
+            if (! $ehMaster) {
+                $permArr = json_decode($dados['permissoes'], true);
+                if (is_array($permArr)) {
+                    foreach (array_keys(PERMISSOES_SUPORTE) as $codSup) {
+                        unset($permArr[$codSup]);
+                    }
+                    $dados['permissoes'] = json_encode($permArr);
+                }
+            }
             // Exigir 2FA do grupo (#2876): só grava se a migration já criou a coluna.
             if ($this->db->field_exists('exigir_2fa', 'permissoes')) {
                 $dados['exigir_2fa'] = in_array($this->input->post('exigir_2fa'), ['1', 'on'], true) ? 1 : 0;
@@ -121,6 +135,7 @@ class Permissoes extends MY_Controller
         $this->data['erros'] = $erros;
         $this->data['do_logado'] = $doLogado;
         $this->data['protegido'] = $protegido;
+        $this->data['eh_master'] = $ehMaster;
         $this->data['view'] = 'permissoes/formulario';
 
         return $this->layout();

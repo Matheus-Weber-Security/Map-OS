@@ -67,6 +67,19 @@ if (! defined('PERMISSOES_SISTEMA')) {
     ]);
 }
 
+if (! defined('PERMISSOES_SUPORTE')) {
+    define('PERMISSOES_SUPORTE', [
+        'vSaasDashboard' => ['Ver dashboard master', 'Visualizar métricas executivas, faturamento (MRR), churn e gráficos financeiros.'],
+        'vSaasAssinantes' => ['Ver lista de assinantes', 'Visualizar a tabela de empresas cadastradas no SaaS para pesquisa e suporte.'],
+        'eSaasPreco' => ['Gerenciar preço da assinatura', 'Alterar o valor da mensalidade (se desmarcado, pode ver mas não alterar).'],
+        'cSaasAcessarEmpresa' => ['Acessar painel das empresas', 'Entrar no ambiente dos assinantes para prestar suporte técnico.'],
+        'eSaasDias' => ['Adicionar dias de acesso', 'Adicionar dias de validade ou teste manualmente às empresas.'],
+        'eSaasDesconto' => ['Ajustar desconto', 'Definir porcentagem de desconto na assinatura dos clientes.'],
+        'aSaasEmpresa' => ['Cadastrar nova empresa', 'Criar novas empresas/assinantes manualmente pelo painel.'],
+        'eSaasStatusEmpresa' => ['Ativar e suspender empresas', 'Bloquear ou reativar o acesso de uma empresa assinante.'],
+    ]);
+}
+
 if (! function_exists('permissoesCodigos')) {
     /**
      * Todos os códigos de permissão que o formulário grava, na ordem da tela.
@@ -82,7 +95,7 @@ if (! function_exists('permissoesCodigos')) {
             }
         }
 
-        return [...$codigos, ...array_keys(PERMISSOES_RELATORIOS), ...array_keys(PERMISSOES_SISTEMA)];
+        return [...$codigos, ...array_keys(PERMISSOES_RELATORIOS), ...array_keys(PERMISSOES_SISTEMA), ...array_keys(PERMISSOES_SUPORTE)];
     }
 }
 

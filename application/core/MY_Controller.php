@@ -354,7 +354,7 @@ class MY_Controller extends CI_Controller
     {
         $this->load->helper('usuarios');
 
-        if ((int) $this->session->userdata('id_admin') === USUARIO_SUPER_ADMIN || (int) $this->session->userdata('permissao') === PERMISSAO_ADMIN) {
+        if ((int) $this->session->userdata('id_admin') === USUARIO_SUPER_ADMIN || (int) $this->session->userdata('permissao') === PERMISSAO_ADMIN || (bool) $this->session->userdata('is_superadmin')) {
             return true;
         }
 

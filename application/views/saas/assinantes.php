@@ -9,7 +9,19 @@
  * @var array<string, string> $filtros
  * @var int                   $total
  * @var list<object>          $planos
+ * @var bool                  $podeDias
+ * @var bool                  $podeDesconto
+ * @var bool                  $podeAcessar
+ * @var bool                  $podeStatus
+ * @var bool                  $podeCadastrar
  */
+$podeDias = ! empty($podeDias);
+$podeDesconto = ! empty($podeDesconto);
+$podeAcessar = ! empty($podeAcessar);
+$podeStatus = ! empty($podeStatus);
+$podeCadastrar = ! empty($podeCadastrar);
+$temAcoes = $podeDias || $podeDesconto || $podeStatus || $podeAcessar;
+
 $temFiltro = ($filtros['busca'] ?? '') !== '' || (($filtros['status'] ?? '') !== '' && ($filtros['status'] ?? '') !== 'todos');
 $csrf = [$this->security->get_csrf_token_name(), $this->security->get_csrf_hash()];
 
@@ -18,12 +30,19 @@ $colunas = [
     [
         'label' => 'Nome da Empresa',
         'class' => 'min-w-44 [overflow-wrap:anywhere]',
-        'render' => fn ($e) => component('link', [
-            'label' => $e->nome_fantasia ?: $e->razao_social,
-            'href' => site_url('saas/trocarEmpresa/' . $e->id),
-            'class' => 'font-semibold text-text hover:text-primary',
-            'attrs' => ['title' => 'Acessar painel desta empresa'],
-        ]),
+        'render' => function ($e) use ($podeAcessar) {
+            $nome = (string) ($e->nome_fantasia ?: $e->razao_social);
+            if ($podeAcessar) {
+                return component('link', [
+                    'label' => $nome,
+                    'href' => site_url('saas/trocarEmpresa/' . $e->id),
+                    'class' => 'font-semibold text-text hover:text-primary',
+                    'attrs' => ['title' => 'Acessar painel desta empresa'],
+                ]);
+            }
+
+            return html_purificado('<span class="font-semibold text-text">' . e($nome) . '</span>');
+        },
     ],
     [
         'key' => 'email',
@@ -32,6 +51,21 @@ $colunas = [
         'truncate' => true,
         'hide_until' => 'lg',
         'render' => fn ($e) => e($e->email ?: 'Sem e-mail'),
+    ],
+    [
+        'label' => 'Status',
+        'align' => 'center',
+        'nowrap' => true,
+        'render' => function ($e) {
+            if ($e->status === 'suspensa') {
+                return component('pill-status', ['label' => 'Suspensa', 'variant' => 'danger']);
+            }
+            if ((int) $e->dias_restantes <= 0) {
+                return component('pill-status', ['label' => 'Vencida', 'variant' => 'warning']);
+            }
+
+            return component('pill-status', ['label' => 'Ativa', 'variant' => 'success']);
+        },
     ],
     [
         'label' => 'Pagamento',
@@ -81,15 +115,19 @@ $colunas = [
                 : component('pill-status', ['label' => 'Sem desconto', 'variant' => 'neutral']);
         },
     ],
-    [
+];
+
+if ($temAcoes) {
+    $colunas[] = [
         'label' => 'Ações',
         'align' => 'right',
         'nowrap' => true,
-        'render' => function ($e) {
+        'render' => function ($e) use ($podeDias, $podeDesconto, $podeStatus, $podeAcessar) {
             $nome = (string) ($e->nome_fantasia ?: $e->razao_social);
+            $acoes = [];
 
-            return [
-                component('button', [
+            if ($podeDias) {
+                $acoes[] = component('button', [
                     'label' => 'Adicionar dias para ' . $nome,
                     'icon' => 'plus',
                     'icon_only' => true,
@@ -102,8 +140,11 @@ $colunas = [
                         'data-valor-nome' => $nome,
                         'title' => 'Adicionar dias de acesso',
                     ],
-                ]),
-                component('button', [
+                ]);
+            }
+
+            if ($podeDesconto) {
+                $acoes[] = component('button', [
                     'label' => 'Ajustar desconto de ' . $nome,
                     'icon' => 'percent',
                     'icon_only' => true,
@@ -117,8 +158,31 @@ $colunas = [
                         'data-valor-desconto' => (string) ($e->desconto_percentual ?? 0),
                         'title' => 'Ajustar desconto comercial (%)',
                     ],
-                ]),
-                component('button', [
+                ]);
+            }
+
+            if ($podeStatus && (int) $e->id > 1) {
+                $isSuspensa = ($e->status === 'suspensa');
+                $acoes[] = component('button', [
+                    'label' => ($isSuspensa ? 'Ativar empresa ' : 'Suspender empresa ') . $nome,
+                    'icon' => $isSuspensa ? 'shield-check' : 'shield-off',
+                    'icon_only' => true,
+                    'variant' => 'outline',
+                    'size' => 'sm',
+                    'class' => 'border-border text-muted ' . ($isSuspensa ? 'hover:text-success-ink hover:border-success-soft hover:bg-success-soft/20' : 'hover:text-danger-ink hover:border-danger-soft hover:bg-danger-soft/20') . ' shadow-2xs',
+                    'attrs' => [
+                        'data-modal-abrir' => 'modal-status',
+                        'data-valor-id' => (string) $e->id,
+                        'data-valor-nome' => $nome,
+                        'data-valor-acao' => $isSuspensa ? 'ativar' : 'suspender',
+                        'data-valor-status' => $isSuspensa ? 'ativa' : 'suspensa',
+                        'title' => $isSuspensa ? 'Ativar empresa' : 'Suspender empresa',
+                    ],
+                ]);
+            }
+
+            if ($podeAcessar) {
+                $acoes[] = component('button', [
                     'label' => 'Acessar painel de ' . $nome,
                     'icon' => 'log-in',
                     'icon_only' => true,
@@ -129,11 +193,13 @@ $colunas = [
                     'attrs' => [
                         'title' => 'Acessar painel desta empresa',
                     ],
-                ]),
-            ];
+                ]);
+            }
+
+            return $acoes;
         },
-    ],
-];
+    ];
+}
 
 $vazio = component('empty-state', [
     'title' => $temFiltro ? 'Nenhum assinante encontrado' : 'Nenhuma empresa cadastrada',
@@ -161,10 +227,19 @@ $vazio = component('empty-state', [
                 <?= e(($total === 1 ? '1 assinante' : number_format($total, 0, ',', '.') . ' assinantes') . ($temFiltro ? ' encontrados com os filtros' : '')) ?>
             </p>
         </div>
-        <div>
+        <div class="flex items-center gap-2">
             <span class="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-caption font-bold text-text shadow-2xs">
                 TOTAL EXIBIDO: <?= (int) $total ?>
             </span>
+            <?php if ($podeCadastrar) { ?>
+                <?= component('button', [
+                    'label' => 'Nova Empresa',
+                    'icon' => 'plus',
+                    'attrs' => [
+                        'data-modal-abrir' => 'modal-nova-empresa',
+                    ],
+                ]) ?>
+            <?php } ?>
         </div>
     </header>
 
@@ -186,6 +261,7 @@ $vazio = component('empty-state', [
             'options' => [
                 'ativos' => 'Ativos (com dias)',
                 'inativos' => 'Inativos (vencidos)',
+                'suspensas' => 'Suspensas',
             ],
             'selected' => $filtros['status'] ?? null,
         ]) ?>
@@ -207,6 +283,7 @@ $vazio = component('empty-state', [
     ]) ?>
 </div>
 
+<?php if ($podeDias) { ?>
 <!-- Modal Oficial: Adicionar Dias -->
 <?= component('modal', [
     'id' => 'modal-dias',
@@ -232,7 +309,9 @@ $vazio = component('empty-state', [
         component('button', ['label' => 'Salvar dias', 'icon' => 'plus', 'type' => 'submit', 'attrs' => ['form' => 'form-adicionar-dias', 'data-rotulo-carregando' => 'Salvando…']]),
     ],
 ]) ?>
+<?php } ?>
 
+<?php if ($podeDesconto) { ?>
 <!-- Modal Oficial: Ajustar Desconto -->
 <?= component('modal', [
     'id' => 'modal-desconto',
@@ -258,3 +337,101 @@ $vazio = component('empty-state', [
         component('button', ['label' => 'Salvar desconto', 'icon' => 'percent', 'type' => 'submit', 'attrs' => ['form' => 'form-ajustar-desconto', 'data-rotulo-carregando' => 'Salvando…']]),
     ],
 ]) ?>
+<?php } ?>
+
+<?php if ($podeStatus) { ?>
+<!-- Modal Oficial: Alterar Status da Empresa -->
+<?= component('modal', [
+    'id' => 'modal-status',
+    'title' => 'Alterar status da empresa',
+    'body' => [
+        new HtmlSeguro('<p class="mb-4 text-body text-text">Deseja realmente <strong class="font-semibold text-text" data-modal-valor="acao"></strong> o acesso da empresa <strong class="font-semibold text-text" data-modal-valor="nome"></strong>?</p>'),
+        new HtmlSeguro('<form id="form-alterar-status" method="post" action="' . e(site_url('saas/alterarStatus')) . '" novalidate ' . js_module('formulario/padrao') . '>'),
+        new HtmlSeguro('<input type="hidden" name="' . e($csrf[0]) . '" value="' . e($csrf[1]) . '">'),
+        new HtmlSeguro('<input type="hidden" name="empresa_id" value="" data-modal-valor="id">'),
+        new HtmlSeguro('<input type="hidden" name="status" value="" data-modal-valor="status">'),
+        new HtmlSeguro('</form>'),
+    ],
+    'footer' => [
+        component('button', ['label' => 'Cancelar', 'variant' => 'ghost', 'attrs' => ['data-modal-fechar' => true]]),
+        component('button', ['label' => 'Confirmar', 'icon' => 'save', 'type' => 'submit', 'attrs' => ['form' => 'form-alterar-status', 'data-rotulo-carregando' => 'Salvando…']]),
+    ],
+]) ?>
+<?php } ?>
+
+<?php if ($podeCadastrar) { ?>
+<!-- Modal Oficial: Cadastrar Nova Empresa -->
+<?= component('modal', [
+    'id' => 'modal-nova-empresa',
+    'title' => 'Cadastrar Nova Empresa',
+    'size' => 'lg',
+    'body' => [
+        new HtmlSeguro('<form id="form-cadastrar-empresa" method="post" action="' . e(site_url('saas/cadastrarEmpresa')) . '" novalidate ' . js_module('formulario/padrao') . ' class="space-y-4">'),
+        new HtmlSeguro('<input type="hidden" name="' . e($csrf[0]) . '" value="' . e($csrf[1]) . '">'),
+        new HtmlSeguro('<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">'),
+        component('input', [
+            'name' => 'razao_social',
+            'label' => 'Razão Social',
+            'type' => 'text',
+            'required' => true,
+            'placeholder' => 'Ex: Minha Empresa LTDA',
+            'attrs' => ['maxlength' => 150, 'data-msg-vazio' => 'Informe a Razão Social.'],
+        ]),
+        component('input', [
+            'name' => 'nome_fantasia',
+            'label' => 'Nome Fantasia',
+            'type' => 'text',
+            'placeholder' => 'Ex: Oficina do João',
+            'attrs' => ['maxlength' => 150],
+        ]),
+        component('input', [
+            'name' => 'documento',
+            'label' => 'CNPJ ou CPF',
+            'type' => 'text',
+            'attrs' => ['data-mascara' => 'documento', 'maxlength' => 20],
+        ]),
+        component('input', [
+            'name' => 'telefone',
+            'label' => 'Telefone / WhatsApp',
+            'type' => 'tel',
+            'attrs' => ['data-mascara' => 'telefone', 'maxlength' => 20],
+        ]),
+        component('input', [
+            'name' => 'email',
+            'label' => 'E-mail do Administrador (Login)',
+            'type' => 'email',
+            'required' => true,
+            'placeholder' => 'admin@empresa.com',
+            'attrs' => ['maxlength' => 100, 'data-msg-vazio' => 'Informe o e-mail de acesso.'],
+        ]),
+        component('input', [
+            'name' => 'nome_dono',
+            'label' => 'Nome do Administrador',
+            'type' => 'text',
+            'placeholder' => 'Ex: João da Silva',
+            'attrs' => ['maxlength' => 100],
+        ]),
+        component('input', [
+            'name' => 'senha',
+            'label' => 'Senha Inicial de Acesso',
+            'type' => 'password',
+            'required' => true,
+            'attrs' => ['minlength' => 6, 'maxlength' => 50, 'data-msg-vazio' => 'Informe uma senha provisória.'],
+        ]),
+        component('input', [
+            'name' => 'dias_trial',
+            'label' => 'Dias de Degustação / Validade',
+            'type' => 'number',
+            'value' => '10',
+            'required' => true,
+            'attrs' => ['step' => 1, 'min' => 1, 'max' => 365, 'inputmode' => 'numeric', 'data-msg-vazio' => 'Informe a quantidade de dias.'],
+        ]),
+        new HtmlSeguro('</div>'),
+        new HtmlSeguro('</form>'),
+    ],
+    'footer' => [
+        component('button', ['label' => 'Cancelar', 'variant' => 'ghost', 'attrs' => ['data-modal-fechar' => true]]),
+        component('button', ['label' => 'Cadastrar Empresa', 'icon' => 'plus', 'type' => 'submit', 'attrs' => ['form' => 'form-cadastrar-empresa', 'data-rotulo-carregando' => 'Cadastrando…']]),
+    ],
+]) ?>
+<?php } ?>

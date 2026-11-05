@@ -68,6 +68,8 @@ class Saas_model extends CI_Model
                     ->where('e.status !=', 'ativa')
                     ->or_where('e.dias_restantes <=', 0)
                     ->group_end();
+            } elseif ($filtros['status'] === 'suspensas') {
+                $this->db->where('e.status', 'suspensa');
             }
         }
 
@@ -114,6 +116,15 @@ class Saas_model extends CI_Model
     {
         return $this->db->where('id', $empresaId)->update('saas_empresas', [
             'plano_id' => $planoId,
+        ]);
+    }
+
+    public function alterarStatusEmpresa(int $empresaId, string $status): bool
+    {
+        $statusValido = in_array($status, ['ativa', 'inativa', 'suspensa'], true) ? $status : 'inativa';
+
+        return $this->db->where('id', $empresaId)->update('saas_empresas', [
+            'status' => $statusValido,
         ]);
     }
 
