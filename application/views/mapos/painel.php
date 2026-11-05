@@ -146,16 +146,20 @@ if ($pode['os']) {
                 </div>
             </section>
 
-            <section class="<?= e($caixa) ?> min-w-0" aria-labelledby="titulo-os-status">
+            <section class="<?= e($caixa) ?> flex flex-col min-w-0" aria-labelledby="titulo-os-status">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <h2 id="titulo-os-status" class="text-heading-sm text-text">OS por status</h2>
                     <?= component('button', ['label' => 'Ver OS', 'variant' => 'ghost', 'size' => 'sm', 'href' => site_url('os')]) ?>
                 </div>
                 <?php if ($os_grafico === []) { ?>
-                    <?= component('empty-state', ['title' => 'Nenhuma OS cadastrada', 'message' => 'As OS aparecem aqui por status.', 'icon' => 'chart-pie', 'class' => 'border-0']) ?>
+                    <div class="flex flex-1 items-center justify-center py-4">
+                        <?= component('empty-state', ['title' => 'Nenhuma OS cadastrada', 'message' => 'As OS aparecem aqui por status.', 'icon' => 'chart-pie', 'class' => 'border-0']) ?>
+                    </div>
                 <?php } else { ?>
-                    <div class="relative mx-auto mt-4 aspect-square max-w-72">
-                        <canvas data-grafico="os" role="img" aria-label="Gráfico de OS por status"></canvas>
+                    <div class="flex flex-1 items-center justify-center w-full py-2">
+                        <div class="relative aspect-square w-full max-w-md">
+                            <canvas data-grafico="os" role="img" aria-label="Gráfico de OS por status"></canvas>
+                        </div>
                     </div>
                     <div class="sr-only"><table>
                         <caption>OS por status</caption>
