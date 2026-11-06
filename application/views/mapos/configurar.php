@@ -168,6 +168,16 @@ foreach ($campos as $nome => $def) {
         <form method="post" action="<?= e(site_url('mapos/configurar') . listagemQuery(['aba' => $aba])) ?>" novalidate class="flex flex-col gap-4" <?= js_module('formulario/padrao') ?>>
             <input type="hidden" name="<?= e($this->security->get_csrf_token_name()) ?>" value="<?= e($this->security->get_csrf_hash()) ?>">
 
+            <?php if ($aba === 'pagamentos') { ?>
+                <div class="flex flex-col gap-1 pt-1">
+                    <h2 class="font-display text-heading-md font-semibold text-text flex items-center gap-2">
+                        <?= icon('barcode', ['class' => 'size-6 text-primary']) ?>
+                        <span>Boleto</span>
+                    </h2>
+                    <p class="text-caption text-muted">Gateways emissores de boleto bancário para cobrança de clientes em Vendas e Ordens de Serviço.</p>
+                </div>
+            <?php } ?>
+
             <?php foreach ($grupos as $titulo => $lista) { ?>
                 <section class="<?= e($caixa) ?>" aria-label="<?= e($titulo !== '' ? $titulo : CONFIG_ABAS[$aba]) ?>">
                     <?php if ($titulo !== '') { ?>

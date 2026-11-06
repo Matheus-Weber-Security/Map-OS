@@ -7,9 +7,10 @@
  */
 $caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6 shadow-2xs flex flex-col gap-4';
 $grade = 'grid gap-4 sm:grid-cols-2';
-$usarEnv = ! empty($configuracoes['usar_env']);
+$tipoPixAtual = $configuracoes['tipo_pix'] ?? 'dinamico';
+$provedorAtual = $forma->provedor ?: 'mercadopago';
 ?>
-<div class="flex max-w-4xl flex-col gap-6 pt-2 pb-8 mx-auto w-full">
+<div class="flex max-w-4xl flex-col gap-6 pt-2 pb-8 mx-auto w-full" <?= js_module('saas/forma-pagamento') ?>>
     <!-- Cabeçalho -->
     <header class="flex flex-wrap items-end justify-between gap-3">
         <div>
@@ -27,7 +28,7 @@ $usarEnv = ! empty($configuracoes['usar_env']);
                 <?= icon($forma->icone ?: 'banknote', ['class' => 'size-6 text-primary']) ?>
                 <span><?= e($forma->nome) ?></span>
             </h1>
-            <p class="text-caption text-muted">Ajuste os parâmetros de cobrança, provedores e credenciais para compra de +30 dias.</p>
+            <p class="text-caption text-muted">Ajuste os parâmetros de cobrança, provedores e tokens de API para compra de +30 dias.</p>
         </div>
         <div>
             <?= component('pill-status', [
@@ -84,82 +85,184 @@ $usarEnv = ! empty($configuracoes['usar_env']);
                 <div class="border-b border-border pb-3">
                     <h2 class="font-display text-base font-semibold text-text flex items-center gap-2">
                         <?= icon('qr-code', ['class' => 'size-5 text-primary']) ?>
-                        <span>Opções do PIX</span>
+                        <span>Configurações do PIX</span>
                     </h2>
-                    <p class="text-caption text-muted">Defina como o QR Code será gerado para o cliente.</p>
+                    <p class="text-caption text-muted">Escolha entre baixa automática via Gateway de pagamento ou chave PIX fixa para transferência direta.</p>
                 </div>
 
-                <div class="<?= e($grade) ?>">
+                <div class="w-full">
                     <?= component('select', [
                         'name' => 'tipo_pix',
                         'label' => 'Modelo de Cobrança PIX',
-                        'selected' => $configuracoes['tipo_pix'] ?? 'dinamico',
+                        'selected' => $tipoPixAtual,
                         'options' => [
-                            ['value' => 'dinamico', 'label' => 'PIX Dinâmico (Via Gateway com baixa automática)'],
-                            ['value' => 'manual', 'label' => 'PIX Chave Fixa (Manual com chave da empresa)'],
+                            ['value' => 'dinamico', 'label' => 'PIX Dinâmico (Via Gateway com baixa automática instantânea)'],
+                            ['value' => 'manual', 'label' => 'PIX Chave Fixa (Manual com chave bancária da empresa master)'],
                         ],
-                    ]) ?>
-
-                    <?= component('select', [
-                        'name' => 'provedor',
-                        'label' => 'Gateway Processador',
-                        'selected' => $forma->provedor,
-                        'options' => [
-                            ['value' => 'mercadopago', 'label' => 'Mercado Pago'],
-                            ['value' => 'asaas', 'label' => 'Asaas'],
-                            ['value' => 'gerencianet', 'label' => 'Efí (antiga Gerencianet)'],
-                        ],
+                        'help' => 'No modelo dinâmico, o gateway gera o QR Code e credita os 30 dias na hora. No modelo manual, o cliente paga na sua chave e você confere o comprovante.',
                     ]) ?>
                 </div>
 
-                <div class="<?= e($grade) ?>">
-                    <?= component('input', [
-                        'name' => 'chave_pix',
-                        'label' => 'Chave PIX (Para modo manual)',
-                        'type' => 'text',
-                        'value' => $configuracoes['chave_pix'] ?? '',
-                        'help' => 'Preencha se estiver usando o modelo Chave Fixa.',
-                    ]) ?>
+                <!-- Bloco PIX Dinâmico (Via Gateway) -->
+                <div id="bloco-pix-dinamico" class="flex flex-col gap-4 <?= $tipoPixAtual === 'manual' ? 'hidden' : '' ?>">
+                    <div class="rounded-lg border border-border bg-surface-subtle p-3.5 flex items-start gap-3">
+                        <?= icon('circle-dollar-sign', ['class' => 'size-5 text-primary shrink-0 mt-0.5']) ?>
+                        <div class="text-caption text-muted">
+                            <strong class="text-text font-semibold">Baixa Automática Instantânea:</strong> A API do gateway gera um QR Code exclusivo com valor e expiração. Quando a empresa assinante paga em seu banco, o gateway avisa o sistema e +30 dias são creditados automaticamente.
+                        </div>
+                    </div>
 
-                    <?= component('select', [
-                        'name' => 'tipo_chave',
-                        'label' => 'Tipo da Chave PIX',
-                        'selected' => $configuracoes['tipo_chave'] ?? 'aleatoria',
-                        'options' => [
-                            ['value' => 'cnpj', 'label' => 'CNPJ'],
-                            ['value' => 'cpf', 'label' => 'CPF'],
-                            ['value' => 'email', 'label' => 'E-mail'],
-                            ['value' => 'telefone', 'label' => 'Telefone'],
-                            ['value' => 'aleatoria', 'label' => 'Chave Aleatória (EVP)'],
-                        ],
-                    ]) ?>
+                    <div class="<?= e($grade) ?>">
+                        <?= component('select', [
+                            'name' => 'provedor',
+                            'label' => 'Gateway Processador',
+                            'selected' => $provedorAtual,
+                            'options' => [
+                                ['value' => 'mercadopago', 'label' => 'Mercado Pago'],
+                                ['value' => 'asaas', 'label' => 'Asaas'],
+                                ['value' => 'gerencianet', 'label' => 'Efí (antiga Gerencianet)'],
+                            ],
+                        ]) ?>
+
+                        <?= component('input', [
+                            'name' => 'expiracao_minutos',
+                            'label' => 'Tempo de Expiração do QR Code (Minutos)',
+                            'type' => 'number',
+                            'value' => (string) ($configuracoes['expiracao_minutos'] ?? 60),
+                            'attrs' => ['min' => 5, 'max' => 1440],
+                            'help' => 'Tempo que o cliente tem para ler o QR Code e pagar antes de expirar.',
+                        ]) ?>
+                    </div>
+
+                    <!-- Credenciais Mercado Pago -->
+                    <div id="credenciais-mercadopago" class="flex flex-col gap-4 border-t border-border pt-4 <?= $provedorAtual !== 'mercadopago' ? 'hidden' : '' ?>">
+                        <div class="flex items-center gap-2">
+                            <?= icon('key-round', ['class' => 'size-4 text-primary']) ?>
+                            <h3 class="font-display text-sm font-semibold text-text">Credenciais de API - Mercado Pago</h3>
+                        </div>
+                        <div class="<?= e($grade) ?>">
+                            <?= component('input', [
+                                'name' => 'mp_access_token',
+                                'label' => 'Access Token (Produção)',
+                                'type' => 'password',
+                                'value' => $configuracoes['access_token'] ?? $configuracoes['mp_access_token'] ?? '',
+                                'help' => 'Token de produção (ex: APP_USR-...) obtido no painel de desenvolvedores do Mercado Pago.',
+                                'attrs' => ['autocomplete' => 'new-password'],
+                            ]) ?>
+
+                            <?= component('input', [
+                                'name' => 'mp_public_key',
+                                'label' => 'Public Key (Chave Pública)',
+                                'type' => 'text',
+                                'value' => $configuracoes['public_key'] ?? $configuracoes['mp_public_key'] ?? '',
+                                'help' => 'Chave pública da sua aplicação no Mercado Pago.',
+                            ]) ?>
+                        </div>
+                    </div>
+
+                    <!-- Credenciais Asaas -->
+                    <div id="credenciais-asaas" class="flex flex-col gap-4 border-t border-border pt-4 <?= $provedorAtual !== 'asaas' ? 'hidden' : '' ?>">
+                        <div class="flex items-center gap-2">
+                            <?= icon('key-round', ['class' => 'size-4 text-primary']) ?>
+                            <h3 class="font-display text-sm font-semibold text-text">Credenciais de API - Asaas</h3>
+                        </div>
+                        <div class="w-full">
+                            <?= component('input', [
+                                'name' => 'asaas_api_key',
+                                'label' => 'Chave de API Asaas (API Key)',
+                                'type' => 'password',
+                                'value' => $configuracoes['api_key'] ?? $configuracoes['asaas_api_key'] ?? '',
+                                'help' => 'Chave de API gerada no painel Asaas em Minha Conta > Integrações.',
+                                'attrs' => ['autocomplete' => 'new-password'],
+                            ]) ?>
+                        </div>
+                    </div>
+
+                    <!-- Credenciais Efí (Gerencianet) -->
+                    <div id="credenciais-gerencianet" class="flex flex-col gap-4 border-t border-border pt-4 <?= $provedorAtual !== 'gerencianet' ? 'hidden' : '' ?>">
+                        <div class="flex items-center gap-2">
+                            <?= icon('key-round', ['class' => 'size-4 text-primary']) ?>
+                            <h3 class="font-display text-sm font-semibold text-text">Credenciais de API - Efí (Gerencianet)</h3>
+                        </div>
+                        <div class="<?= e($grade) ?>">
+                            <?= component('input', [
+                                'name' => 'efi_client_id',
+                                'label' => 'Client ID',
+                                'type' => 'text',
+                                'value' => $configuracoes['client_id'] ?? $configuracoes['efi_client_id'] ?? '',
+                                'help' => 'Client ID obtido na aplicação cadastrada na Efí.',
+                            ]) ?>
+
+                            <?= component('input', [
+                                'name' => 'efi_client_secret',
+                                'label' => 'Client Secret',
+                                'type' => 'password',
+                                'value' => $configuracoes['client_secret'] ?? $configuracoes['efi_client_secret'] ?? '',
+                                'help' => 'Client Secret da aplicação cadastrada na Efí.',
+                                'attrs' => ['autocomplete' => 'new-password'],
+                            ]) ?>
+                        </div>
+                        <div class="<?= e($grade) ?>">
+                            <?= component('input', [
+                                'name' => 'efi_chave_pix',
+                                'label' => 'Chave PIX da Conta Efí',
+                                'type' => 'text',
+                                'value' => $configuracoes['chave_pix_efi'] ?? $configuracoes['efi_chave_pix'] ?? '',
+                                'help' => 'A chave PIX vinculada à sua conta Efí onde o valor será recebido.',
+                            ]) ?>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="<?= e($grade) ?>">
-                    <?= component('input', [
-                        'name' => 'titular',
-                        'label' => 'Nome do Titular da Conta',
-                        'type' => 'text',
-                        'value' => $configuracoes['titular'] ?? '',
-                    ]) ?>
+                <!-- Bloco PIX Manual (Chave Fixa) -->
+                <div id="bloco-pix-manual" class="flex flex-col gap-4 <?= $tipoPixAtual === 'dinamico' ? 'hidden' : '' ?>">
+                    <div class="rounded-lg border border-border bg-surface-subtle p-3.5 flex items-start gap-3">
+                        <?= icon('info', ['class' => 'size-5 text-primary shrink-0 mt-0.5']) ?>
+                        <div class="text-caption text-muted">
+                            <strong class="text-text font-semibold">Chave PIX Fixa:</strong> O sistema gera o QR Code estático padrão do Banco Central com os dados bancários informados abaixo. O assinante paga pelo app do banco dele e você confirma os 30 dias após verificar o comprovante.
+                        </div>
+                    </div>
 
-                    <?= component('input', [
-                        'name' => 'expiracao_minutos',
-                        'label' => 'Tempo de Expiração do QR Code (Minutos)',
-                        'type' => 'number',
-                        'value' => (string) ($configuracoes['expiracao_minutos'] ?? 60),
-                        'attrs' => ['min' => 5, 'max' => 1440],
-                    ]) ?>
-                </div>
+                    <div class="<?= e($grade) ?>">
+                        <?= component('input', [
+                            'name' => 'chave_pix',
+                            'label' => 'Chave PIX',
+                            'type' => 'text',
+                            'value' => $configuracoes['chave_pix'] ?? '',
+                            'help' => 'Ex: seu CNPJ, CPF, E-mail, Celular ou Chave Aleatória.',
+                        ]) ?>
 
-                <div class="pt-2 border-t border-border">
-                    <?= component('switch', [
-                        'name' => 'usar_env',
-                        'label' => 'Usar credenciais de gateway padrão do sistema (.env)',
-                        'value' => '1',
-                        'checked' => $usarEnv,
-                        'help' => 'Aproveita automaticamente as chaves do Mercado Pago, Efí ou Asaas configuradas no arquivo .env do Map-OS.',
-                    ]) ?>
+                        <?= component('select', [
+                            'name' => 'tipo_chave',
+                            'label' => 'Tipo da Chave PIX',
+                            'selected' => $configuracoes['tipo_chave'] ?? 'cnpj',
+                            'options' => [
+                                ['value' => 'cnpj', 'label' => 'CNPJ'],
+                                ['value' => 'cpf', 'label' => 'CPF'],
+                                ['value' => 'email', 'label' => 'E-mail'],
+                                ['value' => 'telefone', 'label' => 'Telefone / Celular'],
+                                ['value' => 'aleatoria', 'label' => 'Chave Aleatória (EVP)'],
+                            ],
+                        ]) ?>
+                    </div>
+
+                    <div class="<?= e($grade) ?>">
+                        <?= component('input', [
+                            'name' => 'titular',
+                            'label' => 'Nome do Titular da Conta / Beneficiário',
+                            'type' => 'text',
+                            'value' => $configuracoes['titular'] ?? '',
+                            'help' => 'Nome da empresa master exatamente como aparece na conta bancária.',
+                        ]) ?>
+
+                        <?= component('input', [
+                            'name' => 'cidade',
+                            'label' => 'Cidade do Titular da Conta',
+                            'type' => 'text',
+                            'value' => $configuracoes['cidade'] ?? 'Sao Paulo',
+                            'help' => 'Cidade da agência bancária (exigida na norma EMV do Banco Central).',
+                        ]) ?>
+                    </div>
                 </div>
             </section>
 
@@ -171,7 +274,7 @@ $usarEnv = ! empty($configuracoes['usar_env']);
                         <?= icon('barcode', ['class' => 'size-5 text-primary']) ?>
                         <span>Opções do Boleto Bancário</span>
                     </h2>
-                    <p class="text-caption text-muted">Configurações de emissão e prazos de compensação bancária.</p>
+                    <p class="text-caption text-muted">Configurações de emissão registrada e tokens de API do gateway emissor.</p>
                 </div>
 
                 <div class="rounded-lg border border-border bg-surface-subtle p-3.5 flex items-start gap-3">
@@ -185,7 +288,7 @@ $usarEnv = ! empty($configuracoes['usar_env']);
                     <?= component('select', [
                         'name' => 'provedor',
                         'label' => 'Gateway Emissor do Boleto',
-                        'selected' => $forma->provedor,
+                        'selected' => $forma->provedor ?: 'asaas',
                         'options' => [
                             ['value' => 'asaas', 'label' => 'Asaas (Recomendado para Boletos)'],
                             ['value' => 'gerencianet', 'label' => 'Efí (antiga Gerencianet)'],
@@ -193,25 +296,82 @@ $usarEnv = ! empty($configuracoes['usar_env']);
                         ],
                     ]) ?>
 
-                    <?= component('input', [
+                    <?php
+                    $opcoesDiasVencimento = [];
+                    for ($d = 1; $d <= 30; $d++) {
+                        $rotulo = $d . ($d === 1 ? ' dia corrido' : ' dias corridos') . ($d === 3 ? ' (Padrão)' : '');
+                        $opcoesDiasVencimento[] = [
+                            'value' => (string) $d,
+                            'label' => $rotulo,
+                        ];
+                    }
+                    ?>
+                    <?= component('select', [
                         'name' => 'dias_vencimento',
-                        'label' => 'Prazo de Vencimento do Boleto (Dias)',
-                        'type' => 'number',
-                        'value' => (string) ($configuracoes['dias_vencimento'] ?? 3),
-                        'required' => true,
-                        'attrs' => ['min' => 1, 'max' => 30],
+                        'label' => 'Prazo de Vencimento do Boleto',
+                        'selected' => (string) ($configuracoes['dias_vencimento'] ?? 3),
+                        'options' => $opcoesDiasVencimento,
                         'help' => 'Quantidade de dias corridos após a geração para vencimento do boleto.',
                     ]) ?>
                 </div>
 
-                <div class="pt-2 border-t border-border">
-                    <?= component('switch', [
-                        'name' => 'usar_env',
-                        'label' => 'Usar credenciais padrão do sistema (.env)',
-                        'value' => '1',
-                        'checked' => $usarEnv,
-                        'help' => 'Utiliza as chaves de API e credenciais bancárias já preenchidas no .env do Map-OS.',
-                    ]) ?>
+                <!-- Credenciais Asaas -->
+                <div id="credenciais-asaas" class="flex flex-col gap-4 border-t border-border pt-4 <?= ($forma->provedor ?: 'asaas') !== 'asaas' ? 'hidden' : '' ?>">
+                    <div class="flex items-center gap-2">
+                        <?= icon('key-round', ['class' => 'size-4 text-primary']) ?>
+                        <h3 class="font-display text-sm font-semibold text-text">Credenciais de API - Asaas</h3>
+                    </div>
+                    <div class="w-full">
+                        <?= component('input', [
+                            'name' => 'asaas_api_key',
+                            'label' => 'Chave de API Asaas (API Key)',
+                            'type' => 'password',
+                            'value' => $configuracoes['api_key'] ?? $configuracoes['asaas_api_key'] ?? '',
+                            'help' => 'Chave de API gerada no painel Asaas em Minha Conta > Integrações.',
+                            'attrs' => ['autocomplete' => 'new-password'],
+                        ]) ?>
+                    </div>
+                </div>
+
+                <!-- Credenciais Efí (Gerencianet) -->
+                <div id="credenciais-gerencianet" class="flex flex-col gap-4 border-t border-border pt-4 <?= $forma->provedor !== 'gerencianet' ? 'hidden' : '' ?>">
+                    <div class="flex items-center gap-2">
+                        <?= icon('key-round', ['class' => 'size-4 text-primary']) ?>
+                        <h3 class="font-display text-sm font-semibold text-text">Credenciais de API - Efí (Gerencianet)</h3>
+                    </div>
+                    <div class="<?= e($grade) ?>">
+                        <?= component('input', [
+                            'name' => 'efi_client_id',
+                            'label' => 'Client ID',
+                            'type' => 'text',
+                            'value' => $configuracoes['client_id'] ?? $configuracoes['efi_client_id'] ?? '',
+                        ]) ?>
+
+                        <?= component('input', [
+                            'name' => 'efi_client_secret',
+                            'label' => 'Client Secret',
+                            'type' => 'password',
+                            'value' => $configuracoes['client_secret'] ?? $configuracoes['efi_client_secret'] ?? '',
+                            'attrs' => ['autocomplete' => 'new-password'],
+                        ]) ?>
+                    </div>
+                </div>
+
+                <!-- Credenciais Mercado Pago -->
+                <div id="credenciais-mercadopago" class="flex flex-col gap-4 border-t border-border pt-4 <?= $forma->provedor !== 'mercadopago' ? 'hidden' : '' ?>">
+                    <div class="flex items-center gap-2">
+                        <?= icon('key-round', ['class' => 'size-4 text-primary']) ?>
+                        <h3 class="font-display text-sm font-semibold text-text">Credenciais de API - Mercado Pago</h3>
+                    </div>
+                    <div class="w-full">
+                        <?= component('input', [
+                            'name' => 'mp_access_token',
+                            'label' => 'Access Token (Produção)',
+                            'type' => 'password',
+                            'value' => $configuracoes['access_token'] ?? $configuracoes['mp_access_token'] ?? '',
+                            'attrs' => ['autocomplete' => 'new-password'],
+                        ]) ?>
+                    </div>
                 </div>
             </section>
 
@@ -223,7 +383,7 @@ $usarEnv = ! empty($configuracoes['usar_env']);
                         <?= icon('banknote', ['class' => 'size-5 text-primary']) ?>
                         <span>Opções do Cartão de Crédito</span>
                     </h2>
-                    <p class="text-caption text-muted">Pagamento à vista com aprovação instantânea e renovação de +30 dias.</p>
+                    <p class="text-caption text-muted">Pagamento com aprovação instantânea e renovação imediata de +30 dias.</p>
                 </div>
 
                 <div class="rounded-lg border border-border bg-surface-subtle p-3.5 flex items-start gap-3">
@@ -237,7 +397,7 @@ $usarEnv = ! empty($configuracoes['usar_env']);
                     <?= component('select', [
                         'name' => 'provedor',
                         'label' => 'Gateway Processador',
-                        'selected' => $forma->provedor,
+                        'selected' => $forma->provedor ?: 'mercadopago',
                         'options' => [
                             ['value' => 'mercadopago', 'label' => 'Mercado Pago (Recomendado)'],
                             ['value' => 'asaas', 'label' => 'Asaas'],
@@ -262,18 +422,51 @@ $usarEnv = ! empty($configuracoes['usar_env']);
                         'type' => 'number',
                         'value' => (string) ($configuracoes['max_parcelas'] ?? 1),
                         'attrs' => ['min' => 1, 'max' => 12],
-                        'help' => 'Normalmente 1x (à vista) para plano mensal de 30 dias.',
+                        'help' => 'Normalmente 1x (à vista) para renovação mensal de 30 dias.',
                     ]) ?>
                 </div>
 
-                <div class="pt-2 border-t border-border">
-                    <?= component('switch', [
-                        'name' => 'usar_env',
-                        'label' => 'Usar credenciais padrão do sistema (.env)',
-                        'value' => '1',
-                        'checked' => $usarEnv,
-                        'help' => 'Utiliza a Public Key e Access Token configurados no .env.',
-                    ]) ?>
+                <!-- Credenciais Mercado Pago -->
+                <div id="credenciais-mercadopago" class="flex flex-col gap-4 border-t border-border pt-4 <?= ($forma->provedor ?: 'mercadopago') !== 'mercadopago' ? 'hidden' : '' ?>">
+                    <div class="flex items-center gap-2">
+                        <?= icon('key-round', ['class' => 'size-4 text-primary']) ?>
+                        <h3 class="font-display text-sm font-semibold text-text">Credenciais de API - Mercado Pago</h3>
+                    </div>
+                    <div class="<?= e($grade) ?>">
+                        <?= component('input', [
+                            'name' => 'mp_access_token',
+                            'label' => 'Access Token (Produção)',
+                            'type' => 'password',
+                            'value' => $configuracoes['access_token'] ?? $configuracoes['mp_access_token'] ?? '',
+                            'help' => 'Utilizado no backend para efetivar a transação.',
+                            'attrs' => ['autocomplete' => 'new-password'],
+                        ]) ?>
+
+                        <?= component('input', [
+                            'name' => 'mp_public_key',
+                            'label' => 'Public Key (Chave Pública)',
+                            'type' => 'text',
+                            'value' => $configuracoes['public_key'] ?? $configuracoes['mp_public_key'] ?? '',
+                            'help' => 'Necessária para a tokenização segura do cartão no navegador do assinante.',
+                        ]) ?>
+                    </div>
+                </div>
+
+                <!-- Credenciais Asaas -->
+                <div id="credenciais-asaas" class="flex flex-col gap-4 border-t border-border pt-4 <?= $forma->provedor !== 'asaas' ? 'hidden' : '' ?>">
+                    <div class="flex items-center gap-2">
+                        <?= icon('key-round', ['class' => 'size-4 text-primary']) ?>
+                        <h3 class="font-display text-sm font-semibold text-text">Credenciais de API - Asaas</h3>
+                    </div>
+                    <div class="w-full">
+                        <?= component('input', [
+                            'name' => 'asaas_api_key',
+                            'label' => 'Chave de API Asaas (API Key)',
+                            'type' => 'password',
+                            'value' => $configuracoes['api_key'] ?? $configuracoes['asaas_api_key'] ?? '',
+                            'attrs' => ['autocomplete' => 'new-password'],
+                        ]) ?>
+                    </div>
                 </div>
             </section>
 
@@ -299,7 +492,7 @@ $usarEnv = ! empty($configuracoes['usar_env']);
                     <?= component('select', [
                         'name' => 'provedor',
                         'label' => 'Gateway Processador',
-                        'selected' => $forma->provedor,
+                        'selected' => $forma->provedor ?: 'mercadopago',
                         'options' => [
                             ['value' => 'mercadopago', 'label' => 'Mercado Pago Checkout Pro (3DS)'],
                             ['value' => 'asaas', 'label' => 'Asaas Link Seguro'],
@@ -307,13 +500,38 @@ $usarEnv = ! empty($configuracoes['usar_env']);
                     ]) ?>
                 </div>
 
-                <div class="pt-2 border-t border-border">
-                    <?= component('switch', [
-                        'name' => 'usar_env',
-                        'label' => 'Usar credenciais padrão do sistema (.env)',
-                        'value' => '1',
-                        'checked' => $usarEnv,
-                    ]) ?>
+                <!-- Credenciais Mercado Pago -->
+                <div id="credenciais-mercadopago" class="flex flex-col gap-4 border-t border-border pt-4 <?= ($forma->provedor ?: 'mercadopago') !== 'mercadopago' ? 'hidden' : '' ?>">
+                    <div class="flex items-center gap-2">
+                        <?= icon('key-round', ['class' => 'size-4 text-primary']) ?>
+                        <h3 class="font-display text-sm font-semibold text-text">Credenciais de API - Mercado Pago</h3>
+                    </div>
+                    <div class="w-full">
+                        <?= component('input', [
+                            'name' => 'mp_access_token',
+                            'label' => 'Access Token (Produção)',
+                            'type' => 'password',
+                            'value' => $configuracoes['access_token'] ?? $configuracoes['mp_access_token'] ?? '',
+                            'attrs' => ['autocomplete' => 'new-password'],
+                        ]) ?>
+                    </div>
+                </div>
+
+                <!-- Credenciais Asaas -->
+                <div id="credenciais-asaas" class="flex flex-col gap-4 border-t border-border pt-4 <?= $forma->provedor !== 'asaas' ? 'hidden' : '' ?>">
+                    <div class="flex items-center gap-2">
+                        <?= icon('key-round', ['class' => 'size-4 text-primary']) ?>
+                        <h3 class="font-display text-sm font-semibold text-text">Credenciais de API - Asaas</h3>
+                    </div>
+                    <div class="w-full">
+                        <?= component('input', [
+                            'name' => 'asaas_api_key',
+                            'label' => 'Chave de API Asaas (API Key)',
+                            'type' => 'password',
+                            'value' => $configuracoes['api_key'] ?? $configuracoes['asaas_api_key'] ?? '',
+                            'attrs' => ['autocomplete' => 'new-password'],
+                        ]) ?>
+                    </div>
                 </div>
             </section>
         <?php } ?>

@@ -430,42 +430,107 @@ class Saas extends MY_Controller
 
         // Monta o array de configurações de acordo com o tipo
         $configuracoes = $forma->config ?? [];
-        $usarEnv = (int) $this->input->post('usar_env') === 1 ? 1 : 0;
-        $configuracoes['usar_env'] = $usarEnv;
+        unset($configuracoes['usar_env']);
 
         if ($forma->codigo === 'pix') {
             $configuracoes['tipo_pix'] = $this->input->post('tipo_pix') ?: 'dinamico';
             $configuracoes['chave_pix'] = trim((string) $this->input->post('chave_pix'));
             $configuracoes['tipo_chave'] = trim((string) $this->input->post('tipo_chave'));
             $configuracoes['titular'] = trim((string) $this->input->post('titular'));
+            $configuracoes['cidade'] = trim((string) $this->input->post('cidade')) ?: 'Sao Paulo';
             $configuracoes['expiracao_minutos'] = max(5, (int) ($this->input->post('expiracao_minutos') ?: 60));
-            if (! $usarEnv) {
-                $configuracoes['access_token'] = trim((string) $this->input->post('access_token'));
-                $configuracoes['public_key'] = trim((string) $this->input->post('public_key'));
-                $configuracoes['client_id'] = trim((string) $this->input->post('client_id'));
-                $configuracoes['client_secret'] = trim((string) $this->input->post('client_secret'));
+
+            // Tokens da API digitados manualmente pelo Master
+            $mpToken = trim((string) $this->input->post('mp_access_token'));
+            if ($mpToken !== '') {
+                $configuracoes['access_token'] = $mpToken;
+                $configuracoes['mp_access_token'] = $mpToken;
+            }
+            $mpPublic = trim((string) $this->input->post('mp_public_key'));
+            if ($mpPublic !== '') {
+                $configuracoes['public_key'] = $mpPublic;
+                $configuracoes['mp_public_key'] = $mpPublic;
+            }
+
+            $asaasKey = trim((string) $this->input->post('asaas_api_key'));
+            if ($asaasKey !== '') {
+                $configuracoes['api_key'] = $asaasKey;
+                $configuracoes['asaas_api_key'] = $asaasKey;
+            }
+
+            $efiClient = trim((string) $this->input->post('efi_client_id'));
+            if ($efiClient !== '') {
+                $configuracoes['client_id'] = $efiClient;
+                $configuracoes['efi_client_id'] = $efiClient;
+            }
+            $efiSecret = trim((string) $this->input->post('efi_client_secret'));
+            if ($efiSecret !== '') {
+                $configuracoes['client_secret'] = $efiSecret;
+                $configuracoes['efi_client_secret'] = $efiSecret;
+            }
+            $efiChave = trim((string) $this->input->post('efi_chave_pix'));
+            if ($efiChave !== '') {
+                $configuracoes['chave_pix_efi'] = $efiChave;
+                $configuracoes['efi_chave_pix'] = $efiChave;
             }
         } elseif ($forma->codigo === 'boleto') {
             $configuracoes['dias_vencimento'] = max(1, min(30, (int) ($this->input->post('dias_vencimento') ?: 3)));
-            if (! $usarEnv) {
-                $configuracoes['api_key'] = trim((string) $this->input->post('api_key'));
-                $configuracoes['client_id'] = trim((string) $this->input->post('client_id'));
-                $configuracoes['client_secret'] = trim((string) $this->input->post('client_secret'));
-                $configuracoes['access_token'] = trim((string) $this->input->post('access_token'));
+
+            $asaasKey = trim((string) $this->input->post('asaas_api_key'));
+            if ($asaasKey !== '') {
+                $configuracoes['api_key'] = $asaasKey;
+                $configuracoes['asaas_api_key'] = $asaasKey;
+            }
+
+            $efiClient = trim((string) $this->input->post('efi_client_id'));
+            if ($efiClient !== '') {
+                $configuracoes['client_id'] = $efiClient;
+                $configuracoes['efi_client_id'] = $efiClient;
+            }
+            $efiSecret = trim((string) $this->input->post('efi_client_secret'));
+            if ($efiSecret !== '') {
+                $configuracoes['client_secret'] = $efiSecret;
+                $configuracoes['efi_client_secret'] = $efiSecret;
+            }
+
+            $mpToken = trim((string) $this->input->post('mp_access_token'));
+            if ($mpToken !== '') {
+                $configuracoes['access_token'] = $mpToken;
+                $configuracoes['mp_access_token'] = $mpToken;
             }
         } elseif ($forma->codigo === 'cartao_credito') {
             $configuracoes['modo'] = $this->input->post('modo') ?: 'transparente';
             $configuracoes['max_parcelas'] = max(1, min(12, (int) ($this->input->post('max_parcelas') ?: 1)));
-            if (! $usarEnv) {
-                $configuracoes['public_key'] = trim((string) $this->input->post('public_key'));
-                $configuracoes['access_token'] = trim((string) $this->input->post('access_token'));
-                $configuracoes['api_key'] = trim((string) $this->input->post('api_key'));
+
+            $mpToken = trim((string) $this->input->post('mp_access_token'));
+            if ($mpToken !== '') {
+                $configuracoes['access_token'] = $mpToken;
+                $configuracoes['mp_access_token'] = $mpToken;
+            }
+            $mpPublic = trim((string) $this->input->post('mp_public_key'));
+            if ($mpPublic !== '') {
+                $configuracoes['public_key'] = $mpPublic;
+                $configuracoes['mp_public_key'] = $mpPublic;
+            }
+
+            $asaasKey = trim((string) $this->input->post('asaas_api_key'));
+            if ($asaasKey !== '') {
+                $configuracoes['api_key'] = $asaasKey;
+                $configuracoes['asaas_api_key'] = $asaasKey;
             }
         } elseif ($forma->codigo === 'cartao_debito') {
             $configuracoes['modo'] = 'link';
-            if (! $usarEnv) {
-                $configuracoes['public_key'] = trim((string) $this->input->post('public_key'));
-                $configuracoes['access_token'] = trim((string) $this->input->post('access_token'));
+
+            $mpToken = trim((string) $this->input->post('mp_access_token'));
+            if ($mpToken !== '') {
+                $configuracoes['access_token'] = $mpToken;
+                $configuracoes['mp_access_token'] = $mpToken;
+            }
+
+            $asaasKey = trim((string) $this->input->post('asaas_api_key'));
+            if ($asaasKey !== '') {
+                $configuracoes['api_key'] = $asaasKey;
+                $configuracoes['asaas_api_key'] = $asaasKey;
             }
         }
 

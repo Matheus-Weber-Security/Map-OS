@@ -173,8 +173,20 @@ class Saas_model extends CI_Model
     {
         $txid = 'MAPOS' . date('YmdHis') . strtoupper(substr(md5(uniqid('', true)), 0, 10));
         
-        // Simulação / payload padrão PIX Copia e Cola (padrão EMV BRCode)
         $pixPayload = '00020126580014BR.GOV.BCB.PIX0136' . $txid . '520400005303986540' . number_format($valor, 2, '.', '') . '5802BR5915MapOS Software6009Sao Paulo62070503***6304';
+
+        if (strtoupper($forma) === 'PIX') {
+            $formaPix = $this->getFormaPagamentoByCodigo('pix');
+            if ($formaPix && ! empty($formaPix->config)) {
+                $cfg = $formaPix->config;
+                if (($cfg['tipo_pix'] ?? '') === 'manual' && ! empty($cfg['chave_pix'])) {
+                    $chave = trim((string) $cfg['chave_pix']);
+                    $titular = substr(trim((string) ($cfg['titular'] ?? 'Empresa Master')), 0, 25);
+                    $cidade = substr(trim((string) ($cfg['cidade'] ?? 'Sao Paulo')), 0, 15);
+                    $pixPayload = '00020126' . str_pad((string) (14 + strlen($chave)), 2, '0', STR_PAD_LEFT) . '0014BR.GOV.BCB.PIX01' . str_pad((string) strlen($chave), 2, '0', STR_PAD_LEFT) . $chave . '520400005303986540' . number_format($valor, 2, '.', '') . '5802BR59' . str_pad((string) strlen($titular), 2, '0', STR_PAD_LEFT) . $titular . '60' . str_pad((string) strlen($cidade), 2, '0', STR_PAD_LEFT) . $cidade . '62070503***6304';
+                }
+            }
+        }
 
         $dados = [
             'empresa_id' => $empresaId,

@@ -256,11 +256,16 @@
                                     </div>
                                 </td>
                                 <td class="py-3 px-3">
-                                    <span class="font-medium text-text capitalize">
-                                        <?= e($forma->provedor === 'mercadopago' ? 'Mercado Pago' : ($forma->provedor === 'gerencianet' ? 'Efí / Gerencianet' : ($forma->provedor === 'asaas' ? 'Asaas' : $forma->provedor))) ?>
-                                    </span>
-                                    <?php if (! empty($forma->config['usar_env'])) { ?>
-                                        <span class="text-caption text-muted block">Credenciais globais (.env)</span>
+                                    <?php if ($forma->codigo === 'pix' && ($forma->config['tipo_pix'] ?? '') === 'manual') { ?>
+                                        <span class="font-medium text-text">Chave Fixa</span>
+                                        <span class="text-caption text-muted block"><?= e(strtoupper($forma->config['tipo_chave'] ?? 'Manual')) ?></span>
+                                    <?php } else { ?>
+                                        <span class="font-medium text-text capitalize">
+                                            <?= e($forma->provedor === 'mercadopago' ? 'Mercado Pago' : ($forma->provedor === 'gerencianet' ? 'Efí / Gerencianet' : ($forma->provedor === 'asaas' ? 'Asaas' : $forma->provedor))) ?>
+                                        </span>
+                                        <span class="text-caption text-muted block">
+                                            <?= e($forma->codigo === 'pix' ? 'PIX Dinâmico (API)' : (isset($forma->config['modo']) && $forma->config['modo'] === 'transparente' ? 'Checkout Transparente' : 'Gateway Direto')) ?>
+                                        </span>
                                     <?php } ?>
                                 </td>
                                 <td class="py-3 px-3 text-center status-col">
