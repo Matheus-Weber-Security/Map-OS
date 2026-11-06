@@ -1,0 +1,12 @@
+.git
+.github
+.idea
+.vscode
+node_modules
+.env
+.env.*
+!.env.example
+*.log
+.system_generated
+tests
+phpstan-stubs
