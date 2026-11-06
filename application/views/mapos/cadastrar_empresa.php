@@ -134,7 +134,7 @@ include APPPATH . 'views/entrada/inicio.php';
                         'label' => 'Criar conta',
                         'type' => 'submit',
                         'size' => 'lg',
-                        'icon' => 'arrow-right',
+                        'icon' => 'check',
                         'class' => 'w-full shadow-elev-3 sm:w-auto',
                         'attrs' => ['data-rotulo-carregando' => 'Criando seu ambiente…'],
                     ]) ?>

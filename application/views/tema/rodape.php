@@ -37,7 +37,7 @@
             component('button', [
                 'label' => 'Começar a usar agora',
                 'variant' => 'primary',
-                'icon' => 'arrow-right',
+                'icon' => 'check',
                 'attrs' => ['data-modal-fechar' => true],
             ]),
         ],
