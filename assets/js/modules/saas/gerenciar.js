@@ -150,10 +150,9 @@ export default async function iniciar(raiz, { doc = document } = {}) {
             toggle.disabled = true;
 
             try {
-                const res = await post(urlAlternar, { id, ativo });
-                const json = await res.json();
+                const json = await post(urlAlternar, { id, ativo });
 
-                if (json.result) {
+                if (json && json.result) {
                     if (statusCol) {
                         statusCol.innerHTML = ativo
                             ? '<span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-caption font-semibold bg-success-soft text-success-ink"><span class="size-1.5 rounded-full bg-success"></span>Ativo</span>'
@@ -171,11 +170,14 @@ export default async function iniciar(raiz, { doc = document } = {}) {
 
                     mostrarToast({ mensagem: json.message || 'Status atualizado com sucesso!', variante: 'success' }, doc);
                 } else {
-                    throw new Error(json.message || 'Falha ao atualizar status.');
+                    throw new Error(json?.message || 'Falha ao atualizar o status da forma de pagamento.');
                 }
             } catch (err) {
                 toggle.checked = !ativo;
-                mostrarToast({ mensagem: err.message || 'Erro ao comunicar com o servidor.', variante: 'danger' }, doc);
+                const mensagem = (err && typeof err.message === 'string' && !err.message.includes('function') && !err.message.includes('TypeError'))
+                    ? err.message
+                    : 'Não foi possível atualizar o status da forma de pagamento. Tente novamente.';
+                mostrarToast({ mensagem, variante: 'danger' }, doc);
             } finally {
                 toggle.disabled = false;
             }
