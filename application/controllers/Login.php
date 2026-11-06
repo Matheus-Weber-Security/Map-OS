@@ -322,56 +322,22 @@ class Login extends CI_Controller
             $captchaInformado = trim((string) $this->input->post('captcha'));
             $this->session->unset_userdata('captchaWord_empresa');
 
-            $nomeEmpresa = trim((string) $this->input->post('nome_empresa'));
-            $nomeFantasia = trim((string) $this->input->post('nome_fantasia'));
-            $documento = trim((string) $this->input->post('documento'));
-            $nomeResponsavel = trim((string) $this->input->post('nome_responsavel'));
+            $nome = trim((string) $this->input->post('nome'));
             $email = strtolower(trim((string) $this->input->post('email')));
-            $telefone = trim((string) $this->input->post('telefone'));
             $senha = (string) $this->input->post('senha');
             $senhaConfirmacao = (string) $this->input->post('senha_confirmacao');
 
-            $cep = trim((string) $this->input->post('cep'));
-            $rua = trim((string) $this->input->post('rua'));
-            $numero = trim((string) $this->input->post('numero'));
-            $bairro = trim((string) $this->input->post('bairro'));
-            $cidade = trim((string) $this->input->post('cidade'));
-            $estado = trim((string) $this->input->post('estado'));
-
             $valores = [
-                'nome_empresa' => $nomeEmpresa,
-                'nome_fantasia' => $nomeFantasia,
-                'documento' => $documento,
-                'nome_responsavel' => $nomeResponsavel,
+                'nome' => $nome,
                 'email' => $email,
-                'telefone' => $telefone,
-                'cep' => $cep,
-                'rua' => $rua,
-                'numero' => $numero,
-                'bairro' => $bairro,
-                'cidade' => $cidade,
-                'estado' => $estado,
             ];
 
-            if ($nomeEmpresa === '') {
-                $erros['nome_empresa'] = 'Informe a razão social ou nome da empresa.';
-            }
-
-            $docLimpo = preg_replace('/\D/', '', $documento);
-            if ($docLimpo === '' || (! in_array(strlen($docLimpo), [11, 14], true))) {
-                $erros['documento'] = 'Informe um CPF (11 dígitos) ou CNPJ (14 dígitos) válido.';
-            }
-
-            if ($nomeResponsavel === '') {
-                $erros['nome_responsavel'] = 'Informe o nome do responsável.';
+            if ($nome === '') {
+                $erros['nome'] = 'Informe o seu nome ou o nome do seu negócio.';
             }
 
             if ($email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 $erros['email'] = 'Informe um e-mail válido para acesso.';
-            }
-
-            if ($telefone === '') {
-                $erros['telefone'] = 'Informe um WhatsApp ou telefone de contato.';
             }
 
             if (strlen($senha) < 8) {
@@ -387,23 +353,23 @@ class Login extends CI_Controller
             if ($erros === []) {
                 $resultado = $this->saas_model->cadastrarEmpresaComDono(
                     [
-                        'razao_social' => $nomeEmpresa,
-                        'nome_fantasia' => $nomeFantasia ?: $nomeEmpresa,
-                        'documento' => $documento,
-                        'telefone' => $telefone,
+                        'razao_social' => $nome,
+                        'nome_fantasia' => $nome,
+                        'documento' => '',
+                        'telefone' => '',
                         'email' => $email,
                     ],
                     [
-                        'nome' => $nomeResponsavel,
+                        'nome' => $nome,
                         'email' => $email,
                         'senha_plana' => $senha,
-                        'telefone' => $telefone,
-                        'cep' => $cep,
-                        'rua' => $rua,
-                        'numero' => $numero,
-                        'bairro' => $bairro,
-                        'cidade' => $cidade,
-                        'estado' => $estado,
+                        'telefone' => '',
+                        'cep' => '',
+                        'rua' => '',
+                        'numero' => '',
+                        'bairro' => '',
+                        'cidade' => '',
+                        'estado' => '',
                     ],
                     10 // 10 dias de degustação
                 );
