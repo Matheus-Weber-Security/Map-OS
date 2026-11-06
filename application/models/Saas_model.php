@@ -130,6 +130,19 @@ class Saas_model extends CI_Model
 
     // --- Vínculos Usuário - Empresa (Workspace Switcher) ---
 
+    public function usuarioPertenceAEmpresa(int $usuarioId, int $empresaId): bool
+    {
+        if ($usuarioId <= 0 || $empresaId <= 0) {
+            return false;
+        }
+
+        return $this->db
+            ->where('usuario_id', $usuarioId)
+            ->where('empresa_id', $empresaId)
+            ->where('ativo', 1)
+            ->count_all_results('saas_empresa_usuarios') > 0;
+    }
+
     public function getEmpresasDoUsuario(int $usuarioId): array
     {
         return $this->db

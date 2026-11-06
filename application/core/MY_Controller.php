@@ -414,6 +414,10 @@ class MY_Controller extends CI_Controller
      */
     protected function regraPermite($regra)
     {
+        if ((bool) $this->session->userdata('is_superadmin')) {
+            return true;
+        }
+
         if ($regra === '*') {
             return true;
         }
@@ -577,6 +581,10 @@ class MY_Controller extends CI_Controller
      */
     protected function permite(string $permissao): bool
     {
+        if ((bool) $this->session->userdata('is_superadmin')) {
+            return true;
+        }
+
         return (bool) $this->permission->checkPermission($this->session->userdata('permissao'), $permissao);
     }
 

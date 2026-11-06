@@ -271,7 +271,23 @@ class Login extends CI_Controller
         }
 
         $empresaId = (int) $id;
+        if ($empresaId <= 0) {
+            redirect('mapos');
+        }
+
+        $usuarioId = (int) $this->session->userdata('id_admin');
+        $isSuperadmin = (bool) ($this->session->userdata('is_superadmin') ?? false);
+
         $this->load->model('saas_model');
+
+        // Valida se o usuário pertence à empresa ou se é Superadmin
+        if (! $isSuperadmin && ! $this->saas_model->usuarioPertenceAEmpresa($usuarioId, $empresaId)) {
+            log_info("Tentativa não autorizada de trocar para a empresa {$empresaId} pelo usuário {$usuarioId}");
+            $this->session->set_flashdata('error', 'Você não tem permissão para acessar esta empresa.');
+
+            redirect('mapos');
+        }
+
         $empresa = $this->saas_model->getEmpresaById($empresaId);
 
         if ($empresa) {
@@ -280,6 +296,8 @@ class Login extends CI_Controller
                 'empresa_nome' => $empresa->nome_fantasia ?: $empresa->razao_social,
             ]);
             $this->session->set_flashdata('success', "Empresa selecionada: {$empresa->nome_fantasia}");
+        } else {
+            $this->session->set_flashdata('error', 'Empresa não encontrada.');
         }
 
         redirect('mapos');

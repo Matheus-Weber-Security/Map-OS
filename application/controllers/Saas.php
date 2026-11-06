@@ -285,6 +285,13 @@ class Saas extends MY_Controller
             redirect('saas/assinantes');
         }
 
+        $isSuper = (bool) ($this->session->userdata('is_superadmin') ?? false);
+        if (! $isSuper && ! $this->permite('eSaasStatusEmpresa')) {
+            $this->session->set_flashdata('error', 'Você não tem permissão para alterar o plano de empresas.');
+
+            return redirect('saas/assinantes');
+        }
+
         $empresaId = (int) $this->input->post('empresa_id');
         $planoId = (int) $this->input->post('plano_id');
 
