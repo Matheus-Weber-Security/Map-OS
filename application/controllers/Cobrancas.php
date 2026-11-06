@@ -54,11 +54,23 @@ class Cobrancas extends MY_Controller
             }
 
             $this->load->config('payment_gateways');
-            if (! cobrancaGatewayValido($gatewayDePagamento, $this->config->item('payment_gateways'))) {
+            $gatewaysConfig = (array) $this->config->item('payment_gateways');
+            if (! cobrancaGatewayValido($gatewayDePagamento, $gatewaysConfig)) {
                 return $this->output
                     ->set_content_type('application/json')
                     ->set_status_header(400)
                     ->set_output(json_encode(['message' => 'Gateway de pagamento inválido.']));
+            }
+
+            $gatewayConfig = $gatewaysConfig[$gatewayDePagamento] ?? [];
+            if (! gatewayEstaConfigurado($gatewayConfig)) {
+                $nomeGateway = $gatewayConfig['name'] ?? $gatewayDePagamento;
+                return $this->output
+                    ->set_content_type('application/json')
+                    ->set_status_header(400)
+                    ->set_output(json_encode([
+                        'message' => "As credenciais do {$nomeGateway} não foram configuradas. Acesse Configurações > Pagamentos para informar os dados de acesso.",
+                    ]));
             }
 
             $this->load->library("Gateways/$gatewayDePagamento", null, 'PaymentGateway');
@@ -75,15 +87,13 @@ class Cobrancas extends MY_Controller
                     ->set_status_header(200)
                     ->set_output(json_encode($cobranca));
             } catch (\Exception $e) {
-                $expMsg = $e->getMessage();
-                if ($expMsg == 'unauthorized: Must provide your access_token to proceed' || $expMsg == 'Unauthorized') {
-                    $expMsg = 'Por favor configurar os dados da API em Config/payment_gatways.php';
-                }
+                $nomeGateway = $gatewayConfig['name'] ?? $gatewayDePagamento;
+                $msgAmigavel = $this->traduzirErroGateway($e->getMessage(), $nomeGateway);
 
                 return $this->output
                     ->set_content_type('application/json')
                     ->set_status_header(500)
-                    ->set_output(json_encode(['message' => $expMsg]));
+                    ->set_output(json_encode(['message' => $msgAmigavel]));
             }
         }
     }
@@ -317,5 +327,43 @@ class Cobrancas extends MY_Controller
         }
 
         $this->agirSobreCobranca((int) $this->uri->segment(3), 'enviarEmail', 'E-mail adicionado na fila.', 'Não foi possível enviar o e-mail.');
+    }
+
+    /**
+     * Traduz erros técnicos de gateways, cURL e bibliotecas para português claro e amigável.
+     */
+    private function traduzirErroGateway(string $msg, string $nomeGateway): string
+    {
+        $msgLower = strtolower($msg);
+
+        // Erros de SSL / Certificado OpenSSL / cURL 60 / cURL 35
+        if (str_contains($msgLower, 'ssl') || str_contains($msgLower, 'certificate') || str_contains($msgLower, 'openssl') || str_contains($msgLower, 'curl error 60') || str_contains($msgLower, 'curl error 35')) {
+            return "Não foi possível estabelecer uma conexão segura (SSL) com os servidores do {$nomeGateway}. Verifique a conexão com a internet e as configurações de certificado do servidor.";
+        }
+
+        // Erros de Timeout / Conexão / cURL 28 / Host não encontrado
+        if (str_contains($msgLower, 'timed out') || str_contains($msgLower, 'timeout') || str_contains($msgLower, 'curl error 28') || str_contains($msgLower, 'connection refused') || str_contains($msgLower, 'could not resolve host')) {
+            return "O servidor do {$nomeGateway} demorou muito para responder ou está indisponível no momento. Tente novamente em instantes.";
+        }
+
+        // Erros de Credenciais / Não autorizado / Token inválido
+        if (str_contains($msgLower, 'unauthorized') || str_contains($msgLower, 'must provide your access_token') || str_contains($msgLower, 'invalid token') || str_contains($msgLower, 'invalid_token') || str_contains($msgLower, 'invalid_client') || str_contains($msgLower, 'forbidden')) {
+            return "As credenciais de acesso informadas para o {$nomeGateway} estão incorretas, incompletas ou expiradas. Por favor, confira os dados em Configurações > Pagamentos.";
+        }
+
+        // Erros de Dados cadastrais do cliente
+        if (str_contains($msgLower, 'identification.number') || str_contains($msgLower, 'invalid cpf') || str_contains($msgLower, 'invalid cnpj') || str_contains($msgLower, 'cpf inválido') || str_contains($msgLower, 'cnpj inválido')) {
+            return 'O CPF/CNPJ do cliente é inválido ou não foi preenchido. Verifique o cadastro do cliente antes de gerar a cobrança.';
+        }
+
+        if (str_contains($msgLower, 'payer.email') || str_contains($msgLower, 'email inválido') || str_contains($msgLower, 'invalid email')) {
+            return 'O e-mail do cliente é inválido ou não foi informado. Verifique o cadastro do cliente.';
+        }
+
+        if (str_contains($msgLower, 'zip_code') || str_contains($msgLower, 'cep inválido') || str_contains($msgLower, 'cep')) {
+            return 'O CEP do cliente é obrigatório para emissão de boleto bancário. Atualize o endereço no cadastro do cliente.';
+        }
+
+        return $msg;
     }
 }

@@ -771,11 +771,48 @@ if (! function_exists('osTextoWhatsApp')) {
     }
 }
 
+if (! function_exists('gatewayEstaConfigurado')) {
+    /**
+     * Verifica se o gateway possui as credenciais mínimas configuradas para operar.
+     *
+     * @param  mixed  $gateway  Configuração do gateway
+     */
+    function gatewayEstaConfigurado($gateway): bool
+    {
+        if (! is_array($gateway)) {
+            return false;
+        }
+
+        $lib = (string) ($gateway['library_name'] ?? '');
+        $creds = $gateway['credentials'] ?? [];
+
+        if (! is_array($creds)) {
+            return false;
+        }
+
+        if ($lib === 'Asaas') {
+            return ! empty(trim((string) ($creds['api_key'] ?? '')));
+        }
+
+        if ($lib === 'MercadoPago') {
+            return ! empty(trim((string) ($creds['access_token'] ?? '')));
+        }
+
+        if ($lib === 'GerencianetSdk') {
+            return ! empty(trim((string) ($creds['client_id'] ?? ''))) && ! empty(trim((string) ($creds['client_secret'] ?? '')));
+        }
+
+        return false;
+    }
+}
+
 if (! function_exists('osOpcoesDeCobranca')) {
     /**
      * Opções do "Gerar cobrança" a partir de config/payment_gateways.php: uma
      * por gateway e forma de pagamento, com o valor "Biblioteca|forma" (o
      * módulo os/tela separa os dois campos que cobrancas/adicionar espera).
+     *
+     * Apenas gateways com credenciais configuradas são listados.
      *
      * @return array<string, string> valor => rótulo
      */
@@ -784,6 +821,11 @@ if (! function_exists('osOpcoesDeCobranca')) {
         $opcoes = [];
         foreach (is_array($gateways) ? $gateways : [] as $gateway) {
             if (! is_array($gateway) || ! isset($gateway['library_name'], $gateway['name']) || ! preg_match('/^[A-Za-z0-9_]+$/', (string) $gateway['library_name'])) {
+                continue;
+            }
+
+            // Exibe apenas gateways com credenciais configuradas
+            if (! gatewayEstaConfigurado($gateway)) {
                 continue;
             }
 

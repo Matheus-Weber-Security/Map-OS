@@ -515,6 +515,41 @@ if (! function_exists('cobrancaUrlSegura')) {
     }
 }
 
+if (! function_exists('gatewayEstaConfigurado')) {
+    /**
+     * Verifica se o gateway possui as credenciais mínimas configuradas para operar.
+     *
+     * @param  mixed  $gateway  Configuração do gateway
+     */
+    function gatewayEstaConfigurado($gateway): bool
+    {
+        if (! is_array($gateway)) {
+            return false;
+        }
+
+        $lib = (string) ($gateway['library_name'] ?? '');
+        $creds = $gateway['credentials'] ?? [];
+
+        if (! is_array($creds)) {
+            return false;
+        }
+
+        if ($lib === 'Asaas') {
+            return ! empty(trim((string) ($creds['api_key'] ?? '')));
+        }
+
+        if ($lib === 'MercadoPago') {
+            return ! empty(trim((string) ($creds['access_token'] ?? '')));
+        }
+
+        if ($lib === 'GerencianetSdk') {
+            return ! empty(trim((string) ($creds['client_id'] ?? ''))) && ! empty(trim((string) ($creds['client_secret'] ?? '')));
+        }
+
+        return false;
+    }
+}
+
 if (! function_exists('cobrancaGatewayValido')) {
     /**
      * Diz se o nome é de um gateway configurado (config/payment_gateways.php) e

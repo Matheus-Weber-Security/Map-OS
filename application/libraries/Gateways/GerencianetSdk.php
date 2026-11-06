@@ -146,6 +146,10 @@ class GerencianetSdk extends BasePaymentGateway
 
     protected function gerarCobrancaBoleto($id, $tipo)
     {
+        if (empty($this->gerenciaNetConfig['credentials']['client_id']) || empty($this->gerenciaNetConfig['credentials']['client_secret'])) {
+            throw new \Exception('As credenciais da Efí (Gerencianet) não foram configuradas. Acesse Configurações > Pagamentos para configurar o Client ID e Client Secret.');
+        }
+
         $entity = $this->findEntity($id, $tipo);
 
         if (empty($entity)) {

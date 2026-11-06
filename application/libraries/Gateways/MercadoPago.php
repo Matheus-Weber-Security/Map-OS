@@ -23,7 +23,9 @@ class MercadoPago extends BasePaymentGateway
 
         $this->mercadoPagoConfig = $this->ci->config->item('payment_gateways')['MercadoPago'];
 
-        MercadoPagoConfig::setAccessToken($this->mercadoPagoConfig['credentials']['access_token']);
+        if (! empty($this->mercadoPagoConfig['credentials']['access_token'])) {
+            MercadoPagoConfig::setAccessToken($this->mercadoPagoConfig['credentials']['access_token']);
+        }
     }
 
     public function cancelar($id)
@@ -191,6 +193,10 @@ class MercadoPago extends BasePaymentGateway
 
     protected function gerarCobrancaBoleto($id, $tipo)
     {
+        if (empty($this->mercadoPagoConfig['credentials']['access_token'])) {
+            throw new \Exception('As credenciais do Mercado Pago não foram configuradas. Acesse Configurações > Pagamentos para configurar o Access Token.');
+        }
+
         $entity = $this->findEntity($id, $tipo);
 
         if (empty($entity)) {
@@ -238,7 +244,7 @@ class MercadoPago extends BasePaymentGateway
                 ],
             ]);
         } catch (MPApiException $e) {
-            throw new \Exception($e->getApiResponse()->getContent());
+            throw new \Exception($this->mpErrorMessage($e));
         } catch (MPException $e) {
             throw new \Exception($e->getMessage());
         }

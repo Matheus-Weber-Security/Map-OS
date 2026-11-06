@@ -168,6 +168,10 @@ class Asaas extends BasePaymentGateway
 
     protected function gerarCobrancaBoleto($id, $tipo)
     {
+        if (empty($this->asaasConfig['credentials']['api_key'])) {
+            throw new \Exception('As credenciais do Asaas não foram configuradas. Acesse Configurações > Pagamentos para configurar a Chave da API.');
+        }
+
         $entity = $this->findEntity($id, $tipo);
 
         if (empty($entity)) {
