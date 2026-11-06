@@ -20,8 +20,8 @@ include APPPATH . 'views/entrada/inicio.php';
 ?>
     <main class="mx-auto w-full max-w-xl flex-1 px-4 py-6 lg:py-10">
         <header class="mb-6">
-            <h1 class="font-display text-2xl font-bold text-on-dark sm:text-3xl whitespace-nowrap">
-                Cadastre sua <span class="rounded-xs bg-accent-lime px-2 py-0.5 text-ink">empresa</span>
+            <h1 class="font-display text-3xl font-bold tracking-tight text-on-dark sm:text-4xl md:text-[45px] whitespace-nowrap">
+                Cadastre sua <span class="rounded-xs bg-accent-lime px-2.5 py-0.5 text-ink">empresa</span>
             </h1>
             <p class="mt-2 text-sm text-on-dark-muted sm:text-base">
                 Crie sua conta para gerenciar ordens de serviço, vendas e financeiro.
