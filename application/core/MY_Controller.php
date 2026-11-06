@@ -662,10 +662,16 @@ class MY_Controller extends CI_Controller
 
         $abrirModalPreVencimento = false;
         $abrirModalCarencia = false;
+        $abrirModalBoasVindas = false;
 
         if (! $ehMaster && strtolower((string) $this->router->class) !== 'assinatura') {
+            // Modal no Primeiro Acesso: Boas-vindas com 10 dias de trial
+            if ($this->session->userdata('saas_modal_boas_vindas')) {
+                $abrirModalBoasVindas = true;
+                $this->session->unset_userdata('saas_modal_boas_vindas');
+            }
             // Modal no Login: 3 dias antes de vencer até o dia do vencimento (3, 2, 1, 0 dias)
-            if ($statusAssinatura === 'ativa' && $diasRestantes <= 3 && $diasRestantes >= 0) {
+            elseif ($statusAssinatura === 'ativa' && $diasRestantes <= 3 && $diasRestantes >= 0) {
                 if (! $this->session->userdata('saas_modal_prevencimento_visto')) {
                     $abrirModalPreVencimento = true;
                     $this->session->set_userdata('saas_modal_prevencimento_visto', true);
@@ -706,6 +712,7 @@ class MY_Controller extends CI_Controller
             'saas_dias_restantes' => $situacaoAssinatura['dias_restantes'],
             'saas_dias_carencia' => $situacaoAssinatura['dias_carencia'],
             'saas_somente_leitura' => $somenteLeitura,
+            'saas_modal_boas_vindas' => $abrirModalBoasVindas,
             'saas_modal_prevencimento' => $abrirModalPreVencimento,
             'saas_modal_carencia' => $abrirModalCarencia,
         ];

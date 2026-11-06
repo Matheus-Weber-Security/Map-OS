@@ -20,6 +20,32 @@
 
 <?php $this->load->view('tema/busca'); ?>
 
+<?php if (! empty($layout['saas_modal_boas_vindas'])) { ?>
+  <div class="v5-shell">
+    <?= component('modal', [
+        'id' => 'modal-boas-vindas-trial',
+        'title' => '🎉 Parabéns! Seja muito bem-vindo',
+        'open' => true,
+        'body' => html_purificado(
+            '<div class="space-y-3 text-text leading-relaxed">'
+            . '<p class="font-medium text-[0.9375rem] text-primary">Você acaba de ganhar 10 dias de assinatura gratuita para avaliar o sistema!</p>'
+            . '<p class="text-muted text-sm">Seu ambiente já está pronto. Aproveite para cadastrar clientes, emitir ordens de serviço, registrar vendas e controlar seu financeiro com total liberdade e sem compromisso.</p>'
+            . '<p class="text-muted text-sm">Explore todos os recursos e aproveite ao máximo seu período de avaliação.</p>'
+            . '</div>'
+        ),
+        'footer' => [
+            component('button', [
+                'label' => 'Começar a usar agora',
+                'variant' => 'primary',
+                'icon' => 'arrow-right',
+                'attrs' => ['data-modal-fechar' => true],
+            ]),
+        ],
+        'size' => 'md',
+    ]) ?>
+  </div>
+<?php } ?>
+
 <?php if (! empty($layout['saas_modal_prevencimento'])) { ?>
   <div class="v5-shell">
     <?= component('modal', [

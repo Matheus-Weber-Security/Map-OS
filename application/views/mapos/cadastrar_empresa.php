@@ -20,14 +20,11 @@ include APPPATH . 'views/entrada/inicio.php';
 ?>
     <main class="mx-auto w-full max-w-xl flex-1 px-4 py-6 lg:py-10">
         <header class="mb-6">
-            <div class="mb-3 inline-flex items-center gap-2 rounded-full border border-hairline-violet bg-night px-3.5 py-1 text-caption font-semibold text-accent-lime">
-                <?= icon('circle-check', ['class' => 'size-4']) ?> 10 dias grátis de assinatura sem compromisso
-            </div>
-            <h1 class="font-display text-display-hero-sm font-bold text-on-dark sm:text-display-large">
-                Cadastre sua <span class="rounded-xs bg-accent-lime px-3 text-ink">empresa</span>.
+            <h1 class="font-display text-2xl font-bold text-on-dark sm:text-3xl whitespace-nowrap">
+                Cadastre sua <span class="rounded-xs bg-accent-lime px-2 py-0.5 text-ink">empresa</span>
             </h1>
-            <p class="mt-2 text-body-lg text-on-dark-muted">
-                Comece agora mesmo com ordens de serviço, vendas, compras, controle de estoque e financeiro completo.
+            <p class="mt-2 text-sm text-on-dark-muted sm:text-base">
+                Crie sua conta para gerenciar ordens de serviço, vendas e financeiro.
             </p>
         </header>
 
@@ -132,15 +129,12 @@ include APPPATH . 'views/entrada/inicio.php';
                     </div>
                 </section>
 
-                <div class="flex flex-col items-center justify-between gap-4 pt-2 sm:flex-row">
-                    <p class="text-caption text-muted">
-                        Ao se cadastrar, você inicia seu período de 10 dias grátis.
-                    </p>
+                <div class="flex flex-col items-center justify-end pt-2 sm:flex-row">
                     <?= component('button', [
-                        'label' => 'Criar conta e iniciar teste grátis',
+                        'label' => 'Criar conta',
                         'type' => 'submit',
                         'size' => 'lg',
-                        'icon' => 'check',
+                        'icon' => 'arrow-right',
                         'class' => 'w-full shadow-elev-3 sm:w-auto',
                         'attrs' => ['data-rotulo-carregando' => 'Criando seu ambiente…'],
                     ]) ?>

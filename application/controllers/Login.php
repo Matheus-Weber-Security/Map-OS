@@ -382,9 +382,8 @@ class Login extends CI_Controller
                     $this->session->set_userdata([
                         'empresa_id' => (int) $resultado['empresa_id'],
                         'empresa_nome' => (string) $resultado['empresa_nome'],
+                        'saas_modal_boas_vindas' => true,
                     ]);
-
-                    $this->session->set_flashdata('success', '🎉 Parabéns! Sua empresa foi criada com sucesso. Você ganhou 10 dias de assinatura grátis para testar todos os recursos!');
 
                     return redirect(site_url('mapos'));
                 }
