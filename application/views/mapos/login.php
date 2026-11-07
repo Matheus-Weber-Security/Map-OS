@@ -42,7 +42,7 @@ include APPPATH . 'views/entrada/inicio.php';
             <?php } ?>
         </section>
 
-        <section class="superficie-entrada w-full rounded-xxl border border-hairline-violet bg-night p-6 text-text sm:p-8" aria-labelledby="titulo-login">
+        <section class="superficie-entrada w-full max-w-md mx-auto rounded-xxl border border-hairline-violet bg-night p-6 text-text sm:p-8" aria-labelledby="titulo-login">
             <h2 id="titulo-login" class="mb-6 font-display text-heading-md text-text"><?= e($saudacao . '! Entre na sua conta') ?></h2>
 
             <?php if (! empty($sucesso)) { ?>
