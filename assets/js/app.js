@@ -45,6 +45,41 @@ export function iniciarAlternarSenha(raiz = document) {
     });
 }
 
+export function iniciarRecarregarCaptcha(raiz = document) {
+    raiz.addEventListener('click', (event) => {
+        const botao = event.target.closest('[data-recarregar-captcha]');
+        if (!botao) {
+            return;
+        }
+
+        const container = botao.closest('[data-captcha-container]') || botao.parentElement;
+        const imagem = container ? container.querySelector('[data-captcha-imagem], img') : null;
+        if (!imagem) {
+            return;
+        }
+
+        const url = (imagem.dataset.url || imagem.src).split('?')[0];
+        const novoParametro = 't=' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+        imagem.src = url + '?' + novoParametro;
+
+        const icone = botao.querySelector('svg');
+        if (icone) {
+            icone.classList.add('animar-girar');
+            imagem.addEventListener('load', () => {
+                icone.classList.remove('animar-girar');
+            }, { once: true });
+            setTimeout(() => icone.classList.remove('animar-girar'), 1000);
+        }
+
+        const form = botao.closest('form');
+        const inputCaptcha = form ? form.querySelector('input[name="captcha"]') : document.querySelector('input[name="captcha"]');
+        if (inputCaptcha) {
+            inputCaptcha.value = '';
+            inputCaptcha.focus();
+        }
+    });
+}
+
 export async function iniciarModulos(raiz = document) {
     const elementos = raiz.querySelectorAll('[data-module]');
 
@@ -74,6 +109,7 @@ export async function iniciarModulos(raiz = document) {
 
 if (typeof document !== 'undefined') {
     iniciarAlternarSenha(document);
+    iniciarRecarregarCaptcha(document);
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => iniciarModulos());

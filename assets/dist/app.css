@@ -4,3 +4,4 @@
 
 .titulo-cadastrar-empresa{font-size:30px!important;line-height:1.2!important}@media (min-width:640px){.titulo-cadastrar-empresa{font-size:38px!important;white-space:nowrap!important}}@media (min-width:768px){.titulo-cadastrar-empresa{font-size:45px!important}}
 input::-ms-reveal,input::-ms-clear{display:none}
+.w-\[50px\]{width:50px!important}@keyframes girar{to{transform:rotate(360deg)}}.animar-girar{animation:girar .6s linear infinite}
