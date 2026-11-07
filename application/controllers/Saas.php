@@ -250,6 +250,12 @@ class Saas extends MY_Controller
             return redirect('saas/assinantes');
         }
 
+        if (strlen($senha) < 8 || ! preg_match('/[A-Z]/', $senha) || ! preg_match('/[a-z]/', $senha) || ! preg_match('/[0-9]/', $senha) || ! preg_match('/[^a-zA-Z0-9]/', $senha)) {
+            $this->session->set_flashdata('error', 'A senha precisa ter no mínimo 8 caracteres, com letra maiúscula, minúscula, número e caractere especial.');
+
+            return redirect('saas/assinantes');
+        }
+
         $dadosEmpresa = [
             'razao_social' => $razaoSocial,
             'nome_fantasia' => $nomeFantasia,

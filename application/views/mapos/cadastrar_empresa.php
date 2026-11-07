@@ -83,12 +83,13 @@ include APPPATH . 'views/entrada/inicio.php';
                             'type' => 'password',
                             'required' => true,
                             'error' => $errosDeCampo['senha'] ?? null,
-                            'help' => 'Mínimo de 8 caracteres.',
+                            'help' => 'Mínimo de 8 caracteres, com letra maiúscula, minúscula, número e caractere especial.',
                             'attrs' => [
                                 'minlength' => 8,
                                 'maxlength' => 72,
                                 'data-msg-vazio' => 'Crie uma senha de acesso.',
-                                'data-msg-invalido' => 'A senha precisa de pelo menos 8 caracteres.',
+                                'pattern' => '(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^a-zA-Z0-9]).{8,}',
+                                'data-msg-invalido' => 'Mínimo de 8 caracteres, com letra maiúscula, minúscula, número e caractere especial.',
                             ],
                         ]) ?>
 
@@ -100,6 +101,7 @@ include APPPATH . 'views/entrada/inicio.php';
                             'required' => true,
                             'error' => $errosDeCampo['senha_confirmacao'] ?? null,
                             'attrs' => [
+                                'minlength' => 8,
                                 'maxlength' => 72,
                                 'data-msg-vazio' => 'Repita a senha para confirmar.',
                             ],

@@ -359,7 +359,15 @@ class Login extends CI_Controller
             }
 
             if (strlen($senha) < 8) {
-                $erros['senha'] = 'A senha precisa ter pelo menos 8 caracteres.';
+                $erros['senha'] = 'A senha precisa ter no mínimo 8 caracteres.';
+            } elseif (! preg_match('/[A-Z]/', $senha)) {
+                $erros['senha'] = 'A senha precisa conter pelo menos 1 letra maiúscula.';
+            } elseif (! preg_match('/[a-z]/', $senha)) {
+                $erros['senha'] = 'A senha precisa conter pelo menos 1 letra minúscula.';
+            } elseif (! preg_match('/[0-9]/', $senha)) {
+                $erros['senha'] = 'A senha precisa conter pelo menos 1 número.';
+            } elseif (! preg_match('/[^a-zA-Z0-9]/', $senha)) {
+                $erros['senha'] = 'A senha precisa conter pelo menos 1 caractere especial (ex: !@#$%&*).';
             } elseif ($senha !== $senhaConfirmacao) {
                 $erros['senha_confirmacao'] = 'A confirmação de senha não confere.';
             }
