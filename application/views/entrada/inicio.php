@@ -34,7 +34,7 @@ $nomeSistema = (string) ($this->config->item('app_name') ?: 'Nexus Ticket');
     <link rel="apple-touch-icon" sizes="180x180" href="<?= e(base_url('assets/img/apple-touch-icon.png?v=2')) ?>">
     <link rel="manifest" href="<?= e(base_url('assets/manifest.json')) ?>">
     <meta name="theme-color" content="#7c3aed">
-    <link rel="stylesheet" href="<?= e(base_url('assets/dist/app.css')) ?>">
+    <link rel="stylesheet" href="<?= e(base_url('assets/dist/app.css?v=' . (file_exists(FCPATH . 'assets/dist/app.css') ? filemtime(FCPATH . 'assets/dist/app.css') : '2'))) ?>">
     <script type="module" src="<?= e(base_url('assets/js/app.js')) ?>"></script>
 </head>
 <body class="flex min-h-screen flex-col bg-canvas-dark bg-[url(../img/entrada/estrelas.svg)] font-sans text-on-dark antialiased">

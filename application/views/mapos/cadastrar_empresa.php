@@ -20,7 +20,7 @@ include APPPATH . 'views/entrada/inicio.php';
 ?>
     <main class="mx-auto w-full max-w-xl flex-1 px-4 py-6 lg:py-10">
         <header class="mb-6">
-            <h1 class="font-display text-[35px] font-bold tracking-tight text-on-dark sm:text-[41px] md:text-[50px] whitespace-nowrap">
+            <h1 class="font-display text-[35px] font-bold tracking-tight text-on-dark sm:text-[41px] md:text-[50px] whitespace-nowrap titulo-cadastrar-empresa" style="font-size: clamp(32px, 5.5vw, 50px); line-height: 1.2;">
                 Cadastre sua <span class="rounded-xs bg-accent-lime px-2.5 py-0.5 text-ink">empresa</span>
             </h1>
             <p class="mt-2 text-sm text-on-dark-muted sm:text-base">
