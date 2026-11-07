@@ -39,15 +39,18 @@ include APPPATH . 'views/entrada/inicio.php';
                 <section class="border-t border-border pt-6" aria-labelledby="secao-captcha">
                     <h2 id="secao-captcha" class="text-heading-sm text-text">Confirme que você não é um robô</h2>
                     <div class="mt-4 grid items-start gap-4 sm:grid-cols-2">
-                        <div class="flex items-center gap-2" data-captcha-container>
-                            <img src="<?= e(site_url('mine/captcha') . '?' . bin2hex(random_bytes(4))) ?>" alt="Imagem com os caracteres a digitar" width="180" height="50" class="h-[50px] w-[180px] shrink-0 rounded-md border border-border" data-captcha-imagem>
-                            <button type="button"
-                                    class="flex h-[50px] w-[50px] shrink-0 items-center justify-center rounded-md border border-hairline-violet bg-surface-subtle text-muted hover:bg-surface hover:text-text focus-visible:outline-3 focus-visible:outline-ring cursor-pointer transition-colors"
-                                    data-recarregar-captcha
-                                    title="Recarregar outra imagem"
-                                    aria-label="Recarregar outra imagem">
-                                <?= icon('refresh-cw', ['class' => 'size-5']) ?>
-                            </button>
+                        <div class="flex flex-col gap-1">
+                            <span class="text-sm font-medium invisible select-none max-sm:hidden" aria-hidden="true">&nbsp;</span>
+                            <div class="flex items-center gap-2" data-captcha-container>
+                                <img src="<?= e(site_url('mine/captcha') . '?' . bin2hex(random_bytes(4))) ?>" alt="Imagem com os caracteres a digitar" width="180" height="50" class="h-[50px] w-[180px] shrink-0 rounded-md border border-border" data-captcha-imagem>
+                                <button type="button"
+                                        class="flex h-[50px] w-[50px] shrink-0 items-center justify-center rounded-md border border-hairline-violet bg-surface-subtle text-muted hover:bg-surface hover:text-text focus-visible:outline-3 focus-visible:outline-ring cursor-pointer transition-colors"
+                                        data-recarregar-captcha
+                                        title="Recarregar outra imagem"
+                                        aria-label="Recarregar outra imagem">
+                                    <?= icon('refresh-cw', ['class' => 'size-5']) ?>
+                                </button>
+                            </div>
                         </div>
                         <?= component('input', [
                             'name' => 'captcha',
