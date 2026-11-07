@@ -13,6 +13,36 @@ export function nomeDeModuloValido(nome) {
     return typeof nome === 'string' && NOME_VALIDO.test(nome);
 }
 
+export function iniciarAlternarSenha(raiz = document) {
+    raiz.addEventListener('click', (event) => {
+        const botao = event.target.closest('[data-alternar-senha]');
+        if (!botao) {
+            return;
+        }
+
+        const container = botao.closest('.relative') || botao.parentElement;
+        const input = container ? container.querySelector('input') : null;
+        if (!input) {
+            return;
+        }
+
+        const estaOculto = input.type === 'password';
+        input.type = estaOculto ? 'text' : 'password';
+
+        const iconeAberto = botao.querySelector('[data-icone-olho-aberto]');
+        const iconeFechado = botao.querySelector('[data-icone-olho-fechado]');
+
+        if (iconeAberto && iconeFechado) {
+            iconeAberto.classList.toggle('hidden', estaOculto);
+            iconeFechado.classList.toggle('hidden', !estaOculto);
+        }
+
+        const rotulo = estaOculto ? 'Ocultar senha' : 'Ver senha';
+        botao.setAttribute('aria-label', rotulo);
+        botao.setAttribute('title', rotulo);
+    });
+}
+
 export async function iniciarModulos(raiz = document) {
     const elementos = raiz.querySelectorAll('[data-module]');
 
@@ -41,6 +71,8 @@ export async function iniciarModulos(raiz = document) {
 }
 
 if (typeof document !== 'undefined') {
+    iniciarAlternarSenha(document);
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => iniciarModulos());
     } else {

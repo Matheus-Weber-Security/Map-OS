@@ -107,6 +107,7 @@ if (! function_exists('componenteEspecificacoes')) {
                     'readonly' => false,
                     'autocomplete' => null,
                     'hide_label' => false,
+                    'alternar_senha' => true,
                 ],
                 'opcoes' => [
                     'type' => ['text', 'email', 'password', 'number', 'date', 'datetime-local', 'time', 'tel', 'url', 'search'],
