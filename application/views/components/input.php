@@ -57,7 +57,7 @@ $atributos = [
         <div class="relative w-full">
             <input<?= componenteAtributos(componenteMesclarAtributos($atributos, $attrs)) ?>>
             <button type="button"
-                    class="absolute inset-y-0 right-0 flex items-center pr-3 text-muted hover:text-text focus:outline-none cursor-pointer"
+                    class="absolute inset-y-0 right-3 flex items-center text-muted hover:text-text focus:outline-none cursor-pointer"
                     data-alternar-senha
                     tabindex="-1"
                     title="Ver senha"
