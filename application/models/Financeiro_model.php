@@ -19,6 +19,7 @@ class Financeiro_model extends CI_Model
     public function __construct()
     {
         parent::__construct();
+        $this->corrigirIdsSaltados();
     }
 
     /**
@@ -411,5 +412,57 @@ class Financeiro_model extends CI_Model
             'valor' => $linha['cliente_fornecedor'],
             'detalhe' => 'Já usado em lançamentos',
         ], $linhas);
+    }
+
+    /**
+     * Corrige lançamentos que saltaram para a faixa de 30000+ devido ao cache de auto-increment do TiDB.
+     */
+    public function corrigirIdsSaltados(): void
+    {
+        $existe = (int) ($this->db->where('idLancamentos >=', 30000)->count_all_results('lancamentos') ?? 0);
+        if ($existe <= 0) {
+            return;
+        }
+
+        $this->db->query('SET FOREIGN_KEY_CHECKS = 0');
+
+        $saltados = $this->db
+            ->where('idLancamentos >=', 30000)
+            ->order_by('idLancamentos', 'ASC')
+            ->get('lancamentos')
+            ->result();
+
+        foreach ($saltados as $l) {
+            $idAntigo = (int) $l->idLancamentos;
+
+            $maxId = (int) ($this->db
+                ->select_max('idLancamentos')
+                ->where('idLancamentos <', 30000)
+                ->get('lancamentos')
+                ->row()->idLancamentos ?? 0);
+
+            $proximoId = max(1, $maxId + 1);
+
+            if ($this->db->table_exists('vendas')) {
+                $this->db->where('lancamentos_id', $idAntigo)->update('vendas', ['lancamentos_id' => $proximoId]);
+            }
+
+            if ($this->db->table_exists('os')) {
+                $this->db->where('lancamento', $idAntigo)->update('os', ['lancamento' => $proximoId]);
+            }
+
+            $this->db->where('idLancamentos', $idAntigo)->update('lancamentos', ['idLancamentos' => $proximoId]);
+        }
+
+        $maxFinal = (int) ($this->db
+            ->select_max('idLancamentos')
+            ->where('idLancamentos <', 30000)
+            ->get('lancamentos')
+            ->row()->idLancamentos ?? 0);
+
+        $novoAutoIncrement = max(1, $maxFinal + 1);
+        $this->db->query("ALTER TABLE `lancamentos` AUTO_INCREMENT = {$novoAutoIncrement}");
+
+        $this->db->query('SET FOREIGN_KEY_CHECKS = 1');
     }
 }
