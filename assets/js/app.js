@@ -33,6 +33,8 @@ export function iniciarAlternarSenha(raiz = document) {
         const iconeFechado = botao.querySelector('[data-icone-olho-fechado]');
 
         if (iconeAberto && iconeFechado) {
+            iconeAberto.hidden = estaOculto;
+            iconeFechado.hidden = !estaOculto;
             iconeAberto.classList.toggle('hidden', estaOculto);
             iconeFechado.classList.toggle('hidden', !estaOculto);
         }

@@ -82,6 +82,6 @@ if (! function_exists('icon')) {
 
         $href = htmlspecialchars(base_url(ICONE_SPRITE) . '#' . $nome, ENT_QUOTES, 'UTF-8');
 
-        return new HtmlSeguro('<svg' . $atributos . '><use href="' . $href . '"></use></svg>');
+        return new HtmlSeguro('<svg' . $atributos . '><use href="' . $href . '" xlink:href="' . $href . '"></use></svg>');
     }
 }

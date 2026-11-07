@@ -35,7 +35,7 @@ $nomeSistema = (string) ($this->config->item('app_name') ?: 'Nexus Ticket');
     <link rel="manifest" href="<?= e(base_url('assets/manifest.json')) ?>">
     <meta name="theme-color" content="#7c3aed">
     <link rel="stylesheet" href="<?= e(base_url('assets/dist/app.css?v=' . (file_exists(FCPATH . 'assets/dist/app.css') ? filemtime(FCPATH . 'assets/dist/app.css') : '2'))) ?>">
-    <script type="module" src="<?= e(base_url('assets/js/app.js')) ?>"></script>
+    <script type="module" src="<?= e(base_url('assets/js/app.js?v=' . (file_exists(FCPATH . 'assets/js/app.js') ? filemtime(FCPATH . 'assets/js/app.js') : '2'))) ?>"></script>
 </head>
 <body class="flex min-h-screen flex-col bg-canvas-dark bg-[url(../img/entrada/estrelas.svg)] font-sans text-on-dark antialiased">
     <header class="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-5 lg:px-8">

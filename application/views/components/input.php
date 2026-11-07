@@ -63,7 +63,7 @@ $atributos = [
                     title="Ver senha"
                     aria-label="Ver senha">
                 <span data-icone-olho-aberto class="inline-flex items-center pointer-events-none"><?= icon('eye', ['class' => 'size-5']) ?></span>
-                <span data-icone-olho-fechado class="hidden inline-flex items-center pointer-events-none"><?= icon('eye-off', ['class' => 'size-5']) ?></span>
+                <span data-icone-olho-fechado hidden class="inline-flex items-center pointer-events-none"><?= icon('eye-off', ['class' => 'size-5']) ?></span>
             </button>
         </div>
     <?php } else { ?>
