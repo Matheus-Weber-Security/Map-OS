@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     unzip \
     git \
+    default-mysql-client \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
         mysqli \
@@ -40,6 +41,7 @@ RUN { \
     echo 'memory_limit = 256M'; \
     echo 'max_execution_time = 300'; \
     echo 'date.timezone = America/Sao_Paulo'; \
+    echo 'variables_order = "EGPCS"'; \
 } > /usr/local/etc/php/conf.d/mapos.ini
 
 # Definir diretório de trabalho
@@ -63,6 +65,11 @@ RUN mkdir -p /var/www/html/application/storage \
     && chmod -R 775 /var/www/html/assets/uploads \
     && chmod -R 775 /var/www/html/assets/userImage
 
+# Copiar e configurar entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 EXPOSE 80
 
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["apache2-foreground"]

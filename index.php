@@ -83,10 +83,10 @@ if (file_exists($envFile) && file_exists($composerAutoloadFile)) {
 }
 
 //set the environment to production after installation
-define('ENVIRONMENT', $_ENV['APP_ENVIRONMENT'] ?? 'pre_installation');
+define('ENVIRONMENT', $_ENV['APP_ENVIRONMENT'] ?? getenv('APP_ENVIRONMENT') ?: 'production');
 
 // we don't want to access the main project before installation. redirect to installation page
-if (ENVIRONMENT === 'pre_installation') {
+if (ENVIRONMENT === 'pre_installation' && file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'install' . DIRECTORY_SEPARATOR . 'index.php')) {
     $domain = $_SERVER['HTTP_HOST'] . $_SERVER['SCRIPT_NAME'];
 
     $domain = preg_replace('/index.php.*/', '', $domain); //remove everything after index.php

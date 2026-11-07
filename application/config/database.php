@@ -22,11 +22,11 @@ if ($db_ssl) {
 
 $db['default'] = [
     'dsn' => $_ENV['DB_DSN'] ?? '',
-    'hostname' => $_ENV['DB_HOSTNAME'] ?? 'enter_hostname',
-    'port' => (int)($_ENV['DB_PORT'] ?? 3306),
-    'username' => $_ENV['DB_USERNAME'] ?? 'enter_db_username',
-    'password' => $_ENV['DB_PASSWORD'] ?? 'enter_db_password',
-    'database' => $_ENV['DB_DATABASE'] ?? 'enter_database_name',
+    'hostname' => $_ENV['DB_HOSTNAME'] ?? getenv('DB_HOSTNAME') ?: 'enter_hostname',
+    'port' => (int)($_ENV['DB_PORT'] ?? getenv('DB_PORT') ?: 3306),
+    'username' => $_ENV['DB_USERNAME'] ?? getenv('DB_USERNAME') ?: 'enter_db_username',
+    'password' => $_ENV['DB_PASSWORD'] ?? getenv('DB_PASSWORD') ?: 'enter_db_password',
+    'database' => $_ENV['DB_DATABASE'] ?? getenv('DB_DATABASE') ?: 'enter_database_name',
     'dbdriver' => $_ENV['DB_DRIVER'] ?? 'mysqli',
     'dbprefix' => $_ENV['DB_PREFIX'] ?? '',
     'pconnect' => filter_var($_ENV['DB_PCONNECT'] ?? false, FILTER_VALIDATE_BOOLEAN),
