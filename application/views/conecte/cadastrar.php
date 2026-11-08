@@ -18,33 +18,33 @@ $entrada = [
 ];
 include APPPATH . 'views/entrada/inicio.php';
 ?>
-    <main class="mx-auto w-full max-w-3xl flex-1 px-4 py-6 lg:py-10" <?= js_module('clientes/formulario') ?>>
-        <header class="mb-6">
-            <h1 class="font-display text-display-hero-sm font-bold text-on-dark sm:text-display-large">Crie sua <span class="rounded-xs bg-accent-lime px-3 text-ink">conta</span>.</h1>
-            <p class="mt-2 max-w-xl text-body-lg text-on-dark-muted">Acompanhe as ordens de serviço, as compras e as cobranças pela área do cliente.</p>
+    <main class="mx-auto w-full max-w-2xl flex-1 px-4 py-6 lg:py-8" <?= js_module('clientes/formulario') ?>>
+        <header class="mb-5">
+            <h1 class="font-display text-heading-lg sm:text-heading-xl font-bold tracking-tight text-on-dark">Crie sua <span class="rounded-xs bg-accent-lime px-2 py-0.5 text-ink">conta</span></h1>
+            <p class="mt-1.5 text-sm text-on-dark-muted">Acompanhe as ordens de serviço, as compras e as cobranças pela área do cliente.</p>
         </header>
 
-        <div class="superficie-entrada flex flex-col gap-4 rounded-xxl border border-hairline-violet bg-night p-4 text-text sm:p-8">
+        <div class="superficie-entrada flex flex-col gap-4 rounded-xxl border border-hairline-violet bg-night p-5 text-text sm:p-6">
             <?php if ($erroGeral !== null) { ?>
                 <?= component('alert', ['variant' => 'danger', 'message' => $erroGeral]) ?>
             <?php } elseif ($errosDeCampo !== []) { ?>
-                <?= component('alert', ['variant' => 'danger', 'message' => count($errosDeCampo) === 1 ? 'Confira o campo destacado.' : 'Confira os ' . count($errosDeCampo) . ' campos destacados.']) ?>
+                <?= component('alert', ['variant' => 'danger', 'message' => count($errosDeCampo) === 1 ? 'Confira o campo destacado abaixo.' : 'Confira os ' . count($errosDeCampo) . ' campos destacados abaixo.']) ?>
             <?php } ?>
 
-            <form method="post" action="<?= e(site_url('mine/cadastrar')) ?>" novalidate class="flex flex-col gap-6" <?= js_module('formulario/padrao') ?>>
+            <form method="post" action="<?= e(site_url('mine/cadastrar')) ?>" novalidate class="flex flex-col gap-4" <?= js_module('formulario/padrao') ?>>
                 <input type="hidden" name="<?= e($this->security->get_csrf_token_name()) ?>" value="<?= e($this->security->get_csrf_hash()) ?>">
 
-                <?php $this->load->view('conecte/partes/campos_cliente', ['erros' => $errosDeCampo, 'novo' => true, 'caixa' => 'border-t border-border pt-6', 'caixa_primeira' => '']); ?>
+                <?php $this->load->view('conecte/partes/campos_cliente', ['erros' => $errosDeCampo, 'novo' => true, 'caixa' => 'border-t border-border pt-4', 'caixa_primeira' => '']); ?>
 
-                <section class="border-t border-border pt-6" aria-labelledby="secao-captcha">
+                <section class="border-t border-border pt-4" aria-labelledby="secao-captcha">
                     <h2 id="secao-captcha" class="text-heading-sm text-text">Confirme que você não é um robô</h2>
                     <div class="mt-4 grid items-start gap-4 sm:grid-cols-2">
                         <div class="flex flex-col gap-1">
                             <span class="text-sm font-medium invisible select-none max-sm:hidden" aria-hidden="true">&nbsp;</span>
                             <div class="flex items-center gap-2" data-captcha-container>
-                                <img src="<?= e(site_url('mine/captcha') . '?' . bin2hex(random_bytes(4))) ?>" alt="Imagem com os caracteres a digitar" width="180" height="50" class="h-[50px] w-[180px] shrink-0 rounded-md border border-border" data-captcha-imagem>
+                                <img src="<?= e(site_url('mine/captcha') . '?' . bin2hex(random_bytes(4))) ?>" alt="Imagem com os caracteres a digitar" width="160" height="40" class="h-10 w-[160px] shrink-0 rounded-md border border-border" data-captcha-imagem>
                                 <button type="button"
-                                        class="flex h-[50px] w-[50px] shrink-0 items-center justify-center rounded-md border border-hairline-violet bg-surface-subtle text-muted hover:bg-surface hover:text-text focus-visible:outline-3 focus-visible:outline-ring cursor-pointer transition-colors"
+                                        class="flex size-10 shrink-0 items-center justify-center rounded-md border border-hairline-violet bg-surface-subtle text-muted hover:bg-surface hover:text-text focus-visible:outline-3 focus-visible:outline-ring cursor-pointer transition-colors"
                                         data-recarregar-captcha
                                         title="Recarregar outra imagem"
                                         aria-label="Recarregar outra imagem">
@@ -64,16 +64,22 @@ include APPPATH . 'views/entrada/inicio.php';
                     </div>
                 </section>
 
-                <?= component('button', [
-                    'label' => 'Criar conta',
-                    'type' => 'submit',
-                    'size' => 'lg',
-                    'icon' => 'circle-user',
-                    // DESIGN.md: na superfície de entrada o button-primary leva o halo nível 3.
-                    'class' => 'w-full shadow-elev-3 sm:ml-auto sm:w-auto',
-                    'attrs' => ['data-rotulo-carregando' => 'Criando…'],
-                ]) ?>
+                <div class="flex justify-end pt-2">
+                    <?= component('button', [
+                        'label' => 'Criar conta',
+                        'type' => 'submit',
+                        'size' => 'lg',
+                        'icon' => 'circle-user',
+                        // DESIGN.md: na superfície de entrada o button-primary leva o halo nível 3.
+                        'class' => 'w-full shadow-elev-3 sm:w-auto',
+                        'attrs' => ['data-rotulo-carregando' => 'Criando…'],
+                    ]) ?>
+                </div>
             </form>
+        </div>
+
+        <div class="mt-4 text-center text-sm text-on-dark-muted">
+            <a href="<?= e(site_url('mine')) ?>" class="text-on-dark underline underline-offset-4 hover:decoration-2">Já tem uma conta? Acesse aqui</a>
         </div>
     </main>
 <?php include APPPATH . 'views/entrada/fim.php'; ?>
