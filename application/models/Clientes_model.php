@@ -160,9 +160,6 @@ class Clientes_model extends CI_Model
 
         return $this->db->count_all($table);
     }
-    {
-        return $this->db->count_all($table);
-    }
 
     /** OS do cliente, das mais recentes para as mais antigas. */
     public function osDoCliente(int $id, int $limite, int $offset = 0): array
