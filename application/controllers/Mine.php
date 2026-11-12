@@ -986,6 +986,7 @@ class Mine extends CI_Controller
             'Return-Path' => '',
         ];
         $email = [
+            'empresa_id' => (int) ($dados['cliente']->empresa_id ?? ($emitente->empresa_id ?? 1)),
             'to' => $remetente,
             'message' => $html,
             'status' => 'pending',
@@ -1023,11 +1024,12 @@ class Mine extends CI_Controller
         $remetentes = array_unique(array_filter($remetentes));
         foreach ($remetentes as $remetente) {
             $headers = [
-                'From' => $emitente->email,
+                'From' => "\"{$emitente->nome}\" <{$emitente->email}>",
                 'Subject' => $assunto,
                 'Return-Path' => '',
             ];
             $email = [
+                'empresa_id' => (int) ($dados['result']->empresa_id ?? ($emitente->empresa_id ?? 1)),
                 'to' => $remetente,
                 'message' => $html,
                 'status' => 'pending',
@@ -1067,6 +1069,7 @@ class Mine extends CI_Controller
             'Return-Path' => '',
         ];
         $email = [
+            'empresa_id' => (int) ($remetente->empresa_id ?? ($emitente->empresa_id ?? 1)),
             'to' => $remetente->email,
             'message' => $html,
             'status' => 'pending',
@@ -1104,6 +1107,7 @@ class Mine extends CI_Controller
                 'Return-Path' => '',
             ];
             $email = [
+                'empresa_id' => (int) ($dados['cliente']->empresa_id ?? ($emitente->empresa_id ?? 1)),
                 'to' => $usuario->email,
                 'message' => $html,
                 'status' => 'pending',

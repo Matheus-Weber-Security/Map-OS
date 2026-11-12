@@ -79,11 +79,26 @@ class Login extends CI_Controller
             exit();
         }
 
-        // 2FA ativo (#2876): a senha sozinha não entra. A sessão guarda só que a
-        // senha conferiu, por 5 minutos e 5 tentativas, e o código decide. O
-        // contador de falhas só zera com o código certo: senão repetir a senha
-        // devolveria tentativas de código de graça.
-        if ($user->totp_ativado_em ?? null) {
+        // Primeiro acesso sem autenticador configurado: redireciona para vincular o 2FA antes de liberar o painel.
+        if ($this->db->field_exists('totp_ativado_em', 'usuarios') && empty($user->totp_ativado_em)) {
+            $this->limite_login->registrarSucesso('usuario', $email);
+            $this->load->library('Totp');
+            $this->session->sess_regenerate(true);
+            $this->session->set_userdata('dois_fatores_primeiro_acesso', [
+                'id_usuario' => (int) $user->idUsuarios,
+                'email' => (string) $user->email,
+                'nome' => (string) $user->nome,
+                'segredo' => $this->totp->criarSegredo(),
+                'expira' => time() + 600,
+            ]);
+            echo json_encode(['result' => true, 'destino' => site_url('login/configurarDoisFatores')]);
+            exit();
+        }
+
+        // 2FA no login (#2876): só pede os 6 dígitos ao entrar se a opção global
+        // "exigir_2fa_login" estiver ativada (padrão desativado) ou se o grupo exigir.
+        $exigirNoLogin = $this->Mapos_model->exigir2faNoLogin() || $this->Mapos_model->grupoExige2fa((int) $user->permissoes_id);
+        if (($user->totp_ativado_em ?? null) && $exigirNoLogin) {
             $this->session->sess_regenerate(true);
             $this->session->set_userdata('dois_fatores', ['email' => $user->email, 'expira' => time() + self::DOIS_FATORES_VALIDADE, 'tentativas' => 0]);
             echo json_encode(['result' => true, 'destino' => site_url('login/doisFatores')]);
@@ -163,7 +178,123 @@ class Login extends CI_Controller
         $this->session->unset_userdata('dois_fatores');
         $this->iniciarSessao($user);
 
+        if ($this->session->userdata('qtd_empresas') > 1) {
+            return redirect(site_url('login/escolherEmpresa'));
+        }
+
         return redirect(site_url('mapos'));
+    }
+
+    /**
+     * Primeiro acesso de funcionário/usuário sem 2FA: tela obrigatória para
+     * vincular o aplicativo autenticador logo após validar e-mail e senha.
+     */
+    public function configurarDoisFatores()
+    {
+        $setup = $this->primeiroAcessoPendente();
+        if ($setup === null) {
+            $this->session->set_flashdata('error', 'Entre com seu e-mail e senha primeiro.');
+
+            return redirect(site_url('login'));
+        }
+
+        $this->load->library('Totp');
+
+        return $this->load->view('mapos/login_configurar_2fa', [
+            'nome' => $setup['nome'],
+            'email' => $setup['email'],
+            'qr' => $this->totp->qrCodeDataUri($setup['email'], $setup['segredo']),
+            'segredo' => Totp::formatarSegredo($setup['segredo']),
+            'segredo_puro' => $setup['segredo'],
+            'otpauth_uri' => $this->totp->uri($setup['email'], $setup['segredo']),
+            'erro' => $this->session->flashdata('error'),
+        ]);
+    }
+
+    public function salvarDoisFatoresPrimeiroAcesso()
+    {
+        $setup = $this->primeiroAcessoPendente();
+        if ($setup === null || $this->input->method() !== 'post') {
+            $this->session->set_flashdata('error', 'Sessão expirada. Entre com seu e-mail e senha novamente.');
+
+            return redirect(site_url('login'));
+        }
+
+        $this->load->library('Totp');
+        $codigo = trim((string) $this->input->post('codigo'));
+        $passo = $this->totp->verificar($setup['segredo'], $codigo);
+
+        if ($passo === null) {
+            $this->session->set_flashdata('error', 'Código incorreto. Confira os 6 dígitos mostrados no aplicativo e tente novamente.');
+
+            return redirect(site_url('login/configurarDoisFatores'));
+        }
+
+        $codigos = $this->totp->gerarCodigosDeRecuperacao();
+        $salvou = $this->mapos_model->ativarTotp(
+            (int) $setup['id_usuario'],
+            $this->totp->cifrar($setup['segredo']),
+            array_map([Totp::class, 'hashDoCodigo'], $codigos),
+            $passo
+        );
+
+        if (! $salvou) {
+            $this->session->set_flashdata('error', 'Não foi possível salvar a configuração do autenticador. Tente novamente.');
+
+            return redirect(site_url('login/configurarDoisFatores'));
+        }
+
+        $this->session->unset_userdata('dois_fatores_primeiro_acesso');
+        $user = $this->mapos_model->usuarioParaLoginPorId((int) $setup['id_usuario']);
+        if (! $user) {
+            $this->session->set_flashdata('error', 'Usuário não encontrado.');
+
+            return redirect(site_url('login'));
+        }
+
+        $this->iniciarSessao($user);
+        log_info('Vinculou o aplicativo autenticador no primeiro acesso.');
+
+        $destino = $this->session->userdata('qtd_empresas') > 1 ? site_url('login/escolherEmpresa') : site_url('mapos');
+        $this->session->set_userdata('codigos_recuperacao_novos', [
+            'codigos' => $codigos,
+            'email' => (string) $user->email,
+            'destino' => $destino,
+        ]);
+
+        return redirect(site_url('login/codigosRecuperacao'));
+    }
+
+    /**
+     * Exibe os 10 códigos de recuperação uma única vez após ativar o 2FA.
+     */
+    public function codigosRecuperacao()
+    {
+        $dados = $this->session->userdata('codigos_recuperacao_novos');
+        if (! is_array($dados) || empty($dados['codigos'])) {
+            return redirect(site_url('mapos'));
+        }
+
+        $this->session->unset_userdata('codigos_recuperacao_novos');
+
+        return $this->load->view('mapos/codigos_recuperacao', [
+            'codigos' => $dados['codigos'],
+            'email' => (string) ($dados['email'] ?? ''),
+            'destino' => (string) ($dados['destino'] ?? site_url('mapos')),
+        ]);
+    }
+
+    /** @return array{id_usuario: int, email: string, nome: string, segredo: string, expira: int}|null */
+    private function primeiroAcessoPendente(): ?array
+    {
+        $p = $this->session->userdata('dois_fatores_primeiro_acesso');
+        if (! is_array($p) || ($p['expira'] ?? 0) < time()) {
+            $this->session->unset_userdata('dois_fatores_primeiro_acesso');
+
+            return null;
+        }
+
+        return $p;
     }
 
     /** @return array{email: string, expira: int, tentativas: int}|null */
@@ -327,13 +458,50 @@ class Login extends CI_Controller
     }
 
     /**
-     * Tela de cadastro de nova empresa (Tenant com 10 dias de degustação).
+     * Valida regra de complexidade forte de senha.
+     *
+     * @return array<string, string>
+     */
+    private function validarSenhaForte(string $senha, string $senhaConfirmacao): array
+    {
+        $erros = [];
+
+        if (strlen($senha) < 8) {
+            $erros['senha'] = 'A senha precisa ter no mínimo 8 caracteres.';
+        } elseif (! preg_match('/[A-Z]/', $senha)) {
+            $erros['senha'] = 'A senha precisa conter pelo menos 1 letra maiúscula.';
+        } elseif (! preg_match('/[a-z]/', $senha)) {
+            $erros['senha'] = 'A senha precisa conter pelo menos 1 letra minúscula.';
+        } elseif (! preg_match('/[0-9]/', $senha)) {
+            $erros['senha'] = 'A senha precisa conter pelo menos 1 número.';
+        } elseif (! preg_match('/[^a-zA-Z0-9]/', $senha)) {
+            $erros['senha'] = 'A senha precisa conter pelo menos 1 caractere especial (ex: !@#$%&*).';
+        } elseif ($senha !== $senhaConfirmacao) {
+            $erros['senha_confirmacao'] = 'A confirmação de senha não confere.';
+        }
+
+        return $erros;
+    }
+
+    /**
+     * Passo 1 de 2 do cadastro de nova empresa (Tenant com 10 dias de degustação).
+     * Valida os dados na sessão e segue para a vinculação do autenticador (2FA).
      */
     public function cadastrar()
     {
         $this->load->model('saas_model');
         $erros = [];
         $valores = [];
+
+        if ($this->input->method() === 'get' && $this->input->get('voltar')) {
+            $pendente = $this->session->userdata('cadastro_empresa_pendente');
+            if (is_array($pendente) && ($pendente['expira'] ?? 0) >= time()) {
+                $valores = [
+                    'nome' => (string) ($pendente['nome'] ?? ''),
+                    'email' => (string) ($pendente['email'] ?? ''),
+                ];
+            }
+        }
 
         if ($this->input->method() === 'post') {
             $captchaEsperado = (string) $this->session->userdata('captchaWord_empresa');
@@ -358,25 +526,83 @@ class Login extends CI_Controller
                 $erros['email'] = 'Informe um e-mail válido para acesso.';
             }
 
-            if (strlen($senha) < 8) {
-                $erros['senha'] = 'A senha precisa ter no mínimo 8 caracteres.';
-            } elseif (! preg_match('/[A-Z]/', $senha)) {
-                $erros['senha'] = 'A senha precisa conter pelo menos 1 letra maiúscula.';
-            } elseif (! preg_match('/[a-z]/', $senha)) {
-                $erros['senha'] = 'A senha precisa conter pelo menos 1 letra minúscula.';
-            } elseif (! preg_match('/[0-9]/', $senha)) {
-                $erros['senha'] = 'A senha precisa conter pelo menos 1 número.';
-            } elseif (! preg_match('/[^a-zA-Z0-9]/', $senha)) {
-                $erros['senha'] = 'A senha precisa conter pelo menos 1 caractere especial (ex: !@#$%&*).';
-            } elseif ($senha !== $senhaConfirmacao) {
-                $erros['senha_confirmacao'] = 'A confirmação de senha não confere.';
-            }
+            $erros += $this->validarSenhaForte($senha, $senhaConfirmacao);
 
             if ($captchaEsperado === '' || $captchaInformado === '' || strtolower($captchaInformado) !== strtolower($captchaEsperado)) {
                 $erros['captcha'] = 'Os caracteres não conferem com a imagem. Digite os da imagem nova.';
             }
 
+            $userExistente = null;
             if ($erros === []) {
+                $userExistente = $this->db->get_where('usuarios', ['email' => $email])->row();
+                if ($userExistente && ! senhaConfere($senha, $userExistente->senha)) {
+                    $erros['email'] = 'Este e-mail já possui uma conta no sistema. Informe a sua senha correta para vincular uma nova empresa ou utilize outro e-mail.';
+                }
+            }
+
+            if ($erros === []) {
+                $jaTem2fa = $userExistente && ! empty($userExistente->totp_ativado_em);
+                $this->load->library('Totp');
+
+                $this->session->set_userdata('cadastro_empresa_pendente', [
+                    'nome' => $nome,
+                    'email' => $email,
+                    'senha_plana' => $senha,
+                    'usuario_existente_id' => $userExistente ? (int) $userExistente->idUsuarios : null,
+                    'ja_tem_2fa' => $jaTem2fa,
+                    'segredo' => $jaTem2fa ? null : $this->totp->criarSegredo(),
+                    'expira' => time() + 1800,
+                ]);
+
+                return redirect(site_url('login/cadastrar2fa'));
+            }
+        }
+
+        $this->load->view('mapos/cadastrar_empresa', [
+            'valores' => $valores,
+            'erros' => $erros,
+            'erro' => $this->session->flashdata('error'),
+        ]);
+    }
+
+    /**
+     * Passo 2 de 2 do cadastro de nova empresa: vincula o Google Authenticator (2FA)
+     * e só então grava empresa + usuário no banco.
+     */
+    public function cadastrar2fa()
+    {
+        $pendente = $this->session->userdata('cadastro_empresa_pendente');
+        if (! is_array($pendente) || ($pendente['expira'] ?? 0) < time()) {
+            $this->session->unset_userdata('cadastro_empresa_pendente');
+            $this->session->set_flashdata('error', 'Preencha os dados da sua conta primeiro.');
+
+            return redirect(site_url('login/cadastrar'));
+        }
+
+        $this->load->library('Totp');
+        $this->load->model('saas_model');
+
+        $jaTem2fa = ! empty($pendente['ja_tem_2fa']);
+        $email = (string) $pendente['email'];
+        $nome = (string) $pendente['nome'];
+        $segredo = (string) ($pendente['segredo'] ?? '');
+        $erro = null;
+
+        if ($this->input->method() === 'post') {
+            $codigo = trim((string) $this->input->post('codigo'));
+            $passo = null;
+
+            if ($jaTem2fa) {
+                $userExistente = $this->mapos_model->usuarioParaLoginPorId((int) $pendente['usuario_existente_id']);
+                $ok = $userExistente && $this->totp->aceitar($this->mapos_model, $userExistente, $codigo);
+                $passo = $ok ? 1 : null;
+            } else {
+                $passo = $this->totp->verificar($segredo, $codigo);
+            }
+
+            if ($passo === null) {
+                $erro = 'Código incorreto. Confira os 6 dígitos mostrados no aplicativo e tente novamente.';
+            } else {
                 $resultado = $this->saas_model->cadastrarEmpresaComDono(
                     [
                         'razao_social' => $nome,
@@ -388,7 +614,7 @@ class Login extends CI_Controller
                     [
                         'nome' => $nome,
                         'email' => $email,
-                        'senha_plana' => $senha,
+                        'senha_plana' => (string) $pendente['senha_plana'],
                         'telefone' => '',
                         'cep' => '',
                         'rua' => '',
@@ -397,28 +623,58 @@ class Login extends CI_Controller
                         'cidade' => '',
                         'estado' => '',
                     ],
-                    10 // 10 dias de degustação
+                    10
                 );
 
                 if (! $resultado['sucesso']) {
-                    $erros['_geral'] = $resultado['mensagem'] ?? 'Erro ao criar a empresa. Tente novamente.';
+                    $erro = $resultado['mensagem'] ?? 'Erro ao criar a empresa. Tente novamente.';
                 } else {
-                    // Auto-login na empresa recém-criada
-                    $this->iniciarSessao($resultado['usuario']);
+                    $usuario = $resultado['usuario'];
+                    $codigos = null;
+
+                    if (! $jaTem2fa) {
+                        $codigos = $this->totp->gerarCodigosDeRecuperacao();
+                        $this->mapos_model->ativarTotp(
+                            (int) $usuario->idUsuarios,
+                            $this->totp->cifrar($segredo),
+                            array_map([Totp::class, 'hashDoCodigo'], $codigos),
+                            (int) $passo
+                        );
+                        $usuario = $this->mapos_model->usuarioParaLoginPorId((int) $usuario->idUsuarios) ?? $usuario;
+                    }
+
+                    $this->session->unset_userdata('cadastro_empresa_pendente');
+                    $this->iniciarSessao($usuario);
                     $this->session->set_userdata([
                         'empresa_id' => (int) $resultado['empresa_id'],
                         'empresa_nome' => (string) $resultado['empresa_nome'],
                         'saas_modal_boas_vindas' => true,
                     ]);
 
+                    if ($codigos !== null) {
+                        $this->session->set_userdata('codigos_recuperacao_novos', [
+                            'codigos' => $codigos,
+                            'email' => (string) $usuario->email,
+                            'destino' => site_url('mapos'),
+                        ]);
+
+                        return redirect(site_url('login/codigosRecuperacao'));
+                    }
+
                     return redirect(site_url('mapos'));
                 }
             }
         }
 
-        $this->load->view('mapos/cadastrar_empresa', [
-            'valores' => $valores,
-            'erros' => $erros,
+        return $this->load->view('mapos/cadastrar_empresa_2fa', [
+            'ja_tem_2fa' => $jaTem2fa,
+            'email' => $email,
+            'nome' => $nome,
+            'qr' => $jaTem2fa ? null : $this->totp->qrCodeDataUri($email, $segredo),
+            'segredo' => $jaTem2fa ? null : Totp::formatarSegredo($segredo),
+            'segredo_puro' => $jaTem2fa ? null : $segredo,
+            'otpauth_uri' => $jaTem2fa ? null : $this->totp->uri($email, $segredo),
+            'erro' => $erro,
         ]);
     }
 
@@ -465,125 +721,112 @@ class Login extends CI_Controller
     }
 
     /**
-     * Tela de solicitação de redefinição de senha para usuários do painel.
+     * Tela de recuperação de senha sem dependência de e-mail (usa o aplicativo autenticador).
      */
     public function resetarSenha()
     {
         $this->load->view('mapos/resetar_senha', [
             'erro' => $this->session->flashdata('error'),
+            'emailValor' => $this->session->flashdata('reset_email'),
         ]);
     }
 
     /**
-     * Processa a solicitação de token para redefinir senha.
+     * Mantido por compatibilidade de rota antiga; redireciona para o fluxo via TOTP.
      */
     public function gerarTokenResetarSenha()
     {
+        return redirect(site_url('login/resetarSenha'));
+    }
+
+    /**
+     * Valida e-mail + código de 6 dígitos (ou código de recuperação) para liberar a troca de senha.
+     */
+    public function verificarRecuperacaoTotp()
+    {
+        if ($this->input->method() !== 'post') {
+            return redirect(site_url('login/resetarSenha'));
+        }
+
         $email = strtolower(trim((string) $this->input->post('email')));
+        $codigo = trim((string) $this->input->post('codigo'));
         $ip = $this->input->ip_address();
 
         $this->load->library('Limite_login');
         if ($this->limite_login->bloqueado('reset', $email, $ip)) {
             $this->session->set_flashdata('error', Limite_login::MENSAGEM);
+            $this->session->set_flashdata('reset_email', $email);
 
             return redirect(site_url('login/resetarSenha'));
         }
 
         $this->limite_login->registrarFalha('reset', $email, $ip);
 
-        $user = $this->mapos_model->check_credentials($email);
+        $user = $email !== '' ? $this->mapos_model->check_credentials($email) : null;
+        $this->load->library('Totp');
 
-        // Resposta idêntica existindo ou não a conta, evitando enumeração de usuários
-        if (! $user) {
-            log_info("Solicitação de redefinição de senha para e-mail inexistente: {$email}");
-            $this->session->set_flashdata('success', "Se o e-mail informado estiver cadastrado, as instruções para redefinição foram enviadas para {$email}.");
+        $ok = $user
+            && $this->motivoDeBloqueio($user) === null
+            && ! empty($user->totp_ativado_em)
+            && $this->totp->aceitar($this->mapos_model, $user, $codigo);
 
-            return redirect(site_url('login'));
+        if (! $ok) {
+            log_info("Tentativa de recuperação de senha via 2FA recusada para: {$email}");
+            $this->session->set_flashdata('error', 'E-mail ou código inválido. Confira os 6 dígitos no aplicativo (ou um código de recuperação) e tente novamente.');
+            $this->session->set_flashdata('reset_email', $email);
+
+            return redirect(site_url('login/resetarSenha'));
         }
 
-        [$tokenEmClaro, $tokenHash] = tokenRecuperacaoGerar();
+        $this->limite_login->registrarSucesso('reset', $email);
+        $this->session->sess_regenerate(true);
 
-        // Invalida tokens anteriores
-        $this->db->where('email', $user->email)->where('token_utilizado', 0)->update('resets_de_senha', ['token_utilizado' => 1]);
+        $tokenSessao = bin2hex(random_bytes(32));
+        $this->session->set_userdata('reset_totp_autorizado', [
+            'token' => $tokenSessao,
+            'usuario_id' => (int) $user->idUsuarios,
+            'email' => (string) $user->email,
+            'expira' => time() + 600,
+        ]);
 
-        $dadosToken = [
-            'email' => $user->email,
-            'token' => $tokenHash,
-            'data_expiracao' => date('Y-m-d H:i:s', time() + 3600), // 1 hora
-            'token_utilizado' => 0,
-        ];
-
-        $this->db->insert('resets_de_senha', $dadosToken);
-
-        // Tenta enviar e-mail
-        $this->enviarEmailRecuperacao($user, $tokenEmClaro);
-
-        log_info("Usuário {$user->idUsuarios} solicitou redefinição de senha.");
-        $this->session->set_flashdata('success', "Instruções para redefinir sua senha foram enviadas para {$user->email}. O link é válido por 1 hora.");
-
-        return redirect(site_url('login'));
+        return redirect(site_url('login/novaSenha'));
     }
 
-    /**
-     * Envia o e-mail com o link de recuperação.
-     */
-    private function enviarEmailRecuperacao(object $user, string $token): bool
+    /** @return array{token: string, usuario_id: int, email: string, expira: int}|null */
+    private function resetTotpValido(?string $tokenPost = null): ?array
     {
-        $this->load->model('email_model');
-        $emitente = $this->mapos_model->getEmitente();
-        $nomeSistema = $this->config->item('app_name') ?: 'Nexus Ticket';
-        $remetenteNome = $emitente ? $emitente->nome : $nomeSistema;
-        $remetenteEmail = $emitente ? $emitente->email : 'nao-responder@mapos.com.br';
+        $dados = $this->session->userdata('reset_totp_autorizado');
+        if (! is_array($dados) || ($dados['expira'] ?? 0) < time()) {
+            $this->session->unset_userdata('reset_totp_autorizado');
 
-        $link = site_url('login/novaSenha?token=' . $token);
-
-        $mensagem = "
-        <div style='font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;'>
-            <h2 style='color: #0f172a;'>Recuperação de Senha</h2>
-            <p>Olá, <strong>" . htmlspecialchars($user->nome) . "</strong>,</p>
-            <p>Recebemos uma solicitação para redefinir a senha da sua conta de acesso ao sistema <strong>" . htmlspecialchars($nomeSistema) . "</strong>.</p>
-            <p style='margin: 24px 0;'>
-                <a href='" . htmlspecialchars($link) . "' style='background-color: #f37338; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;'>Redefinir Minha Senha</a>
-            </p>
-            <p style='color: #64748b; font-size: 14px;'>Ou acesse o link manualmente: <br><a href='" . htmlspecialchars($link) . "'>" . htmlspecialchars($link) . "</a></p>
-            <p style='color: #64748b; font-size: 14px;'>Se preferir digitar o código na página, use o token: <strong>" . htmlspecialchars($token) . "</strong></p>
-            <p style='color: #94a3b8; font-size: 12px; margin-top: 32px;'>Este link expira em 1 hora. Se você não solicitou a alteração, ignore este e-mail com segurança.</p>
-        </div>";
-
-        $headers = [
-            'From' => "\"$remetenteNome\" <$remetenteEmail>",
-            'Subject' => 'Recuperação de Senha - ' . $nomeSistema,
-            'Return-Path' => '',
-        ];
-
-        $emailData = [
-            'to' => $user->email,
-            'message' => $mensagem,
-            'status' => 'pending',
-            'date' => date('Y-m-d H:i:s'),
-            'headers' => serialize($headers),
-        ];
-
-        try {
-            $this->email_model->add('email_queue', $emailData);
-            return true;
-        } catch (\Throwable $e) {
-            log_message('error', 'Falha ao enfileirar e-mail de recuperação: ' . $e->getMessage());
-            return false;
+            return null;
         }
+
+        if ($tokenPost !== null && ! hash_equals((string) ($dados['token'] ?? ''), $tokenPost)) {
+            return null;
+        }
+
+        return $dados;
     }
 
     /**
-     * Tela para digitar nova senha a partir do token.
+     * Tela para digitar nova senha após validação pelo autenticador (ou token legado).
      */
     public function novaSenha()
     {
+        $sessaoReset = $this->resetTotpValido();
+        if ($sessaoReset !== null) {
+            return $this->load->view('mapos/nova_senha', [
+                'token' => $sessaoReset['token'],
+                'erros' => [],
+            ]);
+        }
+
         $tokenEmClaro = trim((string) ($this->input->get('token') ?: $this->input->post('token')));
-
         if ($tokenEmClaro === '') {
-            $this->session->set_flashdata('error', 'Token de recuperação não informado.');
+            $this->session->set_flashdata('error', 'Informe seu e-mail e o código do autenticador para redefinir a senha.');
 
-            return redirect(site_url('login'));
+            return redirect(site_url('login/resetarSenha'));
         }
 
         $tokenHash = tokenRecuperacaoHash($tokenEmClaro);
@@ -595,12 +838,12 @@ class Login extends CI_Controller
             ->row();
 
         if (! $registro) {
-            $this->session->set_flashdata('error', 'Token inválido ou expirado. Por favor, solicite uma nova recuperação de senha.');
+            $this->session->set_flashdata('error', 'Código inválido ou expirado. Faça uma nova verificação abaixo.');
 
-            return redirect(site_url('login'));
+            return redirect(site_url('login/resetarSenha'));
         }
 
-        $this->load->view('mapos/nova_senha', [
+        return $this->load->view('mapos/nova_senha', [
             'token' => $tokenEmClaro,
             'erros' => [],
         ]);
@@ -611,47 +854,51 @@ class Login extends CI_Controller
      */
     public function salvarNovaSenha()
     {
-        $tokenEmClaro = trim((string) $this->input->post('token'));
-        if ($tokenEmClaro === '') {
-            return redirect(site_url('login'));
+        if ($this->input->method() !== 'post') {
+            return redirect(site_url('login/resetarSenha'));
         }
 
-        $tokenHash = tokenRecuperacaoHash($tokenEmClaro);
-        $registro = $this->db
-            ->where('token', $tokenHash)
-            ->where('token_utilizado', 0)
-            ->where('data_expiracao >=', date('Y-m-d H:i:s'))
-            ->get('resets_de_senha')
-            ->row();
+        $tokenEmClaro = trim((string) $this->input->post('token'));
+        if ($tokenEmClaro === '') {
+            return redirect(site_url('login/resetarSenha'));
+        }
 
-        if (! $registro) {
-            $this->session->set_flashdata('error', 'Token inválido ou expirado. Solicite uma nova recuperação.');
+        $sessaoReset = $this->resetTotpValido($tokenEmClaro);
+        $registroLegado = null;
+        $user = null;
 
-            return redirect(site_url('login'));
+        if ($sessaoReset !== null) {
+            $user = $this->mapos_model->usuarioParaLoginPorId((int) $sessaoReset['usuario_id']);
+        } else {
+            $tokenHash = tokenRecuperacaoHash($tokenEmClaro);
+            $registroLegado = $this->db
+                ->where('token', $tokenHash)
+                ->where('token_utilizado', 0)
+                ->where('data_expiracao >=', date('Y-m-d H:i:s'))
+                ->get('resets_de_senha')
+                ->row();
+
+            if ($registroLegado) {
+                $user = $this->mapos_model->check_credentials($registroLegado->email);
+            }
+        }
+
+        if (! $user) {
+            $this->session->unset_userdata('reset_totp_autorizado');
+            $this->session->set_flashdata('error', 'Sessão expirada ou código inválido. Verifique novamente.');
+
+            return redirect(site_url('login/resetarSenha'));
         }
 
         $senha = (string) $this->input->post('senha');
         $senhaConfirmacao = (string) $this->input->post('senha_confirmacao');
-        $erros = [];
-
-        if (strlen($senha) < 8) {
-            $erros['senha'] = 'A senha deve ter no mínimo 8 caracteres.';
-        } elseif ($senha !== $senhaConfirmacao) {
-            $erros['senha_confirmacao'] = 'A confirmação de senha não confere.';
-        }
+        $erros = $this->validarSenhaForte($senha, $senhaConfirmacao);
 
         if ($erros !== []) {
             return $this->load->view('mapos/nova_senha', [
                 'token' => $tokenEmClaro,
                 'erros' => $erros,
             ]);
-        }
-
-        $user = $this->mapos_model->check_credentials($registro->email);
-        if (! $user) {
-            $this->session->set_flashdata('error', 'Usuário não encontrado.');
-
-            return redirect(site_url('login'));
         }
 
         // Atualiza a senha e invalida sessões antigas
@@ -663,10 +910,12 @@ class Login extends CI_Controller
             'sessao_versao' => $novaVersao,
         ]);
 
-        // Marca token como utilizado
-        $this->db->where('id', $registro->id)->update('resets_de_senha', ['token_utilizado' => 1]);
+        if ($registroLegado) {
+            $this->db->where('id', $registroLegado->id)->update('resets_de_senha', ['token_utilizado' => 1]);
+        }
+        $this->session->unset_userdata('reset_totp_autorizado');
 
-        log_info("Senha do usuário {$user->idUsuarios} alterada via recuperação.");
+        log_info("Senha do usuário {$user->idUsuarios} alterada via recuperação 2FA.");
         $this->session->set_flashdata('success', 'Sua senha foi redefinida com sucesso! Entre agora com a nova senha.');
 
         return redirect(site_url('login'));

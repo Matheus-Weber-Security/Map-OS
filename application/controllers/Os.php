@@ -48,7 +48,14 @@ class Os extends MY_Controller
         $this->data['total'] = $total;
         $this->data['status_ocultos'] = ! isset($filtros['pesquisa']) && ! isset($filtros['status']) && $statusVisiveis !== null
             && array_diff(array_keys(OS_STATUS_VARIANTES), $statusVisiveis) !== [];
-        $this->data['results'] = $this->os_model->listar($filtros, (int) $this->data['configuration']['per_page'], $offset, $statusVisiveis);
+        $results = $this->os_model->listar($filtros, (int) $this->data['configuration']['per_page'], $offset, $statusVisiveis);
+        $this->load->model('mapos_model');
+        $emitente = $this->mapos_model->getEmitente();
+        foreach ($results as $linha) {
+            $linha->whatsapp = osDadosWhatsApp($linha, $emitente, $this->data['configuration'], (float) $linha->total);
+        }
+
+        $this->data['results'] = $results;
         $this->data['paginacao'] = $this->paginacao(site_url('os/gerenciar'), $total, $offset, null, $filtros);
         $this->data['pode'] = [
             'adicionar' => $this->permite('aOs'),
@@ -351,23 +358,6 @@ class Os extends MY_Controller
         $historico = $this->os_model->getHistorico($idOs);
 
         $pixPayload = $this->os_model->getPixPayload($idOs, $configuracao['pix_key'] ?? null, $emitente);
-        $telefone = osTelefoneWhatsApp($os->celular_cliente ?: $os->telefone_cliente);
-
-        $troca = [
-            '{CLIENTE_NOME}' => (string) $os->nomeCliente,
-            '{NUMERO_OS}' => (string) $idOs,
-            '{STATUS_OS}' => (string) $os->status,
-            '{VALOR_OS}' => dinheiro($totais['total']),
-            '{DESCRI_PRODUTOS}' => (string) $os->descricaoProduto,
-            '{EMITENTE}' => (string) ($emitente->nome ?? ''),
-            '{TELEFONE_EMITENTE}' => (string) ($emitente->telefone ?? ''),
-            '{OBS_OS}' => (string) $os->observacoes,
-            '{DEFEITO_OS}' => (string) $os->defeito,
-            '{LAUDO_OS}' => (string) $os->laudoTecnico,
-            '{DATA_FINAL}' => dataBr($os->dataFinal),
-            '{DATA_INICIAL}' => dataBr($os->dataInicial),
-            '{DATA_GARANTIA}' => (string) $os->garantia . ' dias',
-        ];
 
         return [
             'os' => $os,
@@ -387,10 +377,7 @@ class Os extends MY_Controller
                 'qr' => $this->os_model->getQrCode($idOs, $configuracao['pix_key'], $emitente),
                 'chave' => $this->formatarChave($configuracao['pix_key']),
             ],
-            'whatsapp' => $telefone === null ? null : [
-                'telefone' => $telefone,
-                'texto' => osTextoWhatsApp($configuracao['notifica_whats'] ?? '', $troca),
-            ],
+            'whatsapp' => osDadosWhatsApp($os, $emitente, $configuracao, (float) $totais['total']),
             'garantia_ate' => osVencimentoGarantia($os->dataFinal, $os->garantia, $os->status),
             'pode' => [
                 'editar' => $editavel,
@@ -658,11 +645,11 @@ class Os extends MY_Controller
             $enviouEmail = $this->enviarOsPorEmail($idOs, $remetentes, 'Ordem de Serviço');
 
             if ($enviouEmail) {
-                $this->session->set_flashdata('success', 'O email está sendo processado e será enviado em breve.');
+                $this->session->set_flashdata('success', 'E-mail enviado para o cliente com sucesso.');
                 log_info('Enviou e-mail para o cliente: ' . $this->data['result']->nomeCliente . '. E-mail: ' . $this->data['result']->email);
                 redirect(site_url('os'));
             } else {
-                $this->session->set_flashdata('error', 'Ocorreu um erro ao enviar e-mail.');
+                $this->session->set_flashdata('error', 'Não foi possível enviar o e-mail. Confira os detalhes no Log da página de e-mails.');
                 redirect(site_url('os'));
             }
         }
@@ -1404,24 +1391,33 @@ class Os extends MY_Controller
 
         $this->load->model('email_model');
 
+        $empresaId = (int) ($dados['result']->empresa_id ?? ($this->session->userdata('empresa_id') ?: 1));
+        $enviadosComSucesso = 0;
+        $tentativas = 0;
+
         $remetentes = array_unique($remetentes);
         foreach ($remetentes as $remetente) {
             if ($remetente) {
-                $headers = ['From' => $emitente->email, 'Subject' => $assunto, 'Return-Path' => ''];
+                $tentativas++;
+                $headers = ['From' => "\"{$emitente->nome}\" <{$emitente->email}>", 'Subject' => $assunto, 'Return-Path' => ''];
                 $email = [
+                    'empresa_id' => $empresaId,
                     'to' => $remetente,
                     'message' => $html,
                     'status' => 'pending',
                     'date' => date('Y-m-d H:i:s'),
                     'headers' => json_encode($headers),
                 ];
-                $this->email_model->add('email_queue', $email);
+                $res = $this->email_model->enviarImediato($email);
+                if (! empty($res['enviado'])) {
+                    $enviadosComSucesso++;
+                }
             } else {
                 log_info('Email não adicionado a Lista de envio de e-mails. Verifique se o remetente esta cadastrado. OS ID: ' . $idOs);
             }
         }
 
-        return true;
+        return $tentativas > 0 && $enviadosComSucesso > 0;
     }
 
     /**

@@ -108,7 +108,7 @@ class Mapos_model extends CI_Model
             'permissoes_id' => $grupo,
             'grupo_ativo' => $this->grupoAtivo($grupo),
             'versao' => (int) ($usuario->sessao_versao ?? 0),
-            'exige_2fa_cadastro' => ! ($usuario->totp_ativado_em ?? null) && $this->grupoExige2fa($grupo),
+            'exige_2fa_cadastro' => $this->db->field_exists('totp_ativado_em', 'usuarios') && ! ($usuario->totp_ativado_em ?? null),
         ];
     }
 
@@ -427,6 +427,23 @@ class Mapos_model extends CI_Model
         $this->db->where('idUsuarios', $idUsuario)->update('usuarios', ['tema_cor' => $cor]);
 
         return $this->db->affected_rows() >= 0;
+    }
+
+    /** A opção global em Configurações > Geral exige código 2FA também no login? */
+    public function exigir2faNoLogin(): bool
+    {
+        if (! $this->db->table_exists('configuracoes')) {
+            return false;
+        }
+
+        $row = $this->db
+            ->select('valor')
+            ->where('config', 'exigir_2fa_login')
+            ->limit(1)
+            ->get('configuracoes')
+            ->row();
+
+        return $row !== null && (string) $row->valor === '1';
     }
 
     /** O grupo de permissão exige o 2FA ativo (#2876)? Falso se a migration ainda não rodou. */

@@ -1165,8 +1165,9 @@ class OsController extends REST_Controller
         $remetentes = array_unique($remetentes);
         foreach ($remetentes as $remetente) {
             if ($remetente) {
-                $headers = ['From' => $emitente->email, 'Subject' => $assunto, 'Return-Path' => ''];
+                $headers = ['From' => "\"{$emitente->nome}\" <{$emitente->email}>", 'Subject' => $assunto, 'Return-Path' => ''];
                 $email = [
+                    'empresa_id' => (int) ($dados['result']->empresa_id ?? ($emitente->empresa_id ?? 1)),
                     'to' => $remetente,
                     'message' => $html,
                     'status' => 'pending',

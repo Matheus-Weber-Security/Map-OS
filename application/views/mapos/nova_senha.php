@@ -1,8 +1,8 @@
 <?php
 /**
- * Definição de nova senha a partir de token válido (#RecuperarSenha).
+ * Definição de nova senha após validação pelo autenticador (ou token legado).
  *
- * @var string                $token  Token em claro
+ * @var string                $token  Token em claro (sessão ou URL)
  * @var array<string, string> $erros  Erros por campo
  */
 $erros ??= [];
@@ -15,7 +15,7 @@ include APPPATH . 'views/entrada/inicio.php';
     <main class="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-6 lg:py-12">
         <section class="superficie-entrada w-full rounded-xxl border border-hairline-violet bg-night p-6 text-text sm:p-8" aria-labelledby="titulo-nova-senha">
             <h1 id="titulo-nova-senha" class="font-display text-heading-md text-text">Crie uma nova senha</h1>
-            <p class="mt-2 text-body-md text-muted">A senha deve ter pelo menos 8 caracteres. Após salvar, você poderá acessar o painel imediatamente.</p>
+            <p class="mt-2 text-body-md text-muted">Use no mínimo 8 caracteres com letra maiúscula, minúscula, número e caractere especial.</p>
 
             <?php if (isset($erros['_geral'])) { ?>
                 <div class="mt-4"><?= component('alert', ['message' => $erros['_geral'], 'variant' => 'danger']) ?></div>
@@ -30,14 +30,17 @@ include APPPATH . 'views/entrada/inicio.php';
                     'label' => 'Nova Senha',
                     'type' => 'password',
                     'required' => true,
+                    'alternar_senha' => true,
                     'autocomplete' => 'new-password',
+                    'help' => 'Mínimo de 8 caracteres, com letra maiúscula, minúscula, número e caractere especial.',
                     'error' => $erros['senha'] ?? null,
                     'attrs' => [
                         'autofocus' => true,
                         'minlength' => 8,
                         'maxlength' => 72,
+                        'pattern' => '(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^a-zA-Z0-9]).{8,}',
                         'data-msg-vazio' => 'Digite a nova senha.',
-                        'data-msg-invalido' => 'A senha deve ter no mínimo 8 caracteres.',
+                        'data-msg-invalido' => 'Mínimo de 8 caracteres, com letra maiúscula, minúscula, número e caractere especial.',
                     ],
                 ]) ?>
 
@@ -46,9 +49,11 @@ include APPPATH . 'views/entrada/inicio.php';
                     'label' => 'Confirmar Nova Senha',
                     'type' => 'password',
                     'required' => true,
+                    'alternar_senha' => true,
                     'autocomplete' => 'new-password',
                     'error' => $erros['senha_confirmacao'] ?? null,
                     'attrs' => [
+                        'minlength' => 8,
                         'maxlength' => 72,
                         'data-msg-vazio' => 'Confirme a nova senha.',
                     ],

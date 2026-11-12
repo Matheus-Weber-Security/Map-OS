@@ -229,16 +229,14 @@ class Mapos extends MY_Controller
         if ($this->input->method() !== 'post' || ! $usuario->totp_ativado_em) {
             return redirect(site_url('mapos/doisFatores'));
         }
-        if ($this->mapos_model->grupoExige2fa((int) $usuario->permissoes_id)) {
-            return $this->telaDoisFatores(['_geral' => 'O seu grupo de permissão exige o 2FA: não é possível desativar.']);
-        }
         if ($erro = $this->confirmarSenhaDoUsuario($usuario, (string) $this->input->post('senha'))) {
             return $this->telaDoisFatores(['senha_desativar' => $erro]);
         }
 
         $this->mapos_model->desativarTotp((int) $usuario->idUsuarios);
-        log_info('Desativou a autenticação em dois fatores.');
-        $this->session->set_flashdata('success', 'Autenticação em dois fatores desativada.');
+        $this->session->set_userdata('exigir_2fa_cadastro', true);
+        log_info('Reiniciou a autenticação em dois fatores para vincular um novo aplicativo.');
+        $this->session->set_flashdata('success', 'Vínculo anterior removido. Leia o novo QR Code abaixo para ativar o novo aplicativo.');
 
         return redirect(site_url('mapos/doisFatores'));
     }
@@ -282,7 +280,8 @@ class Mapos extends MY_Controller
         $ativo = (bool) $usuario->totp_ativado_em;
 
         $this->data['ativo'] = $ativo;
-        $this->data['exigido'] = $this->mapos_model->grupoExige2fa((int) $usuario->permissoes_id);
+        $this->data['exigido'] = true;
+        $this->data['exigir_2fa_login'] = $this->mapos_model->exigir2faNoLogin() || $this->mapos_model->grupoExige2fa((int) $usuario->permissoes_id);
         $this->data['restantes'] = $ativo ? $this->mapos_model->codigosDeRecuperacaoRestantes((int) $usuario->idUsuarios) : 0;
         $this->data['codigos'] = $codigos;
         $this->data['erros'] = $erros;
@@ -660,6 +659,57 @@ class Mapos extends MY_Controller
         return $this->layout();
     }
 
+    public function logEmail($id = null)
+    {
+        if (! $this->permission->checkPermission($this->session->userdata('permissao'), 'cEmail')) {
+            return $this->output
+                ->set_status_header(403)
+                ->set_content_type('application/json', 'utf-8')
+                ->set_output(json_encode(['result' => false, 'message' => 'Você não tem permissão para consultar logs de e-mails.']));
+        }
+
+        $idEmail = (int) $id;
+        $this->load->helper('configuracoes');
+        $this->load->model('email_model');
+        $email = $idEmail > 0 ? $this->email_model->getById($idEmail) : null;
+
+        if (! $email) {
+            return $this->output
+                ->set_status_header(404)
+                ->set_content_type('application/json', 'utf-8')
+                ->set_output(json_encode(['result' => false, 'message' => 'E-mail não encontrado.']));
+        }
+
+        $logs = $this->email_model->logsDoEmail($idEmail);
+        $pill = emailFilaPill($email->status ?? null);
+
+        return $this->output
+            ->set_status_header(200)
+            ->set_content_type('application/json', 'utf-8')
+            ->set_output(json_encode([
+                'result' => true,
+                'email' => [
+                    'id' => (int) $email->id,
+                    'to' => (string) $email->to,
+                    'assunto' => emailFilaAssunto($email->headers ?? '') ?: '—',
+                    'status' => (string) ($email->status ?? ''),
+                    'status_label' => $pill['label'],
+                    'criado_em' => ! empty($email->date) ? date('d/m/Y H:i:s', strtotime((string) $email->date)) : '—',
+                    'enviado_em' => ! empty($email->enviado_em) ? date('d/m/Y H:i:s', strtotime((string) $email->enviado_em)) : '—',
+                    'lido_em' => ! empty($email->lido_em) ? date('d/m/Y H:i:s', strtotime((string) $email->lido_em)) : null,
+                    'ultima_leitura_em' => ! empty($email->ultima_leitura_em) ? date('d/m/Y H:i:s', strtotime((string) $email->ultima_leitura_em)) : null,
+                    'total_leituras' => (int) ($email->total_leituras ?? 0),
+                    'erro_mensagem' => $email->erro_mensagem ?? null,
+                ],
+                'logs' => array_map(static fn ($l) => [
+                    'evento' => (string) $l->evento,
+                    'detalhes' => (string) ($l->detalhes ?? ''),
+                    'ip' => (string) ($l->ip ?? ''),
+                    'criado_em' => ! empty($l->criado_em) ? date('d/m/Y H:i:s', strtotime((string) $l->criado_em)) : '—',
+                ], $logs),
+            ]));
+    }
+
     public function excluirEmail()
     {
         if (!$this->permission->checkPermission($this->session->userdata('permissao'), 'cEmail')) {
@@ -674,6 +724,11 @@ class Mapos extends MY_Controller
         if ($id <= 0 || !$this->email_model->getById($id)) {
             $this->session->set_flashdata('error', 'E-mail não encontrado na fila.');
             redirect($voltar);
+        }
+
+        $empresaId = (int) ($this->session->userdata('empresa_id') ?: 1);
+        if ($this->db->table_exists('email_logs')) {
+            $this->db->where('email_id', $id)->where('empresa_id', $empresaId)->delete('email_logs');
         }
 
         $this->email_model->delete('email_queue', 'id', $id);

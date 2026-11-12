@@ -18,6 +18,7 @@ class MY_Controller extends CI_Controller
             'control_editos' => '1',
             'baixa_auto_cobranca' => '0',
             'pix_key' => '',
+            'exigir_2fa_login' => '0',
         ],
     ];
 
@@ -337,7 +338,7 @@ class MY_Controller extends CI_Controller
 
         $rota = strtolower($this->router->class . '/' . $this->router->method);
         if (! in_array($rota, ['mapos/doisfatores', 'mapos/ativardoisfatores'], true)) {
-            $this->session->set_flashdata('error', 'Seu grupo de permissão exige a autenticação em dois fatores. Ative para continuar.');
+            $this->session->set_flashdata('error', 'Configure a autenticação em dois fatores (aplicativo autenticador) para continuar e garantir sua recuperação de senha.');
             redirect(site_url('mapos/doisFatores'));
         }
     }

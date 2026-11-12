@@ -56,6 +56,15 @@ DB_COLLATION="${DB_COLLATION:-utf8mb4_general_ci}"
 DB_SSL="${DB_SSL:-false}"
 DB_SSL_CA="${DB_SSL_CA:-}"
 API_ENABLED="${API_ENABLED:-false}"
+
+EMAIL_PROTOCOL="${EMAIL_PROTOCOL:-smtp}"
+EMAIL_SMTP_HOST="${EMAIL_SMTP_HOST:-}"
+EMAIL_SMTP_CRYPTO="${EMAIL_SMTP_CRYPTO:-tls}"
+EMAIL_SMTP_PORT="${EMAIL_SMTP_PORT:-587}"
+EMAIL_SMTP_USER="${EMAIL_SMTP_USER:-}"
+EMAIL_SMTP_PASS="${EMAIL_SMTP_PASS:-}"
+EMAIL_FROM="${EMAIL_FROM:-nao-responder@nexustkt.com.br}"
+EMAIL_FROM_NAME="${EMAIL_FROM_NAME:-Nexus Ticket}"
 EOF
     chown www-data:www-data /var/www/html/application/.env
     chmod 600 /var/www/html/application/.env

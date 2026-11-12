@@ -53,7 +53,8 @@ class MercadoPago extends BasePaymentGateway
         }
 
         $emitente = $this->ci->mapos_model->getEmitente();
-        if (!$emitente) {
+        $emitenteObj = is_array($emitente) ? ($emitente[0] ?? null) : $emitente;
+        if (!$emitenteObj) {
             throw new \Exception('Emitente não configurado!');
         }
 
@@ -61,27 +62,27 @@ class MercadoPago extends BasePaymentGateway
             'cobrancas/emails/cobranca',
             [
                 'cobranca' => $cobranca,
-                'emitente' => $emitente[0],
+                'emitente' => $emitenteObj,
                 'paymentGatewaysConfig' => $this->ci->config->item('payment_gateways'),
             ],
             true
         );
 
-        $assunto = 'Cobrança - ' . $emitente[0]->nome;
+        $assunto = 'Cobrança - ' . $emitenteObj->nome;
         if ($cobranca->os_id) {
             $assunto .= ' - OS #' . $cobranca->os_id;
         } else {
             $assunto .= ' - Venda #' . $cobranca->vendas_id;
         }
-
         $remetentes = [$cobranca->email];
         foreach ($remetentes as $remetente) {
             $headers = [
-                'From' => $emitente[0]->email,
+                'From' => $emitenteObj ? "\"{$emitenteObj->nome}\" <{$emitenteObj->email}>" : '',
                 'Subject' => $assunto,
                 'Return-Path' => '',
             ];
             $email = [
+                'empresa_id' => (int) ($cobranca->empresa_id ?? ($emitenteObj->empresa_id ?? 1)),
                 'to' => $remetente,
                 'message' => $html,
                 'status' => 'pending',

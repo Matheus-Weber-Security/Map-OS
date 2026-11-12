@@ -76,6 +76,7 @@ if (! function_exists('configuracaoCampos')) {
                 'per_page' => ['destino' => 'config', 'tipo' => 'opcao', 'rotulo' => 'Registros por página', 'opcoes' => ['10' => '10', '20' => '20', '50' => '50', '100' => '100']],
                 'app_tema_modo' => ['destino' => 'config', 'tipo' => 'opcao', 'rotulo' => 'Tema padrão', 'opcoes' => ['claro' => 'Claro', 'escuro' => 'Escuro', 'sistema' => 'Igual ao do sistema operacional'], 'ajuda' => 'Cada pessoa pode trocar o tema na barra do topo, e a escolha fica salva no perfil dela. Este é o modo de quem ainda não escolheu.'],
                 'app_tema_cor' => ['destino' => 'config', 'tipo' => 'opcao', 'rotulo' => 'Cor padrão do sistema', 'opcoes' => temaCoresRotulos(), 'ajuda' => 'Cada pessoa pode escolher a própria cor no menu do usuário. Esta é a cor de quem ainda não escolheu.'],
+                'exigir_2fa_login' => ['destino' => 'config', 'tipo' => 'sim_nao', 'rotulo' => 'Exigir autenticação em dois fatores (2FA) no login', 'ajuda' => 'Quando desativado (padrão), o código de 6 dígitos do aplicativo autenticador é solicitado apenas ao recuperar a senha. Quando ativado, também será pedido ao fazer login.'],
             ],
             'os' => [
                 'control_editos' => ['destino' => 'config', 'tipo' => 'sim_nao', 'rotulo' => 'Permitir editar OS faturada ou cancelada'],
@@ -104,6 +105,7 @@ if (! function_exists('configuracaoCampos')) {
                 'EMAIL_SMTP_CRYPTO' => ['destino' => 'env', 'tipo' => 'opcao', 'rotulo' => 'Criptografia', 'opcoes' => ['tls' => 'TLS', 'ssl' => 'SSL']],
                 'EMAIL_SMTP_USER' => ['destino' => 'env', 'tipo' => 'texto', 'rotulo' => 'Usuário', 'max' => 255],
                 'EMAIL_SMTP_PASS' => ['destino' => 'env', 'tipo' => 'segredo', 'rotulo' => 'Senha', 'max' => 255],
+                'EMAIL_FROM' => ['destino' => 'env', 'tipo' => 'texto', 'rotulo' => 'Remetente padrão (From)', 'max' => 255, 'ajuda' => 'E-mail exibido como remetente nos envios (padrão: nao-responder@nexustkt.com.br).'],
             ],
             'pagamentos' => [
                 'PAYMENT_GATEWAYS_EFI_PRODUCTION' => ['destino' => 'env', 'tipo' => 'bool_env', 'rotulo' => 'Ambiente de produção', 'grupo' => 'Efí (antiga Gerencianet)'],
@@ -428,11 +430,33 @@ if (! function_exists('emailFilaPill')) {
     }
 }
 
+if (! function_exists('emailFilaLeituraPill')) {
+    /**
+     * Situação de leitura de um e-mail como pill-status.
+     *
+     * @return array{label: string, variant: string}
+     */
+    function emailFilaLeituraPill(int $totalLeituras, ?string $status): array
+    {
+        if ($status !== 'sent') {
+            return ['label' => '—', 'variant' => 'neutral'];
+        }
+
+        if ($totalLeituras > 0) {
+            return ['label' => $totalLeituras === 1 ? 'Lido (1x)' : "Lido ({$totalLeituras}x)", 'variant' => 'success'];
+        }
+
+        return ['label' => 'Não lido', 'variant' => 'neutral'];
+    }
+}
+
 if (! function_exists('emailFilaAssunto')) {
-    /** Assunto do e-mail da fila (o cabeçalho Subject, guardado em JSON). */
+    /** Assunto do e-mail da fila (o cabeçalho Subject, guardado em JSON ou serializado). */
     function emailFilaAssunto(?string $headers): string
     {
-        $dados = json_decode((string) $headers, true);
+        $dados = function_exists('json_decode_legacy')
+            ? json_decode_legacy((string) $headers)
+            : json_decode((string) $headers, true);
 
         if (! is_array($dados) || ! is_scalar($dados['Subject'] ?? null)) {
             return '';

@@ -20,6 +20,7 @@ include APPPATH . 'views/entrada/inicio.php';
 ?>
     <main class="mx-auto w-full max-w-lg flex-1 px-4 py-6 lg:py-8">
         <header class="mb-5">
+            <span class="mb-2 inline-block rounded-xs bg-night px-2 py-1 text-caption text-on-dark">Passo 1 de 2 · Dados da conta</span>
             <h1 class="font-display font-bold tracking-tight text-on-dark sm:whitespace-nowrap titulo-cadastrar-empresa">
                 Cadastre sua <span class="rounded-xs bg-accent-lime px-2 py-0.5 text-ink">empresa</span>
             </h1>
@@ -145,12 +146,12 @@ include APPPATH . 'views/entrada/inicio.php';
 
                 <div class="pt-2">
                     <?= component('button', [
-                        'label' => 'Criar conta',
+                        'label' => 'Continuar',
                         'type' => 'submit',
                         'size' => 'lg',
-                        'icon' => 'check',
+                        'icon' => 'chevron-right',
                         'class' => 'w-full shadow-elev-3',
-                        'attrs' => ['data-rotulo-carregando' => 'Criando seu ambiente…'],
+                        'attrs' => ['data-rotulo-carregando' => 'Validando…'],
                     ]) ?>
                 </div>
             </form>

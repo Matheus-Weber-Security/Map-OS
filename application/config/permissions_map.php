@@ -139,6 +139,7 @@ $config['permissions_map'] = [
         // Cadastrar, editar e trocar o logo do emitente são POST em emitente.
         'emitente' => 'cEmitente',
         'emails' => 'cEmail',
+        'logEmail' => 'cEmail',
         'excluirEmail' => 'cEmail',
         'configurar' => 'cSistema',
         'atualizarBanco' => 'cSistema',

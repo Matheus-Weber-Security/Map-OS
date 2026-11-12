@@ -78,11 +78,12 @@ class GerencianetSdk extends BasePaymentGateway
         $remetentes = [$cobranca->email];
         foreach ($remetentes as $remetente) {
             $headers = [
-                'From' => $emitente->email,
+                'From' => "\"{$emitente->nome}\" <{$emitente->email}>",
                 'Subject' => $assunto,
                 'Return-Path' => '',
             ];
             $email = [
+                'empresa_id' => (int) ($cobranca->empresa_id ?? ($emitente->empresa_id ?? 1)),
                 'to' => $remetente,
                 'message' => $html,
                 'status' => 'pending',
