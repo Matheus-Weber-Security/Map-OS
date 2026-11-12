@@ -15,7 +15,7 @@ include APPPATH . 'views/entrada/inicio.php';
     <main class="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-6 lg:py-12">
         <section class="superficie-entrada w-full rounded-xxl border border-hairline-violet bg-night p-6 text-text sm:p-8" aria-labelledby="titulo-nova-senha">
             <h1 id="titulo-nova-senha" class="font-display text-heading-md text-text">Crie uma nova senha</h1>
-            <p class="mt-2 text-body-md text-muted">Use no mínimo 8 caracteres com letra maiúscula, minúscula, número e caractere especial.</p>
+            <p class="mt-2 text-body-md text-muted">Use no mínimo 6 caracteres.</p>
 
             <?php if (isset($erros['_geral'])) { ?>
                 <div class="mt-4"><?= component('alert', ['message' => $erros['_geral'], 'variant' => 'danger']) ?></div>

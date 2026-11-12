@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Minha conta (#2855): dados do usuário logado, a foto (modal de envio) e a
  * troca de senha, no padrão dos formulários (#2851): POST comum, validação no
@@ -66,7 +66,7 @@ $errosDeCampo = $erros;
 
         <section class="<?= e($caixa) ?>" aria-labelledby="secao-senha">
             <h2 id="secao-senha" class="text-heading-sm text-text">Alterar minha senha</h2>
-            <p class="mt-0.5 text-caption text-muted">A nova senha precisa de pelo menos 8 caracteres.</p>
+            <p class="mt-0.5 text-caption text-muted">A nova senha precisa ter no mínimo 6 caracteres.</p>
 
             <form method="post" action="<?= e(site_url('mapos/alterarSenha')) ?>" novalidate class="mt-4 flex flex-col gap-4" <?= js_module('formulario/padrao') ?>>
                 <input type="hidden" name="<?= e($this->security->get_csrf_token_name()) ?>" value="<?= e($this->security->get_csrf_hash()) ?>">
@@ -86,7 +86,7 @@ $errosDeCampo = $erros;
                     'required' => true,
                     'autocomplete' => 'new-password',
                     'error' => $errosDeCampo['novaSenha'] ?? null,
-                    'attrs' => ['minlength' => 8, 'maxlength' => 72, 'data-msg-vazio' => 'Crie uma senha nova.', 'data-msg-invalido' => 'A senha precisa de pelo menos 8 caracteres.'],
+                    'attrs' => ['minlength' => 6, 'maxlength' => 72, 'data-msg-vazio' => 'Crie uma senha nova.', 'data-msg-invalido' => 'A senha precisa ter no mínimo 6 caracteres.'],
                 ]) ?>
                 <?= component('input', [
                     'name' => 'confirmarSenha',

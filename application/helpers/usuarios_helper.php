@@ -16,7 +16,7 @@ if (! defined('PERMISSAO_ADMIN')) {
 }
 
 if (! defined('USUARIO_SENHA_MINIMA')) {
-    define('USUARIO_SENHA_MINIMA', 8);
+    define('USUARIO_SENHA_MINIMA', 6);
 }
 
 if (! defined('PERMISSOES_MODULOS')) {
@@ -197,7 +197,7 @@ if (! function_exists('usuarioDadosDoFormulario')) {
         if ($senha === '' && $novo) {
             $erros['senha'] = 'Informe a senha.';
         } elseif ($senha !== '' && mb_strlen($senha) < USUARIO_SENHA_MINIMA) {
-            $erros['senha'] = 'A senha tem pelo menos ' . USUARIO_SENHA_MINIMA . ' caracteres.';
+            $erros['senha'] = 'A senha precisa ter no mínimo ' . USUARIO_SENHA_MINIMA . ' caracteres.';
         }
 
         $estado = strtoupper($texto('estado'));

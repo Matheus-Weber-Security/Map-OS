@@ -299,7 +299,7 @@ $config = [
         [
             'field' => 'novaSenha',
             'label' => 'Nova senha',
-            'rules' => 'required|min_length[8]|max_length[72]',
+            'rules' => 'required|min_length[6]|max_length[72]',
         ],
         [
             'field' => 'confirmarSenha',

@@ -4,7 +4,7 @@
  * formulários da v5 (#2851, views/clientes/formulario.php).
  *
  * - Obrigatórios: nome, CPF, e-mail, telefone, situação, grupo e, ao
- *   cadastrar, a senha (mínimo de 8 caracteres). Endereço e RG são opcionais.
+ *   cadastrar, a senha (mínimo de 6 caracteres). Endereço e RG são opcionais.
  * - Ao editar, a senha em branco mantém a atual.
  * - O módulo usuarios/formulario (o mesmo dos clientes) preenche o endereço
  *   pelo CEP.
@@ -71,8 +71,8 @@ $grade = 'mt-4 grid gap-4 sm:grid-cols-2';
                         'required' => ! $editando,
                         'autocomplete' => 'new-password',
                         'error' => $errosDeCampo['senha'] ?? null,
-                        'help' => $editando ? 'Deixe em branco para manter a senha atual. Mínimo de 8 caracteres.' : 'Mínimo de 8 caracteres.',
-                        'attrs' => ['minlength' => USUARIO_SENHA_MINIMA, 'data-msg-vazio' => 'Informe a senha.', 'data-msg-invalido' => 'A senha tem pelo menos 8 caracteres.'],
+                        'help' => $editando ? 'Deixe em branco para manter a senha atual. Mínimo de 6 caracteres.' : 'Mínimo de 6 caracteres.',
+                        'attrs' => ['minlength' => USUARIO_SENHA_MINIMA, 'data-msg-vazio' => 'Informe a senha.', 'data-msg-invalido' => 'A senha precisa ter no mínimo 6 caracteres.'],
                     ]) ?>
                     <?= component('button', ['label' => 'Mostrar senha', 'icon' => 'eye', 'icon_only' => true, 'variant' => 'ghost', 'class' => 'mt-7', 'attrs' => ['data-mostrar-senha' => 'campo-senha', 'aria-controls' => 'campo-senha', 'aria-pressed' => 'false']]) ?>
                 </div>
