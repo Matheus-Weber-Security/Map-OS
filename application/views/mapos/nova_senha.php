@@ -32,15 +32,14 @@ include APPPATH . 'views/entrada/inicio.php';
                     'required' => true,
                     'alternar_senha' => true,
                     'autocomplete' => 'new-password',
-                    'help' => 'Mínimo de 8 caracteres, com letra maiúscula, minúscula, número e caractere especial.',
+                    'help' => 'Mínimo de 6 caracteres.',
                     'error' => $erros['senha'] ?? null,
                     'attrs' => [
                         'autofocus' => true,
-                        'minlength' => 8,
+                        'minlength' => 6,
                         'maxlength' => 72,
-                        'pattern' => '(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^a-zA-Z0-9]).{8,}',
                         'data-msg-vazio' => 'Digite a nova senha.',
-                        'data-msg-invalido' => 'Mínimo de 8 caracteres, com letra maiúscula, minúscula, número e caractere especial.',
+                        'data-msg-invalido' => 'A senha precisa ter no mínimo 6 caracteres.',
                     ],
                 ]) ?>
 
@@ -53,9 +52,10 @@ include APPPATH . 'views/entrada/inicio.php';
                     'autocomplete' => 'new-password',
                     'error' => $erros['senha_confirmacao'] ?? null,
                     'attrs' => [
-                        'minlength' => 8,
+                        'minlength' => 6,
                         'maxlength' => 72,
                         'data-msg-vazio' => 'Confirme a nova senha.',
+                        'data-msg-invalido' => 'A senha precisa ter no mínimo 6 caracteres.',
                     ],
                 ]) ?>
 

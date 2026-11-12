@@ -497,7 +497,7 @@ class Login extends CI_Controller
     }
 
     /**
-     * Valida regra de complexidade forte de senha.
+     * Valida regra de senha (mínimo de 6 caracteres).
      *
      * @return array<string, string>
      */
@@ -505,16 +505,8 @@ class Login extends CI_Controller
     {
         $erros = [];
 
-        if (strlen($senha) < 8) {
-            $erros['senha'] = 'A senha precisa ter no mínimo 8 caracteres.';
-        } elseif (! preg_match('/[A-Z]/', $senha)) {
-            $erros['senha'] = 'A senha precisa conter pelo menos 1 letra maiúscula.';
-        } elseif (! preg_match('/[a-z]/', $senha)) {
-            $erros['senha'] = 'A senha precisa conter pelo menos 1 letra minúscula.';
-        } elseif (! preg_match('/[0-9]/', $senha)) {
-            $erros['senha'] = 'A senha precisa conter pelo menos 1 número.';
-        } elseif (! preg_match('/[^a-zA-Z0-9]/', $senha)) {
-            $erros['senha'] = 'A senha precisa conter pelo menos 1 caractere especial (ex: !@#$%&*).';
+        if (strlen($senha) < 6) {
+            $erros['senha'] = 'A senha precisa ter no mínimo 6 caracteres.';
         } elseif ($senha !== $senhaConfirmacao) {
             $erros['senha_confirmacao'] = 'A confirmação de senha não confere.';
         }
@@ -532,12 +524,14 @@ class Login extends CI_Controller
         $erros = [];
         $valores = [];
 
-        if ($this->input->method() === 'get' && $this->input->get('voltar')) {
+        if ($this->input->method() === 'get') {
             $pendente = $this->session->userdata('cadastro_empresa_pendente');
             if (is_array($pendente) && ($pendente['expira'] ?? 0) >= time()) {
                 $valores = [
                     'nome' => (string) ($pendente['nome'] ?? ''),
                     'email' => (string) ($pendente['email'] ?? ''),
+                    'senha' => (string) ($pendente['senha_plana'] ?? ''),
+                    'senha_confirmacao' => (string) ($pendente['senha_plana'] ?? ''),
                 ];
             }
         }
@@ -555,6 +549,8 @@ class Login extends CI_Controller
             $valores = [
                 'nome' => $nome,
                 'email' => $email,
+                'senha' => $senha,
+                'senha_confirmacao' => $senhaConfirmacao,
             ];
 
             if ($nome === '') {

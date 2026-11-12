@@ -83,14 +83,14 @@ include APPPATH . 'views/entrada/inicio.php';
                             'label' => 'Criar Senha',
                             'type' => 'password',
                             'required' => true,
+                            'value' => $valores['senha'] ?? null,
                             'error' => $errosDeCampo['senha'] ?? null,
-                            'help' => 'Mínimo de 8 caracteres, com letra maiúscula, minúscula, número e caractere especial.',
+                            'help' => 'Mínimo de 6 caracteres.',
                             'attrs' => [
-                                'minlength' => 8,
+                                'minlength' => 6,
                                 'maxlength' => 72,
                                 'data-msg-vazio' => 'Crie uma senha de acesso.',
-                                'pattern' => '(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^a-zA-Z0-9]).{8,}',
-                                'data-msg-invalido' => 'Mínimo de 8 caracteres, com letra maiúscula, minúscula, número e caractere especial.',
+                                'data-msg-invalido' => 'A senha precisa ter no mínimo 6 caracteres.',
                             ],
                         ]) ?>
 
@@ -100,11 +100,13 @@ include APPPATH . 'views/entrada/inicio.php';
                             'label' => 'Confirmar Senha',
                             'type' => 'password',
                             'required' => true,
+                            'value' => $valores['senha_confirmacao'] ?? null,
                             'error' => $errosDeCampo['senha_confirmacao'] ?? null,
                             'attrs' => [
-                                'minlength' => 8,
+                                'minlength' => 6,
                                 'maxlength' => 72,
                                 'data-msg-vazio' => 'Repita a senha para confirmar.',
+                                'data-msg-invalido' => 'A senha precisa ter no mínimo 6 caracteres.',
                             ],
                         ]) ?>
                     </div>
