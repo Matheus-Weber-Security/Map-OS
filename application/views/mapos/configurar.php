@@ -165,7 +165,7 @@ foreach ($campos as $nome => $def) {
             ],
         ]) ?>
     <?php } else { ?>
-        <form method="post" action="<?= e(site_url('mapos/configurar') . listagemQuery(['aba' => $aba])) ?>" novalidate class="flex flex-col gap-4" <?= js_module('formulario/padrao') ?>>
+        <form id="form-configuracoes" method="post" action="<?= e(site_url('mapos/configurar') . listagemQuery(['aba' => $aba])) ?>" novalidate class="flex flex-col gap-4" <?= js_module('formulario/padrao') ?>>
             <input type="hidden" name="<?= e($this->security->get_csrf_token_name()) ?>" value="<?= e($this->security->get_csrf_hash()) ?>">
 
             <?php if ($aba === 'pagamentos') { ?>
@@ -215,9 +215,6 @@ foreach ($campos as $nome => $def) {
                 </section>
             <?php } ?>
 
-            <div class="flex justify-end">
-                <?= component('button', ['label' => 'Salvar', 'icon' => 'save', 'type' => 'submit', 'attrs' => ['data-rotulo-carregando' => 'Salvando…']]) ?>
-            </div>
         </form>
 
         <?php if ($aba === 'geral' && isset($tfa_geral)) {
@@ -225,5 +222,9 @@ foreach ($campos as $nome => $def) {
             $origem = 'geral';
             include APPPATH . 'views/mapos/partes/painel_2fa_conta.php';
         } ?>
+
+        <div class="flex justify-end">
+            <?= component('button', ['label' => 'Salvar', 'icon' => 'save', 'type' => 'submit', 'attrs' => ['form' => 'form-configuracoes', 'data-rotulo-carregando' => 'Salvando…']]) ?>
+        </div>
     <?php } ?>
 </div>
