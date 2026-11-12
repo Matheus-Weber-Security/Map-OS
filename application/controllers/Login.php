@@ -79,8 +79,12 @@ class Login extends CI_Controller
             exit();
         }
 
-        // Primeiro acesso sem autenticador configurado: redireciona para vincular o 2FA antes de liberar o painel.
-        if ($this->db->field_exists('totp_ativado_em', 'usuarios') && empty($user->totp_ativado_em)) {
+        $exigirNoLogin = $this->Mapos_model->exigir2faNoLogin() || $this->Mapos_model->grupoExige2fa((int) $user->permissoes_id);
+        $jaAdiou = $this->db->field_exists('totp_adiado_em', 'usuarios') && ! empty($user->totp_adiado_em);
+
+        // Primeiro acesso (ou quando obrigatório) sem autenticador configurado:
+        // convida para vincular o 2FA, permitindo "Cadastrar depois" quando não obrigatório.
+        if ($this->db->field_exists('totp_ativado_em', 'usuarios') && empty($user->totp_ativado_em) && (! $jaAdiou || $exigirNoLogin)) {
             $this->limite_login->registrarSucesso('usuario', $email);
             $this->load->library('Totp');
             $this->session->sess_regenerate(true);
@@ -89,6 +93,7 @@ class Login extends CI_Controller
                 'email' => (string) $user->email,
                 'nome' => (string) $user->nome,
                 'segredo' => $this->totp->criarSegredo(),
+                'obrigatorio' => $exigirNoLogin,
                 'expira' => time() + 600,
             ]);
             echo json_encode(['result' => true, 'destino' => site_url('login/configurarDoisFatores')]);
@@ -97,7 +102,6 @@ class Login extends CI_Controller
 
         // 2FA no login (#2876): só pede os 6 dígitos ao entrar se a opção global
         // "exigir_2fa_login" estiver ativada (padrão desativado) ou se o grupo exigir.
-        $exigirNoLogin = $this->Mapos_model->exigir2faNoLogin() || $this->Mapos_model->grupoExige2fa((int) $user->permissoes_id);
         if (($user->totp_ativado_em ?? null) && $exigirNoLogin) {
             $this->session->sess_regenerate(true);
             $this->session->set_userdata('dois_fatores', ['email' => $user->email, 'expira' => time() + self::DOIS_FATORES_VALIDADE, 'tentativas' => 0]);
@@ -207,8 +211,43 @@ class Login extends CI_Controller
             'segredo' => Totp::formatarSegredo($setup['segredo']),
             'segredo_puro' => $setup['segredo'],
             'otpauth_uri' => $this->totp->uri($setup['email'], $setup['segredo']),
+            'pode_adiar' => empty($setup['obrigatorio']),
             'erro' => $this->session->flashdata('error'),
         ]);
+    }
+
+    /**
+     * Opção "Cadastrar depois" ao entrar pela primeira vez sem 2FA.
+     * Marca totp_adiado_em para não exibir a tela novamente nos próximos logins.
+     */
+    public function adiarDoisFatores()
+    {
+        $setup = $this->primeiroAcessoPendente();
+        if ($setup === null || $this->input->method() !== 'post' || ! empty($setup['obrigatorio'])) {
+            $this->session->set_flashdata('error', 'A configuração do autenticador é obrigatória ou a sessão expirou.');
+
+            return redirect(site_url('login'));
+        }
+
+        $idUsuario = (int) $setup['id_usuario'];
+        $this->mapos_model->marcarTotpAdiado($idUsuario);
+        $this->session->unset_userdata('dois_fatores_primeiro_acesso');
+
+        $user = $this->mapos_model->usuarioParaLoginPorId($idUsuario);
+        if (! $user) {
+            $this->session->set_flashdata('error', 'Usuário não encontrado.');
+
+            return redirect(site_url('login'));
+        }
+
+        $this->iniciarSessao($user);
+        log_info('Optou por cadastrar o autenticador 2FA depois.');
+
+        if ($this->session->userdata('qtd_empresas') > 1) {
+            return redirect(site_url('login/escolherEmpresa'));
+        }
+
+        return redirect(site_url('mapos'));
     }
 
     public function salvarDoisFatoresPrimeiroAcesso()
@@ -603,71 +642,18 @@ class Login extends CI_Controller
             if ($passo === null) {
                 $erro = 'Código incorreto. Confira os 6 dígitos mostrados no aplicativo e tente novamente.';
             } else {
-                $resultado = $this->saas_model->cadastrarEmpresaComDono(
-                    [
-                        'razao_social' => $nome,
-                        'nome_fantasia' => $nome,
-                        'documento' => '',
-                        'telefone' => '',
-                        'email' => $email,
-                    ],
-                    [
-                        'nome' => $nome,
-                        'email' => $email,
-                        'senha_plana' => (string) $pendente['senha_plana'],
-                        'telefone' => '',
-                        'cep' => '',
-                        'rua' => '',
-                        'numero' => '',
-                        'bairro' => '',
-                        'cidade' => '',
-                        'estado' => '',
-                    ],
-                    10
-                );
-
-                if (! $resultado['sucesso']) {
-                    $erro = $resultado['mensagem'] ?? 'Erro ao criar a empresa. Tente novamente.';
+                $res = $this->finalizarCadastroEmpresa($pendente, ! $jaTem2fa ? $segredo : null, (int) $passo);
+                if (! $res['sucesso']) {
+                    $erro = $res['mensagem'];
                 } else {
-                    $usuario = $resultado['usuario'];
-                    $codigos = null;
-
-                    if (! $jaTem2fa) {
-                        $codigos = $this->totp->gerarCodigosDeRecuperacao();
-                        $this->mapos_model->ativarTotp(
-                            (int) $usuario->idUsuarios,
-                            $this->totp->cifrar($segredo),
-                            array_map([Totp::class, 'hashDoCodigo'], $codigos),
-                            (int) $passo
-                        );
-                        $usuario = $this->mapos_model->usuarioParaLoginPorId((int) $usuario->idUsuarios) ?? $usuario;
-                    }
-
-                    $this->session->unset_userdata('cadastro_empresa_pendente');
-                    $this->iniciarSessao($usuario);
-                    $this->session->set_userdata([
-                        'empresa_id' => (int) $resultado['empresa_id'],
-                        'empresa_nome' => (string) $resultado['empresa_nome'],
-                        'saas_modal_boas_vindas' => true,
-                    ]);
-
-                    if ($codigos !== null) {
-                        $this->session->set_userdata('codigos_recuperacao_novos', [
-                            'codigos' => $codigos,
-                            'email' => (string) $usuario->email,
-                            'destino' => site_url('mapos'),
-                        ]);
-
-                        return redirect(site_url('login/codigosRecuperacao'));
-                    }
-
-                    return redirect(site_url('mapos'));
+                    return redirect($res['destino']);
                 }
             }
         }
 
         return $this->load->view('mapos/cadastrar_empresa_2fa', [
             'ja_tem_2fa' => $jaTem2fa,
+            'pode_adiar' => ! $jaTem2fa && ! $this->mapos_model->exigir2faNoLogin(),
             'email' => $email,
             'nome' => $nome,
             'qr' => $jaTem2fa ? null : $this->totp->qrCodeDataUri($email, $segredo),
@@ -676,6 +662,115 @@ class Login extends CI_Controller
             'otpauth_uri' => $jaTem2fa ? null : $this->totp->uri($email, $segredo),
             'erro' => $erro,
         ]);
+    }
+
+    /**
+     * Conclui o cadastro da empresa pulando o 2FA ("Cadastrar depois").
+     */
+    public function cadastrarDepois()
+    {
+        $pendente = $this->session->userdata('cadastro_empresa_pendente');
+        if (! is_array($pendente) || ($pendente['expira'] ?? 0) < time() || $this->input->method() !== 'post') {
+            $this->session->unset_userdata('cadastro_empresa_pendente');
+            $this->session->set_flashdata('error', 'Preencha os dados da sua conta primeiro.');
+
+            return redirect(site_url('login/cadastrar'));
+        }
+
+        $this->load->model('saas_model');
+        if (! empty($pendente['ja_tem_2fa']) || $this->mapos_model->exigir2faNoLogin()) {
+            $this->session->set_flashdata('error', 'Confirme o código do aplicativo autenticador para concluir.');
+
+            return redirect(site_url('login/cadastrar2fa'));
+        }
+
+        $res = $this->finalizarCadastroEmpresa($pendente, null, null);
+        if (! $res['sucesso']) {
+            $this->session->set_flashdata('error', $res['mensagem']);
+
+            return redirect(site_url('login/cadastrar2fa'));
+        }
+
+        return redirect($res['destino']);
+    }
+
+    /**
+     * Grava empresa + dono, opcionalmente ativa o TOTP ou marca como adiado, e inicia sessão.
+     *
+     * @return array{sucesso: bool, mensagem?: string, destino?: string}
+     */
+    private function finalizarCadastroEmpresa(array $pendente, ?string $segredo, ?int $passo): array
+    {
+        $nome = (string) $pendente['nome'];
+        $email = (string) $pendente['email'];
+        $jaTem2fa = ! empty($pendente['ja_tem_2fa']);
+
+        $resultado = $this->saas_model->cadastrarEmpresaComDono(
+            [
+                'razao_social' => $nome,
+                'nome_fantasia' => $nome,
+                'documento' => '',
+                'telefone' => '',
+                'email' => $email,
+            ],
+            [
+                'nome' => $nome,
+                'email' => $email,
+                'senha_plana' => (string) $pendente['senha_plana'],
+                'telefone' => '',
+                'cep' => '',
+                'rua' => '',
+                'numero' => '',
+                'bairro' => '',
+                'cidade' => '',
+                'estado' => '',
+            ],
+            10
+        );
+
+        if (! $resultado['sucesso']) {
+            return [
+                'sucesso' => false,
+                'mensagem' => $resultado['mensagem'] ?? 'Erro ao criar a empresa. Tente novamente.',
+            ];
+        }
+
+        $usuario = $resultado['usuario'];
+        $codigos = null;
+
+        if ($segredo !== null && $passo !== null && ! $jaTem2fa) {
+            $this->load->library('Totp');
+            $codigos = $this->totp->gerarCodigosDeRecuperacao();
+            $this->mapos_model->ativarTotp(
+                (int) $usuario->idUsuarios,
+                $this->totp->cifrar($segredo),
+                array_map([Totp::class, 'hashDoCodigo'], $codigos),
+                $passo
+            );
+            $usuario = $this->mapos_model->usuarioParaLoginPorId((int) $usuario->idUsuarios) ?? $usuario;
+        } elseif (! $jaTem2fa) {
+            $this->mapos_model->marcarTotpAdiado((int) $usuario->idUsuarios);
+        }
+
+        $this->session->unset_userdata('cadastro_empresa_pendente');
+        $this->iniciarSessao($usuario);
+        $this->session->set_userdata([
+            'empresa_id' => (int) $resultado['empresa_id'],
+            'empresa_nome' => (string) $resultado['empresa_nome'],
+            'saas_modal_boas_vindas' => true,
+        ]);
+
+        if ($codigos !== null) {
+            $this->session->set_userdata('codigos_recuperacao_novos', [
+                'codigos' => $codigos,
+                'email' => (string) $usuario->email,
+                'destino' => site_url('mapos'),
+            ]);
+
+            return ['sucesso' => true, 'destino' => site_url('login/codigosRecuperacao')];
+        }
+
+        return ['sucesso' => true, 'destino' => site_url('mapos')];
     }
 
     /**

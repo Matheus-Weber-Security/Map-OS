@@ -174,71 +174,116 @@ class Mapos extends MY_Controller
         $this->load->library('Totp');
         $usuario = $this->usuarioDoDoisFatores();
         $segredo = $this->session->userdata('totp_pendente');
+        $origemGeral = $this->input->post('origem') === 'geral';
+        $destinoVolta = $origemGeral ? site_url('mapos/configurar#secao-2fa-conta') : site_url('mapos/doisFatores');
 
         if ($this->input->method() !== 'post' || $usuario->totp_ativado_em || ! is_string($segredo) || $segredo === '') {
-            return redirect(site_url('mapos/doisFatores'));
+            return redirect($destinoVolta);
         }
 
-        // A senha também na ativação (#2879): num grupo que exige o 2FA, quem tem só a
-        // senha de outra pessoa não pode cadastrar o próprio autenticador e trancá-la fora.
+        // A senha também na ativação (#2879): evita que outra pessoa com sessão aberta trave a conta.
         if (! password_verify((string) $this->input->post('senha'), $usuario->senha)) {
-            return $this->telaDoisFatores(['senha_ativar' => 'A senha não confere.']);
+            return $this->responderDoisFatores(['senha_ativar' => 'A senha não confere.']);
         }
 
         $passo = $this->totp->verificar($segredo, (string) $this->input->post('codigo'));
         if ($passo === null) {
-            return $this->telaDoisFatores(['codigo' => 'Código incorreto. Confira o aplicativo e tente de novo.']);
+            return $this->responderDoisFatores(['codigo' => 'Código incorreto. Confira o aplicativo e tente de novo.']);
         }
 
         $codigos = $this->totp->gerarCodigosDeRecuperacao();
         $salvou = $this->mapos_model->ativarTotp((int) $usuario->idUsuarios, $this->totp->cifrar($segredo), array_map([Totp::class, 'hashDoCodigo'], $codigos), $passo);
 
         if (! $salvou) {
-            return $this->telaDoisFatores(['_geral' => 'Não foi possível ativar. Tente de novo.']);
+            return $this->responderDoisFatores(['_geral' => 'Não foi possível ativar. Tente de novo.']);
         }
 
         $this->session->unset_userdata(['totp_pendente', 'exigir_2fa_cadastro']);
         log_info('Ativou a autenticação em dois fatores.');
 
-        return $this->telaDoisFatores([], $codigos);
+        return $this->responderDoisFatores([], $codigos, 'Autenticação em dois fatores ativada! Guarde seus códigos de recuperação abaixo.');
     }
 
     public function novosCodigosDoisFatores()
     {
         $this->load->library('Totp');
         $usuario = $this->usuarioDoDoisFatores();
+        $origemGeral = $this->input->post('origem') === 'geral';
+        $destinoVolta = $origemGeral ? site_url('mapos/configurar#secao-2fa-conta') : site_url('mapos/doisFatores');
 
         if ($this->input->method() !== 'post' || ! $usuario->totp_ativado_em) {
-            return redirect(site_url('mapos/doisFatores'));
+            return redirect($destinoVolta);
         }
         if ($erro = $this->confirmarSenhaDoUsuario($usuario, (string) $this->input->post('senha'))) {
-            return $this->telaDoisFatores(['senha_codigos' => $erro]);
+            return $this->responderDoisFatores(['senha_codigos' => $erro]);
         }
 
         $codigos = $this->totp->gerarCodigosDeRecuperacao();
         $this->mapos_model->substituirCodigosDeRecuperacao((int) $usuario->idUsuarios, array_map([Totp::class, 'hashDoCodigo'], $codigos));
         log_info('Gerou novos códigos de recuperação do 2FA.');
 
-        return $this->telaDoisFatores([], $codigos);
+        return $this->responderDoisFatores([], $codigos, 'Novos códigos de recuperação gerados abaixo.');
     }
 
     public function desativarDoisFatores()
     {
         $usuario = $this->usuarioDoDoisFatores();
+        $origemGeral = $this->input->post('origem') === 'geral';
+        $destinoVolta = $origemGeral ? site_url('mapos/configurar#secao-2fa-conta') : site_url('mapos/doisFatores');
 
         if ($this->input->method() !== 'post' || ! $usuario->totp_ativado_em) {
-            return redirect(site_url('mapos/doisFatores'));
+            return redirect($destinoVolta);
         }
+
+        $exigeObrigatorio = $this->mapos_model->exigir2faNoLogin() || $this->mapos_model->grupoExige2fa((int) $usuario->permissoes_id);
+        $trocar = $this->input->post('modo') === 'trocar';
+
+        if ($exigeObrigatorio && ! $trocar) {
+            return $this->responderDoisFatores([
+                '_geral' => 'A exigência de 2FA no login está ativa para sua conta/sistema. Desative a opção acima primeiro ou clique em "Trocar aplicativo".',
+            ]);
+        }
+
         if ($erro = $this->confirmarSenhaDoUsuario($usuario, (string) $this->input->post('senha'))) {
-            return $this->telaDoisFatores(['senha_desativar' => $erro]);
+            return $this->responderDoisFatores(['senha_desativar' => $erro]);
         }
 
-        $this->mapos_model->desativarTotp((int) $usuario->idUsuarios);
-        $this->session->set_userdata('exigir_2fa_cadastro', true);
-        log_info('Reiniciou a autenticação em dois fatores para vincular um novo aplicativo.');
-        $this->session->set_flashdata('success', 'Vínculo anterior removido. Leia o novo QR Code abaixo para ativar o novo aplicativo.');
+        if ($exigeObrigatorio && $trocar) {
+            $this->mapos_model->desativarTotp((int) $usuario->idUsuarios, false);
+            $this->session->set_userdata('exigir_2fa_cadastro', true);
+            log_info('Reiniciou o 2FA para vincular um novo aplicativo.');
+            $this->session->set_flashdata('success', 'Vínculo anterior removido. Leia o novo QR Code abaixo para ativar o novo aplicativo.');
+        } else {
+            $this->mapos_model->desativarTotp((int) $usuario->idUsuarios, true);
+            $this->session->unset_userdata('exigir_2fa_cadastro');
+            log_info('Desativou a autenticação em dois fatores.');
+            $this->session->set_flashdata('success', 'Autenticação em dois fatores desativada na sua conta.');
+        }
 
-        return redirect(site_url('mapos/doisFatores'));
+        return redirect($destinoVolta);
+    }
+
+    private function responderDoisFatores(array $erros = [], ?array $codigos = null, ?string $sucessoFlash = null)
+    {
+        if ($this->input->post('origem') === 'geral') {
+            if ($erros !== []) {
+                $this->session->set_flashdata('tfa_erros_geral', $erros);
+            }
+            if ($codigos !== null) {
+                $this->session->set_flashdata('tfa_codigos_geral', $codigos);
+            }
+            if ($sucessoFlash !== null) {
+                $this->session->set_flashdata('success', $sucessoFlash);
+            }
+
+            return redirect(site_url('mapos/configurar#secao-2fa-conta'));
+        }
+
+        if ($sucessoFlash !== null && $erros === []) {
+            $this->session->set_flashdata('success', $sucessoFlash);
+        }
+
+        return $this->telaDoisFatores($erros, $codigos);
     }
 
     /**
@@ -273,20 +318,17 @@ class Mapos extends MY_Controller
      * @param  array<string, string>  $erros
      * @param  list<string>|null      $codigos  Códigos de recuperação recém-gerados (mostrados só agora)
      */
-    private function telaDoisFatores(array $erros = [], ?array $codigos = null)
+    private function montarDadosDoisFatores(array $erros = [], ?array $codigos = null): array
     {
         $this->load->library('Totp');
         $usuario = $this->usuarioDoDoisFatores();
         $ativo = (bool) $usuario->totp_ativado_em;
+        $exigido = $this->mapos_model->exigir2faNoLogin() || $this->mapos_model->grupoExige2fa((int) $usuario->permissoes_id);
 
-        $this->data['ativo'] = $ativo;
-        $this->data['exigido'] = true;
-        $this->data['exigir_2fa_login'] = $this->mapos_model->exigir2faNoLogin() || $this->mapos_model->grupoExige2fa((int) $usuario->permissoes_id);
-        $this->data['restantes'] = $ativo ? $this->mapos_model->codigosDeRecuperacaoRestantes((int) $usuario->idUsuarios) : 0;
-        $this->data['codigos'] = $codigos;
-        $this->data['erros'] = $erros;
-        $this->data['qr'] = null;
-        $this->data['segredo'] = null;
+        $qr = null;
+        $segredo = null;
+        $segredoPuro = null;
+        $otpauthUri = null;
 
         if (! $ativo && $codigos === null) {
             // O segredo só vai para o banco depois que o usuário prova que o aplicativo o leu.
@@ -295,10 +337,32 @@ class Mapos extends MY_Controller
                 $segredo = $this->totp->criarSegredo();
                 $this->session->set_userdata('totp_pendente', $segredo);
             }
-            $this->data['qr'] = $this->totp->qrCodeDataUri((string) $usuario->email, $segredo);
-            $this->data['segredo'] = Totp::formatarSegredo($segredo);
+            $segredoPuro = $segredo;
+            $qr = $this->totp->qrCodeDataUri((string) $usuario->email, $segredo);
+            $segredo = Totp::formatarSegredo($segredo);
+            $otpauthUri = $this->totp->uri((string) $usuario->email, $segredoPuro);
         }
 
+        return [
+            'ativo' => $ativo,
+            'exigido' => $exigido,
+            'exigir_2fa_login' => $exigido,
+            'restantes' => $ativo ? $this->mapos_model->codigosDeRecuperacaoRestantes((int) $usuario->idUsuarios) : 0,
+            'codigos' => $codigos,
+            'erros' => $erros,
+            'email' => (string) $usuario->email,
+            'qr' => $qr,
+            'segredo' => $segredo,
+            'segredo_puro' => $segredoPuro,
+            'otpauth_uri' => $otpauthUri,
+        ];
+    }
+
+    private function telaDoisFatores(array $erros = [], ?array $codigos = null)
+    {
+        foreach ($this->montarDadosDoisFatores($erros, $codigos) as $chave => $valor) {
+            $this->data[$chave] = $valor;
+        }
         $this->data['view'] = 'mapos/doisFatores';
 
         return $this->layout();
@@ -780,6 +844,14 @@ class Mapos extends MY_Controller
         $this->data['pode_backup'] = $this->permite('cBackup');
         $this->data['is_superadmin'] = (bool) $this->session->userdata('is_superadmin');
         $this->data['tema_pessoal'] = configuracaoTemaPessoal($this->data['configuration']);
+        if ($aba === 'geral') {
+            $errosTfa = $this->session->flashdata('tfa_erros_geral');
+            $codigosTfa = $this->session->flashdata('tfa_codigos_geral');
+            $this->data['tfa_geral'] = $this->montarDadosDoisFatores(
+                is_array($errosTfa) ? $errosTfa : [],
+                is_array($codigosTfa) ? $codigosTfa : null
+            );
+        }
         $this->data['view'] = 'mapos/configurar';
 
         return $this->layout();

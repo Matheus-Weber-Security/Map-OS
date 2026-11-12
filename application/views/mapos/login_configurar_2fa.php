@@ -1,9 +1,9 @@
 <?php
 /**
- * Primeiro acesso: vinculação obrigatória do aplicativo autenticador (2FA).
+ * Primeiro acesso: vinculação do aplicativo autenticador (2FA).
  *
- * Exibido quando um usuário ou funcionário entra pela primeira vez com e-mail
- * e senha e ainda não possui TOTP vinculado para recuperação e segurança.
+ * Exibido quando um usuário ou funcionário entra sem TOTP vinculado.
+ * Quando o 2FA no login está desativado, exibe o botão "Cadastrar depois".
  *
  * @var string      $nome
  * @var string      $email
@@ -11,6 +11,7 @@
  * @var string      $segredo
  * @var string      $segredo_puro
  * @var string      $otpauth_uri
+ * @var bool        $pode_adiar
  * @var string|null $erro
  */
 $entrada = [
@@ -26,7 +27,7 @@ include APPPATH . 'views/entrada/inicio.php';
                 Proteja sua <span class="rounded-xs bg-accent-lime px-2 py-1 text-ink">conta</span>
             </h1>
             <p class="mt-1.5 text-sm text-on-dark-muted">
-                Olá, <strong class="font-medium text-on-dark"><?= e($nome) ?></strong>. Antes de entrar, vincule um aplicativo autenticador. Ele será usado caso precise recuperar sua senha sem depender de e-mail.
+                Olá, <strong class="font-medium text-on-dark"><?= e($nome) ?></strong>. Vincule um aplicativo autenticador. Ele será usado caso precise recuperar sua senha sem depender de e-mail.
             </p>
         </header>
 
@@ -68,6 +69,20 @@ include APPPATH . 'views/entrada/inicio.php';
                     ]) ?>
                 </div>
             </form>
+
+            <?php if (! empty($pode_adiar)) { ?>
+                <form method="post" action="<?= e(site_url('login/adiarDoisFatores')) ?>" class="border-t border-border pt-3 text-center">
+                    <input type="hidden" name="<?= e($this->security->get_csrf_token_name()) ?>" value="<?= e($this->security->get_csrf_hash()) ?>">
+                    <?= component('button', [
+                        'label' => 'Cadastrar depois',
+                        'type' => 'submit',
+                        'variant' => 'ghost',
+                        'size' => 'sm',
+                        'class' => 'w-full',
+                    ]) ?>
+                    <p class="mt-1.5 text-caption text-muted">Você poderá ativar depois em Configurações &gt; Geral ou Minha Conta.</p>
+                </form>
+            <?php } ?>
         </div>
     </main>
 <?php include APPPATH . 'views/entrada/fim.php'; ?>

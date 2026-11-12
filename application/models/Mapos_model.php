@@ -108,7 +108,7 @@ class Mapos_model extends CI_Model
             'permissoes_id' => $grupo,
             'grupo_ativo' => $this->grupoAtivo($grupo),
             'versao' => (int) ($usuario->sessao_versao ?? 0),
-            'exige_2fa_cadastro' => $this->db->field_exists('totp_ativado_em', 'usuarios') && ! ($usuario->totp_ativado_em ?? null),
+            'exige_2fa_cadastro' => $this->db->field_exists('totp_ativado_em', 'usuarios') && ! ($usuario->totp_ativado_em ?? null) && ($this->grupoExige2fa($grupo) || $this->exigir2faNoLogin()),
         ];
     }
 
@@ -468,10 +468,22 @@ class Mapos_model extends CI_Model
      *
      * @param  list<string>  $hashesDosCodigos
      */
+    public function marcarTotpAdiado(int $idUsuario): void
+    {
+        if ($this->db->field_exists('totp_adiado_em', 'usuarios')) {
+            $this->db->where('idUsuarios', $idUsuario)->update('usuarios', ['totp_adiado_em' => date('Y-m-d H:i:s')]);
+        }
+    }
+
     public function ativarTotp(int $idUsuario, string $segredoCifrado, array $hashesDosCodigos, int $passo): bool
     {
+        $dados = ['totp_secreto' => $segredoCifrado, 'totp_ativado_em' => date('Y-m-d H:i:s'), 'totp_ultimo_passo' => $passo];
+        if ($this->db->field_exists('totp_adiado_em', 'usuarios')) {
+            $dados['totp_adiado_em'] = null;
+        }
+
         $this->db->trans_start();
-        $this->db->where('idUsuarios', $idUsuario)->update('usuarios', ['totp_secreto' => $segredoCifrado, 'totp_ativado_em' => date('Y-m-d H:i:s'), 'totp_ultimo_passo' => $passo]);
+        $this->db->where('idUsuarios', $idUsuario)->update('usuarios', $dados);
         $this->substituirCodigosDeRecuperacao($idUsuario, $hashesDosCodigos);
         $this->db->trans_complete();
 
@@ -488,10 +500,15 @@ class Mapos_model extends CI_Model
         }
     }
 
-    public function desativarTotp(int $idUsuario): void
+    public function desativarTotp(int $idUsuario, bool $marcarAdiado = false): void
     {
+        $dados = ['totp_secreto' => null, 'totp_ativado_em' => null, 'totp_ultimo_passo' => null];
+        if ($this->db->field_exists('totp_adiado_em', 'usuarios')) {
+            $dados['totp_adiado_em'] = $marcarAdiado ? date('Y-m-d H:i:s') : null;
+        }
+
         $this->db->trans_start();
-        $this->db->where('idUsuarios', $idUsuario)->update('usuarios', ['totp_secreto' => null, 'totp_ativado_em' => null, 'totp_ultimo_passo' => null]);
+        $this->db->where('idUsuarios', $idUsuario)->update('usuarios', $dados);
         $this->db->where('usuario_id', $idUsuario)->delete('usuarios_codigos_recuperacao');
         $this->db->trans_complete();
     }

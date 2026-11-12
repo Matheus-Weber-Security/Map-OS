@@ -4,8 +4,10 @@
  *
  * O segredo TOTP é gerado e guardado apenas na sessão até o usuário confirmar o
  * código de 6 dígitos; só então a empresa e o usuário são criados no banco.
+ * Quando o login 2FA não está obrigatório no sistema, permite "Cadastrar depois".
  *
  * @var bool        $ja_tem_2fa
+ * @var bool        $pode_adiar
  * @var string      $email
  * @var string      $nome
  * @var string|null $qr
@@ -85,6 +87,20 @@ include APPPATH . 'views/entrada/inicio.php';
                     ]) ?>
                 </div>
             </form>
+
+            <?php if (! empty($pode_adiar)) { ?>
+                <form method="post" action="<?= e(site_url('login/cadastrarDepois')) ?>" class="border-t border-border pt-3 text-center">
+                    <input type="hidden" name="<?= e($this->security->get_csrf_token_name()) ?>" value="<?= e($this->security->get_csrf_hash()) ?>">
+                    <?= component('button', [
+                        'label' => 'Cadastrar depois',
+                        'type' => 'submit',
+                        'variant' => 'ghost',
+                        'size' => 'sm',
+                        'class' => 'w-full',
+                    ]) ?>
+                    <p class="mt-1.5 text-caption text-muted">Você poderá ativar depois em Configurações &gt; Geral (sem o autenticador, não é possível recuperar senha sem suporte).</p>
+                </form>
+            <?php } ?>
         </div>
     </main>
 <?php include APPPATH . 'views/entrada/fim.php'; ?>

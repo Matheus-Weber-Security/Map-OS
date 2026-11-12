@@ -219,5 +219,11 @@ foreach ($campos as $nome => $def) {
                 <?= component('button', ['label' => 'Salvar', 'icon' => 'save', 'type' => 'submit', 'attrs' => ['data-rotulo-carregando' => 'Salvando…']]) ?>
             </div>
         </form>
+
+        <?php if ($aba === 'geral' && isset($tfa_geral)) {
+            $tfa = $tfa_geral;
+            $origem = 'geral';
+            include APPPATH . 'views/mapos/partes/painel_2fa_conta.php';
+        } ?>
     <?php } ?>
 </div>

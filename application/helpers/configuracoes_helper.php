@@ -76,7 +76,7 @@ if (! function_exists('configuracaoCampos')) {
                 'per_page' => ['destino' => 'config', 'tipo' => 'opcao', 'rotulo' => 'Registros por página', 'opcoes' => ['10' => '10', '20' => '20', '50' => '50', '100' => '100']],
                 'app_tema_modo' => ['destino' => 'config', 'tipo' => 'opcao', 'rotulo' => 'Tema padrão', 'opcoes' => ['claro' => 'Claro', 'escuro' => 'Escuro', 'sistema' => 'Igual ao do sistema operacional'], 'ajuda' => 'Cada pessoa pode trocar o tema na barra do topo, e a escolha fica salva no perfil dela. Este é o modo de quem ainda não escolheu.'],
                 'app_tema_cor' => ['destino' => 'config', 'tipo' => 'opcao', 'rotulo' => 'Cor padrão do sistema', 'opcoes' => temaCoresRotulos(), 'ajuda' => 'Cada pessoa pode escolher a própria cor no menu do usuário. Esta é a cor de quem ainda não escolheu.'],
-                'exigir_2fa_login' => ['destino' => 'config', 'tipo' => 'sim_nao', 'rotulo' => 'Exigir autenticação em dois fatores (2FA) no login', 'ajuda' => 'Quando desativado (padrão), o código de 6 dígitos do aplicativo autenticador é solicitado apenas ao recuperar a senha. Quando ativado, também será pedido ao fazer login.'],
+                'exigir_2fa_login' => ['destino' => 'config', 'tipo' => 'sim_nao', 'grupo' => 'Autenticação em dois fatores (2FA)', 'rotulo' => 'Exigir autenticação em dois fatores (2FA) no login', 'ajuda' => 'Quando desativado (padrão), o código de 6 dígitos do aplicativo autenticador é solicitado apenas ao recuperar a senha. Quando ativado, também será pedido ao fazer login.'],
             ],
             'os' => [
                 'control_editos' => ['destino' => 'config', 'tipo' => 'sim_nao', 'rotulo' => 'Permitir editar OS faturada ou cancelada'],

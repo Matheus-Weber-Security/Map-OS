@@ -337,8 +337,9 @@ class MY_Controller extends CI_Controller
         }
 
         $rota = strtolower($this->router->class . '/' . $this->router->method);
-        if (! in_array($rota, ['mapos/doisfatores', 'mapos/ativardoisfatores'], true)) {
-            $this->session->set_flashdata('error', 'Configure a autenticação em dois fatores (aplicativo autenticador) para continuar e garantir sua recuperação de senha.');
+        $permitidas = ['mapos/doisfatores', 'mapos/ativardoisfatores', 'mapos/configurar'];
+        if (! in_array($rota, $permitidas, true)) {
+            $this->session->set_flashdata('error', 'Configure a autenticação em dois fatores (aplicativo autenticador) para continuar.');
             redirect(site_url('mapos/doisFatores'));
         }
     }
