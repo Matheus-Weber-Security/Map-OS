@@ -179,8 +179,9 @@ class Produtos extends MY_Controller
         }
 
         $id = (int) $this->input->post('id');
-        if ($id <= 0) {
-            $this->session->set_flashdata('error', 'Erro ao tentar excluir produto.');
+        $produto = $id > 0 ? $this->produtos_model->getById($id) : null;
+        if (! $produto) {
+            $this->session->set_flashdata('error', 'Erro ao tentar excluir produto ou registro não pertence à sua empresa.');
             redirect(site_url('produtos'));
         }
 

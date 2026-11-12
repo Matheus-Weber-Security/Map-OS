@@ -13,9 +13,14 @@ class Produtos_model extends CI_Model
         $this->db->from($table);
         $this->db->order_by('idProdutos', 'desc');
         $this->db->limit($perpage, $start);
+        if ($table === 'produtos' || $this->db->field_exists('empresa_id', $table)) {
+            $this->db->where("{$table}.empresa_id", empresa_ativa_id());
+        }
         if ($where) {
+            $this->db->group_start();
             $this->db->like('codDeBarra', $where);
             $this->db->or_like('descricao', $where);
+            $this->db->group_end();
         }
 
         $query = $this->db->get();
@@ -64,9 +69,7 @@ class Produtos_model extends CI_Model
      */
     private function aplicarFiltros(array $filtros): void
     {
-        $ci = &get_instance();
-        $empresaId = (int) ($ci->session->userdata('empresa_id') ?: 1);
-        $this->db->where('empresa_id', $empresaId);
+        $this->db->where('empresa_id', empresa_ativa_id());
 
         if (($filtros['pesquisa'] ?? '') !== '') {
             $termo = $filtros['pesquisa'];
@@ -87,11 +90,7 @@ class Produtos_model extends CI_Model
     public function getById($id)
     {
         $this->db->where('idProdutos', $id);
-        $ci = &get_instance();
-        if (! ($ci->session->userdata('is_superadmin') ?? false)) {
-            $empresaId = (int) ($ci->session->userdata('empresa_id') ?: 1);
-            $this->db->where('empresa_id', $empresaId);
-        }
+        $this->db->where('empresa_id', empresa_ativa_id());
         $this->db->limit(1);
 
         return $this->db->get('produtos')->row();
@@ -109,8 +108,13 @@ class Produtos_model extends CI_Model
 
     public function add($table, $data)
     {
-        if ($table === 'produtos' && empty($data['idProdutos'])) {
-            $data['idProdutos'] = $this->gerarProximoId();
+        if ($table === 'produtos') {
+            if (empty($data['idProdutos'])) {
+                $data['idProdutos'] = $this->gerarProximoId();
+            }
+            if (empty($data['empresa_id'])) {
+                $data['empresa_id'] = empresa_ativa_id();
+            }
         }
 
         $this->db->insert($table, $data);
@@ -124,6 +128,9 @@ class Produtos_model extends CI_Model
     public function edit($table, $data, $fieldID, $ID)
     {
         $this->db->where($fieldID, $ID);
+        if ($table === 'produtos' || $this->db->field_exists('empresa_id', $table)) {
+            $this->db->where('empresa_id', empresa_ativa_id());
+        }
         $this->db->update($table, $data);
 
         if ($this->db->affected_rows() >= 0) {
@@ -136,6 +143,9 @@ class Produtos_model extends CI_Model
     public function delete($table, $fieldID, $ID)
     {
         $this->db->where($fieldID, $ID);
+        if ($table === 'produtos' || $this->db->field_exists('empresa_id', $table)) {
+            $this->db->where('empresa_id', empresa_ativa_id());
+        }
         $this->db->delete($table);
         if ($this->db->affected_rows() == '1') {
             return true;
@@ -146,13 +156,17 @@ class Produtos_model extends CI_Model
 
     public function count($table)
     {
-        return $this->db->count_all($table);
+        if ($table === 'produtos' || $this->db->field_exists('empresa_id', $table)) {
+            $this->db->where('empresa_id', empresa_ativa_id());
+        }
+
+        return $this->db->count_all_results($table);
     }
 
     public function updateEstoque($produto, $quantidade, $operacao = '-')
     {
-        $sql = "UPDATE produtos set estoque = estoque $operacao ? WHERE idProdutos = ?";
+        $sql = "UPDATE produtos set estoque = estoque $operacao ? WHERE idProdutos = ? AND empresa_id = ?";
 
-        return $this->db->query($sql, [$quantidade, $produto]);
+        return $this->db->query($sql, [$quantidade, $produto, empresa_ativa_id()]);
     }
 }

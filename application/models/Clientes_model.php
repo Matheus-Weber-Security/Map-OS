@@ -11,6 +11,9 @@ class Clientes_model extends CI_Model
     {
         $this->db->select($fields);
         $this->db->from($table);
+        if ($table === 'clientes') {
+            $this->db->where('empresa_id', empresa_ativa_id());
+        }
         $this->db->order_by('idClientes', 'desc');
         $this->db->limit($perpage, $start);
         if ($where) {
@@ -61,6 +64,8 @@ class Clientes_model extends CI_Model
      */
     private function aplicarFiltros(array $filtros): void
     {
+        $this->db->where('clientes.empresa_id', empresa_ativa_id());
+
         if (($filtros['pesquisa'] ?? '') !== '') {
             $this->db->group_start()
                 ->like('nomeCliente', $filtros['pesquisa'])
@@ -79,6 +84,7 @@ class Clientes_model extends CI_Model
     public function getById($id)
     {
         $this->db->where('idClientes', $id);
+        $this->db->where('empresa_id', empresa_ativa_id());
         $this->db->limit(1);
 
         return $this->db->get('clientes')->row();
@@ -96,8 +102,11 @@ class Clientes_model extends CI_Model
 
     public function add($table, $data)
     {
-        if ($table === 'clientes' && empty($data['idClientes'])) {
-            $data['idClientes'] = $this->gerarProximoId();
+        if ($table === 'clientes') {
+            $data['empresa_id'] = $data['empresa_id'] ?? empresa_ativa_id();
+            if (empty($data['idClientes'])) {
+                $data['idClientes'] = $this->gerarProximoId();
+            }
         }
 
         $this->db->insert($table, $data);
@@ -111,6 +120,9 @@ class Clientes_model extends CI_Model
     public function edit($table, $data, $fieldID, $ID)
     {
         $this->db->where($fieldID, $ID);
+        if ($table === 'clientes') {
+            $this->db->where('empresa_id', empresa_ativa_id());
+        }
         $this->db->update($table, $data);
 
         if ($this->db->affected_rows() >= 0) {
@@ -129,6 +141,9 @@ class Clientes_model extends CI_Model
     public function delete($table, $fieldID, $ID)
     {
         $this->db->where($fieldID, $ID);
+        if ($table === 'clientes') {
+            $this->db->where('empresa_id', empresa_ativa_id());
+        }
         $this->db->delete($table);
         if ($this->db->affected_rows() == '1') {
             return true;
@@ -138,6 +153,13 @@ class Clientes_model extends CI_Model
     }
 
     public function count($table)
+    {
+        if ($table === 'clientes') {
+            return $this->db->where('empresa_id', empresa_ativa_id())->count_all_results('clientes');
+        }
+
+        return $this->db->count_all($table);
+    }
     {
         return $this->db->count_all($table);
     }
@@ -258,13 +280,14 @@ class Clientes_model extends CI_Model
     public function emailExists($email, $id = null)
     {
         $this->db->where('email', $email);
-        
+        $this->db->where('empresa_id', empresa_ativa_id());
+
         if ($id !== null) {
             $this->db->where('idClientes !=', $id);
         }
-        
+
         $query = $this->db->get('clientes');
-        
+
         return $query->num_rows() > 0;
     }
 }

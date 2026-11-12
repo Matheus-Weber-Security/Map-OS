@@ -32,7 +32,7 @@ class Vendas_model extends CI_Model
         $totalItens = '(SELECT COALESCE(SUM(itens_de_vendas.subTotal), 0) FROM itens_de_vendas WHERE itens_de_vendas.vendas_id = vendas.idVendas)';
 
         $this->db->select('vendas.idVendas, vendas.dataVenda, vendas.status, vendas.faturado, vendas.garantia, vendas.desconto, vendas.valor_desconto, vendas.clientes_id, vendas.usuarios_id');
-        $this->db->select('clientes.nomeCliente, usuarios.nome AS vendedor');
+        $this->db->select('clientes.nomeCliente, clientes.celular AS celular_cliente, clientes.telefone AS telefone_cliente, usuarios.nome AS vendedor');
         $this->db->select($totalItens . ' AS totalItens', false);
 
         $this->aplicarFiltros($filtros);
@@ -68,6 +68,7 @@ class Vendas_model extends CI_Model
         $this->db->from('vendas');
         $this->db->join('clientes', 'clientes.idClientes = vendas.clientes_id', 'left');
         $this->db->join('usuarios', 'usuarios.idUsuarios = vendas.usuarios_id', 'left');
+        $this->db->where('vendas.empresa_id', empresa_ativa_id());
 
         $pesquisa = $filtros['pesquisa'] ?? '';
         if ($pesquisa !== '') {
@@ -115,6 +116,7 @@ class Vendas_model extends CI_Model
         $this->db->join('usuarios', 'usuarios.idUsuarios = vendas.usuarios_id');
         $this->db->join('lancamentos', 'vendas.idVendas = lancamentos.vendas_id', 'LEFT');
         $this->db->where('vendas.idVendas', $id);
+        $this->db->where('vendas.empresa_id', empresa_ativa_id());
         $this->db->limit(1);
 
         return $this->db->get()->row();
@@ -146,6 +148,7 @@ class Vendas_model extends CI_Model
         $this->db->join('cobrancas', 'cobrancas.vendas_id = vendas.idVendas');
         $this->db->join('lancamentos', 'vendas.idVendas = lancamentos.vendas_id', 'LEFT');
         $this->db->where('vendas.idVendas', $id);
+        $this->db->where('vendas.empresa_id', empresa_ativa_id());
         $this->db->limit(1);
 
         return $this->db->get()->row();
@@ -182,6 +185,9 @@ class Vendas_model extends CI_Model
 
     public function add($table, $data, $returnId = false)
     {
+        if (in_array($table, ['vendas', 'lancamentos'], true)) {
+            $data['empresa_id'] = $data['empresa_id'] ?? empresa_ativa_id();
+        }
         if ($table === 'vendas' && empty($data['idVendas'])) {
             $data['idVendas'] = $this->gerarProximoId();
         }
@@ -201,6 +207,9 @@ class Vendas_model extends CI_Model
     public function edit($table, $data, $fieldID, $ID)
     {
         $this->db->where($fieldID, $ID);
+        if (in_array($table, ['vendas', 'lancamentos'], true)) {
+            $this->db->where('empresa_id', empresa_ativa_id());
+        }
         $this->db->update($table, $data);
 
         if ($this->db->affected_rows() >= 0) {
@@ -213,12 +222,24 @@ class Vendas_model extends CI_Model
     public function delete($table, $fieldID, $ID)
     {
         $this->db->where($fieldID, $ID);
+        if (in_array($table, ['vendas', 'lancamentos'], true)) {
+            $this->db->where('empresa_id', empresa_ativa_id());
+        }
         $this->db->delete($table);
         if ($this->db->affected_rows() == '1') {
             return true;
         }
 
         return false;
+    }
+
+    public function count($table)
+    {
+        if ($table === 'vendas') {
+            return $this->db->where('empresa_id', empresa_ativa_id())->count_all_results('vendas');
+        }
+
+        return $this->db->count_all($table);
     }
 
     /**
@@ -259,7 +280,11 @@ class Vendas_model extends CI_Model
     /** Produto do cadastro (para conferir o id escolhido e o estoque), ou null. */
     public function getProdutoCadastro(int $id): ?object
     {
-        return $this->db->select('idProdutos, descricao, precoVenda, estoque')->where('idProdutos', $id)->get('produtos', 1)->row() ?: null;
+        return $this->db->select('idProdutos, descricao, precoVenda, estoque')
+            ->where('idProdutos', $id)
+            ->where('empresa_id', empresa_ativa_id())
+            ->get('produtos', 1)
+            ->row() ?: null;
     }
 
     /**
@@ -271,6 +296,12 @@ class Vendas_model extends CI_Model
         $this->db->where($chave, $id);
         if ($ativo) {
             $this->db->where('situacao', 1);
+        }
+        if (in_array($tabela, ['clientes', 'produtos', 'vendas', 'lancamentos'], true)) {
+            $this->db->where('empresa_id', empresa_ativa_id());
+        } elseif ($tabela === 'usuarios') {
+            $this->db->join('saas_empresa_usuarios', 'saas_empresa_usuarios.usuario_id = usuarios.idUsuarios');
+            $this->db->where('saas_empresa_usuarios.empresa_id', empresa_ativa_id());
         }
 
         return $this->db->count_all_results($tabela) > 0;

@@ -66,6 +66,7 @@ class Financeiro_model extends CI_Model
     private function aplicarFiltros(array $filtros, string $hoje): void
     {
         $this->db->from('lancamentos');
+        $this->db->where('lancamentos.empresa_id', empresa_ativa_id());
 
         $pesquisa = $filtros['pesquisa'] ?? '';
         if ($pesquisa !== '') {
@@ -141,8 +142,9 @@ class Financeiro_model extends CI_Model
      *
      * @return array<string, float>  saldo_realizado, a_receber, a_pagar, descontos
      */
-    public function visaoGeral(): array
+    public function visaoGeral(?int $empresaId = null): array
     {
+        $empresaId = (int) ($empresaId ?: empresa_ativa_id());
         $liquido = self::LIQUIDO;
         $pendente = '(lancamentos.baixado = 0 OR lancamentos.baixado IS NULL)';
 
@@ -153,7 +155,9 @@ class Financeiro_model extends CI_Model
                 COALESCE(SUM(CASE WHEN {$pendente} AND lancamentos.tipo = 'receita' THEN {$liquido} END), 0) AS a_receber,
                 COALESCE(SUM(CASE WHEN {$pendente} AND lancamentos.tipo = 'despesa' THEN {$liquido} END), 0) AS a_pagar,
                 COALESCE(SUM(lancamentos.valor - ({$liquido})), 0) AS descontos
-            FROM lancamentos"
+            FROM lancamentos
+            WHERE lancamentos.empresa_id = ?",
+            [$empresaId]
         )->row();
 
         return [
@@ -168,12 +172,15 @@ class Financeiro_model extends CI_Model
      * Lançamentos em aberto do vencimento mais antigo para o mais novo, com o
      * líquido, para a lista do painel inicial (#2847).
      */
-    public function proximosPendentes(int $limite): array
+    public function proximosPendentes(int $limite, ?int $empresaId = null): array
     {
+        $empresaId = (int) ($empresaId ?: empresa_ativa_id());
+
         return $this->db
             ->select('lancamentos.idLancamentos, lancamentos.tipo, lancamentos.descricao, lancamentos.cliente_fornecedor, lancamentos.data_vencimento')
             ->select('(' . self::LIQUIDO . ') AS liquido', false)
             ->from('lancamentos')
+            ->where('lancamentos.empresa_id', $empresaId)
             ->group_start()->where('lancamentos.baixado', 0)->or_where('lancamentos.baixado IS NULL', null, false)->group_end()
             ->order_by('lancamentos.data_vencimento', 'ASC')
             ->order_by('lancamentos.idLancamentos', 'ASC')
@@ -188,12 +195,15 @@ class Financeiro_model extends CI_Model
      * calculava o desconto em % de novo). Linhas: mes (AAAA-MM), tipo, total.
      * O painel monta os 12 meses com painelBalanco().
      */
-    public function balancoAnual(int $ano): array
+    public function balancoAnual(int $ano, ?int $empresaId = null): array
     {
+        $empresaId = (int) ($empresaId ?: empresa_ativa_id());
+
         return $this->db
             ->select('SUBSTR(lancamentos.data_pagamento, 1, 7) AS mes, lancamentos.tipo', false)
             ->select('SUM(' . self::LIQUIDO . ') AS total', false)
             ->from('lancamentos')
+            ->where('lancamentos.empresa_id', $empresaId)
             ->where('lancamentos.baixado', 1)
             ->where('lancamentos.data_pagamento >=', $ano . '-01-01')
             ->where('lancamentos.data_pagamento <=', $ano . '-12-31')
@@ -209,8 +219,9 @@ class Financeiro_model extends CI_Model
      *
      * @return array{receitas: list<float>, despesas: list<float>, saldo: list<float>}
      */
-    public function serieMensal(int $meses, string $hoje): array
+    public function serieMensal(int $meses, string $hoje, ?int $empresaId = null): array
     {
+        $empresaId = (int) ($empresaId ?: empresa_ativa_id());
         $meses = max(2, $meses);
         $inicio = date('Y-m-01', strtotime(date('Y-m-01', strtotime($hoje)) . ' -' . ($meses - 1) . ' months'));
 
@@ -218,6 +229,7 @@ class Financeiro_model extends CI_Model
             ->select('SUBSTR(lancamentos.data_pagamento, 1, 7) AS mes, lancamentos.tipo', false)
             ->select('SUM(' . self::LIQUIDO . ') AS total', false)
             ->from('lancamentos')
+            ->where('lancamentos.empresa_id', $empresaId)
             ->where('lancamentos.baixado', 1)
             ->where('lancamentos.data_pagamento >=', $inicio)
             ->where('lancamentos.data_pagamento <=', $hoje)
@@ -261,6 +273,7 @@ class Financeiro_model extends CI_Model
             ->from('lancamentos')
             ->join('usuarios', 'usuarios.idUsuarios = lancamentos.usuarios_id', 'left')
             ->where('lancamentos.idLancamentos', $id)
+            ->where('lancamentos.empresa_id', empresa_ativa_id())
             ->limit(1)
             ->get()
             ->row() ?: null;
@@ -269,12 +282,17 @@ class Financeiro_model extends CI_Model
     /** Cliente do cadastro (para conferir o id escolhido na sugestão), ou null. */
     public function getCliente(int $id): ?object
     {
-        return $this->db->select('idClientes, nomeCliente')->where('idClientes', $id)->get('clientes', 1)->row() ?: null;
+        return $this->db->select('idClientes, nomeCliente')
+            ->where('idClientes', $id)
+            ->where('empresa_id', empresa_ativa_id())
+            ->get('clientes', 1)
+            ->row() ?: null;
     }
 
     /** Grava um lançamento e devolve o id, ou null se não gravou. */
     public function adicionar(array $dados): ?int
     {
+        $dados['empresa_id'] = $dados['empresa_id'] ?? empresa_ativa_id();
         $this->db->insert('lancamentos', $dados);
 
         return $this->db->affected_rows() === 1 ? (int) $this->db->insert_id() : null;
@@ -290,7 +308,9 @@ class Financeiro_model extends CI_Model
     {
         $this->db->trans_begin();
 
+        $empresaId = empresa_ativa_id();
         foreach ($linhas as $linha) {
+            $linha['empresa_id'] = $linha['empresa_id'] ?? $empresaId;
             $this->db->insert('lancamentos', $linha);
             if ($this->db->affected_rows() !== 1) {
                 $this->db->trans_rollback();
@@ -313,7 +333,9 @@ class Financeiro_model extends CI_Model
     /** Atualiza o lançamento (linha existente) e devolve se deu certo. */
     public function atualizar(int $id, array $dados): bool
     {
-        $this->db->where('idLancamentos', $id)->update('lancamentos', $dados);
+        $this->db->where('idLancamentos', $id)
+            ->where('empresa_id', empresa_ativa_id())
+            ->update('lancamentos', $dados);
 
         return $this->db->affected_rows() >= 0;
     }
@@ -326,19 +348,24 @@ class Financeiro_model extends CI_Model
      */
     public function excluir(int $id, ?int $usuario): bool
     {
+        $lancamento = $this->getLancamento($id);
+        if (! $lancamento) {
+            return false;
+        }
+
         $this->db->trans_begin();
 
         $this->db->set('lancamentos_id', null)->set('faturado', 0)->set('status', 'Finalizado')
-            ->where('lancamentos_id', $id)->update('vendas');
+            ->where('lancamentos_id', $id)->where('empresa_id', empresa_ativa_id())->update('vendas');
 
-        $faturadas = $this->db->select('idOs, status')->where('lancamento', $id)->get('os')->result();
+        $faturadas = $this->db->select('idOs, status')->where('lancamento', $id)->where('empresa_id', empresa_ativa_id())->get('os')->result();
         foreach ($faturadas as $os) {
             $this->osModel()->registrarStatus((int) $os->idOs, $os->status, 'Finalizado', $usuario);
         }
         $this->db->set('lancamento', null)->set('faturado', 0)->set('status', 'Finalizado')
-            ->where('lancamento', $id)->update('os');
+            ->where('lancamento', $id)->where('empresa_id', empresa_ativa_id())->update('os');
 
-        $this->db->where('idLancamentos', $id)->delete('lancamentos');
+        $this->db->where('idLancamentos', $id)->where('empresa_id', empresa_ativa_id())->delete('lancamentos');
         $apagou = $this->db->affected_rows() === 1;
 
         if (! $apagou || $this->db->trans_status() === false) {

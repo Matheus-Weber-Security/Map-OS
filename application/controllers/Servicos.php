@@ -102,6 +102,7 @@ class Servicos extends MY_Controller
                     'nome' => trim((string) $this->input->post('nome')),
                     'descricao' => trim((string) $this->input->post('descricao')),
                     'preco' => $preco,
+                    'empresa_id' => empresa_ativa_id(),
                 ];
 
                 $salvou = $servico === null
@@ -142,6 +143,12 @@ class Servicos extends MY_Controller
         $id = $this->input->post('id');
         if ($id == null) {
             $this->session->set_flashdata('error', 'Erro ao tentar excluir serviço.');
+            redirect(site_url('servicos/gerenciar/'));
+        }
+
+        $servico = $this->servicos_model->getById((int) $id);
+        if (! $servico) {
+            $this->session->set_flashdata('error', 'Serviço não encontrado.');
             redirect(site_url('servicos/gerenciar/'));
         }
 

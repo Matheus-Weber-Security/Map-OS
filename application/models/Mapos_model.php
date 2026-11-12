@@ -208,6 +208,10 @@ class Mapos_model extends CI_Model
 
     public function count($table)
     {
+        if (in_array($table, ['clientes', 'os', 'produtos', 'servicos', 'vendas', 'lancamentos', 'garantias', 'cobrancas', 'documentos'], true)) {
+            return $this->db->where('empresa_id', empresa_ativa_id())->count_all_results($table);
+        }
+
         return $this->db->count_all($table);
     }
     
@@ -216,6 +220,7 @@ class Mapos_model extends CI_Model
         $this->db->select('os.*, clientes.nomeCliente');
         $this->db->from('os');
         $this->db->join('clientes', 'clientes.idClientes = os.clientes_id');
+        $this->db->where('os.empresa_id', empresa_ativa_id());
         $this->db->where('os.status', 'Aberto');
         $this->db->limit(10);
 
@@ -227,6 +232,7 @@ class Mapos_model extends CI_Model
         $this->db->select('os.*, clientes.nomeCliente');
         $this->db->from('os');
         $this->db->join('clientes', 'clientes.idClientes = os.clientes_id');
+        $this->db->where('os.empresa_id', empresa_ativa_id());
         $this->db->where('os.status', 'Em Andamento');
         $this->db->limit(10);
 
@@ -242,14 +248,20 @@ class Mapos_model extends CI_Model
      *
      * @return array<string, int>  status => quantidade
      */
-    public function contarPorStatus(string $tabela): array
+    public function contarPorStatus(string $tabela, ?int $empresaId = null): array
     {
         if (! in_array($tabela, ['os', 'vendas'], true)) {
             throw new InvalidArgumentException("Tabela sem status no painel: {$tabela}");
         }
 
+        $empresaId = $empresaId ?: empresa_ativa_id();
         $contagem = [];
-        foreach ($this->db->select('status, COUNT(*) AS total')->group_by('status')->get($tabela)->result() as $linha) {
+        $query = $this->db->select('status, COUNT(*) AS total')
+            ->where('empresa_id', $empresaId)
+            ->group_by('status')
+            ->get($tabela);
+
+        foreach ($query->result() as $linha) {
             $contagem[(string) $linha->status] = (int) $linha->total;
         }
 
@@ -260,12 +272,15 @@ class Mapos_model extends CI_Model
      * OS nos status pedidos, da entrega mais próxima para a mais distante (sem
      * data de entrega no fim), para a lista do painel.
      */
-    public function osParaPainel(array $status, int $limite): array
+    public function osParaPainel(array $status, int $limite, ?int $empresaId = null): array
     {
+        $empresaId = $empresaId ?: empresa_ativa_id();
+
         return $this->db
             ->select('os.idOs, os.status, os.dataFinal, os.clientes_id, clientes.nomeCliente')
             ->from('os')
             ->join('clientes', 'clientes.idClientes = os.clientes_id', 'left')
+            ->where('os.empresa_id', $empresaId)
             ->where_in('os.status', $status)
             ->order_by('os.dataFinal IS NULL', 'ASC', false)
             ->order_by('os.dataFinal', 'ASC')
@@ -276,12 +291,15 @@ class Mapos_model extends CI_Model
     }
 
     /** Vendas nos status pedidos, da mais recente para a mais antiga. */
-    public function vendasParaPainel(array $status, int $limite): array
+    public function vendasParaPainel(array $status, int $limite, ?int $empresaId = null): array
     {
+        $empresaId = $empresaId ?: empresa_ativa_id();
+
         return $this->db
             ->select('vendas.idVendas, vendas.status, vendas.dataVenda, vendas.clientes_id, clientes.nomeCliente')
             ->from('vendas')
             ->join('clientes', 'clientes.idClientes = vendas.clientes_id', 'left')
+            ->where('vendas.empresa_id', $empresaId)
             ->where_in('vendas.status', $status)
             ->order_by('vendas.idVendas', 'DESC')
             ->limit($limite)
@@ -293,11 +311,14 @@ class Mapos_model extends CI_Model
      * Produtos no estoque mínimo ou abaixo dele (só os que têm mínimo), os que
      * estão mais abaixo primeiro.
      */
-    public function produtosEstoqueBaixo(int $limite): array
+    public function produtosEstoqueBaixo(int $limite, ?int $empresaId = null): array
     {
+        $empresaId = $empresaId ?: empresa_ativa_id();
+
         return $this->db
             ->select('idProdutos, descricao, estoque, estoqueMinimo')
             ->from('produtos')
+            ->where('empresa_id', $empresaId)
             ->where('estoqueMinimo >', 0)
             ->where('estoque <= estoqueMinimo', null, false)
             ->order_by('(estoque - estoqueMinimo)', 'ASC', false)
@@ -325,6 +346,7 @@ class Mapos_model extends CI_Model
         );
         $this->db->from('os');
         $this->db->join('clientes', 'clientes.idClientes = os.clientes_id');
+        $this->db->where('os.empresa_id', empresa_ativa_id());
         $this->db->where('os.dataFinal >=', $start);
         $this->db->where('os.dataFinal <=', $end);
 
@@ -337,18 +359,29 @@ class Mapos_model extends CI_Model
 
     public function getProdutosMinimo()
     {
-        $sql = 'SELECT * FROM produtos WHERE estoque <= estoqueMinimo AND estoqueMinimo > 0 LIMIT 10';
+        $empresaId = (int) empresa_ativa_id();
+        $sql = "SELECT * FROM produtos WHERE empresa_id = {$empresaId} AND estoque <= estoqueMinimo AND estoqueMinimo > 0 LIMIT 10";
 
         return $this->db->query($sql)->result();
     }
 
-    public function getEmitente()
+    public function getEmitente(?int $empresaId = null)
     {
-        return $this->db->get('emitente')->row();
+        $empresaId = (int) ($empresaId ?: empresa_ativa_id());
+        $emitente = $this->db->where('empresa_id', $empresaId)->get('emitente')->row();
+        if (! $emitente && $empresaId === 1) {
+            $emitente = $this->db->where('id', 1)->get('emitente')->row();
+            if (! $emitente) {
+                $emitente = $this->db->order_by('id', 'ASC')->limit(1)->get('emitente')->row();
+            }
+        }
+
+        return $emitente ?: null;
     }
 
     public function addEmitente($nome, $cnpj, $ie, $cep, $logradouro, $numero, $bairro, $cidade, $uf, $telefone, $email, $logo)
     {
+        $this->db->set('empresa_id', empresa_ativa_id());
         $this->db->set('nome', $nome);
         $this->db->set('cnpj', $cnpj);
         $this->db->set('ie', $ie);
@@ -379,6 +412,7 @@ class Mapos_model extends CI_Model
         $this->db->set('telefone', $telefone);
         $this->db->set('email', $email);
         $this->db->where('id', $id);
+        $this->db->where('empresa_id', empresa_ativa_id());
 
         return $this->db->update('emitente');
     }
@@ -387,6 +421,7 @@ class Mapos_model extends CI_Model
     {
         $this->db->set('url_logo', $logo);
         $this->db->where('id', $id);
+        $this->db->where('empresa_id', empresa_ativa_id());
 
         return $this->db->update('emitente');
     }

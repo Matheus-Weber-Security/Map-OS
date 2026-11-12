@@ -17,6 +17,9 @@ class Audit_model extends CI_Model
         $this->db->from($table);
         $this->db->order_by('idLogs', 'desc');
         $this->db->limit($perpage, $start);
+        if ($this->db->field_exists('empresa_id', $table)) {
+            $this->db->where("{$table}.empresa_id", empresa_ativa_id());
+        }
         if ($where) {
             $this->db->where($where);
         }
@@ -30,6 +33,9 @@ class Audit_model extends CI_Model
 
     public function add($data)
     {
+        if (! isset($data['empresa_id']) && $this->db->field_exists('empresa_id', 'logs')) {
+            $data['empresa_id'] = empresa_ativa_id();
+        }
         $this->db->insert('logs', $data);
         if ($this->db->affected_rows() == '1') {
             return true;
@@ -40,7 +46,11 @@ class Audit_model extends CI_Model
 
     public function count($table)
     {
-        return $this->db->count_all('logs');
+        if ($this->db->field_exists('empresa_id', 'logs')) {
+            $this->db->where('empresa_id', empresa_ativa_id());
+        }
+
+        return $this->db->count_all_results('logs');
     }
 
     /**
@@ -64,6 +74,9 @@ class Audit_model extends CI_Model
     private function aplicarFiltros(array $filtros): void
     {
         $this->db->from('logs');
+        if ($this->db->field_exists('empresa_id', 'logs')) {
+            $this->db->where('logs.empresa_id', empresa_ativa_id());
+        }
 
         $pesquisa = $filtros['pesquisa'] ?? '';
         if ($pesquisa !== '') {
@@ -80,6 +93,9 @@ class Audit_model extends CI_Model
     public function clean()
     {
         $this->db->where('data <', date('Y-m-d', strtotime('- 30 days')));
+        if ($this->db->field_exists('empresa_id', 'logs')) {
+            $this->db->where('empresa_id', empresa_ativa_id());
+        }
         $this->db->delete('logs');
 
         if ($this->db->affected_rows()) {

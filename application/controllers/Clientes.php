@@ -140,6 +140,7 @@ class Clientes extends MY_Controller
             unset($post['senha']);
         }
         $dados = clienteDadosDoFormulario($post, $cliente === null);
+        $dados['empresa_id'] = empresa_ativa_id();
 
         if ($cliente === null) {
             $id = $this->clientes_model->add('clientes', $dados + ['dataCadastro' => date('Y-m-d')]);
@@ -270,6 +271,12 @@ class Clientes extends MY_Controller
         $id = $this->input->post('id');
         if ($id == null) {
             $this->session->set_flashdata('error', 'Erro ao tentar excluir cliente.');
+            redirect(site_url('clientes/gerenciar/'));
+        }
+
+        $cliente = $this->clientes_model->getById((int) $id);
+        if (! $cliente) {
+            $this->session->set_flashdata('error', 'Cliente não encontrado.');
             redirect(site_url('clientes/gerenciar/'));
         }
 

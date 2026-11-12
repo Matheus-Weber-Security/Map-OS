@@ -46,7 +46,14 @@ class Vendas extends MY_Controller
 
         $this->data['filtros'] = $filtros;
         $this->data['total'] = $total;
-        $this->data['results'] = $this->vendas_model->listar($filtros, (int) $this->data['configuration']['per_page'], $offset);
+        $results = $this->vendas_model->listar($filtros, (int) $this->data['configuration']['per_page'], $offset);
+        $this->load->model('mapos_model');
+        $emitente = $this->mapos_model->getEmitente();
+        foreach ($results as $linha) {
+            $linha->whatsapp = vendaDadosWhatsApp($linha, $emitente, (float) $linha->total);
+        }
+
+        $this->data['results'] = $results;
         $this->data['paginacao'] = $this->paginacao(site_url('vendas/gerenciar'), $total, $offset, null, $filtros);
         $this->data['pode'] = [
             'adicionar' => $this->permite('aVenda'),
@@ -206,7 +213,7 @@ class Vendas extends MY_Controller
     /** Cria a venda e devolve o id, ou null se não gravou. */
     private function criarVenda(array $dados): ?int
     {
-        $id = $this->vendas_model->add('vendas', $dados + ['faturado' => 0], true);
+        $id = $this->vendas_model->add('vendas', $dados + ['faturado' => 0, 'empresa_id' => empresa_ativa_id()], true);
 
         return is_numeric($id) ? (int) $id : null;
     }
@@ -819,6 +826,7 @@ class Vendas extends MY_Controller
 
         $this->db->trans_start();
 
+        $lancamento['empresa_id'] = empresa_ativa_id();
         $idLancamento = $this->vendas_model->add('lancamentos', $lancamento, true);
         if (! is_numeric($idLancamento)) {
             $this->db->trans_rollback();

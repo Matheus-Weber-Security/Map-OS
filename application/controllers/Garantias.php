@@ -100,6 +100,7 @@ class Garantias extends MY_Controller
                 $dados = [
                     'refGarantia' => trim((string) $this->input->post('refGarantia')),
                     'textoGarantia' => osTextoParaGravar((string) $this->input->post('textoGarantia')),
+                    'empresa_id' => empresa_ativa_id(),
                 ];
 
                 if ($garantia === null) {
@@ -214,6 +215,12 @@ class Garantias extends MY_Controller
         $id = $this->input->post('id');
         if ($id == null) {
             $this->session->set_flashdata('error', 'Erro ao tentar excluir termo de garantia.');
+            redirect(site_url('garantias/gerenciar/'));
+        }
+
+        $garantia = $this->garantias_model->getById((int) $id);
+        if (! $garantia) {
+            $this->session->set_flashdata('error', 'Termo de garantia não encontrado.');
             redirect(site_url('garantias/gerenciar/'));
         }
 

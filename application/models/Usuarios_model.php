@@ -25,6 +25,10 @@ class Usuarios_model extends CI_Model
         $this->db->select(self::CAMPOS_PUBLICOS . ', permissoes.nome as permissao');
         $this->db->limit($perpage, $start);
         $this->db->join('permissoes', 'usuarios.permissoes_id = permissoes.idPermissao', 'left');
+        if ($this->db->table_exists('saas_empresa_usuarios')) {
+            $this->db->join('saas_empresa_usuarios', 'saas_empresa_usuarios.usuario_id = usuarios.idUsuarios');
+            $this->db->where('saas_empresa_usuarios.empresa_id', empresa_ativa_id());
+        }
 
         $query = $this->db->get();
 
@@ -59,6 +63,10 @@ class Usuarios_model extends CI_Model
     {
         $this->db->from('usuarios');
         $this->db->join('permissoes', 'usuarios.permissoes_id = permissoes.idPermissao', 'left');
+        if ($this->db->table_exists('saas_empresa_usuarios')) {
+            $this->db->join('saas_empresa_usuarios', 'saas_empresa_usuarios.usuario_id = usuarios.idUsuarios');
+            $this->db->where('saas_empresa_usuarios.empresa_id', empresa_ativa_id());
+        }
 
         $pesquisa = $filtros['pesquisa'] ?? '';
         if ($pesquisa !== '') {
@@ -134,7 +142,11 @@ class Usuarios_model extends CI_Model
     public function getById($id)
     {
         $this->db->select(self::CAMPOS_PUBLICOS);
-        $this->db->where('idUsuarios', $id);
+        if ($this->db->table_exists('saas_empresa_usuarios')) {
+            $this->db->join('saas_empresa_usuarios', 'saas_empresa_usuarios.usuario_id = usuarios.idUsuarios');
+            $this->db->where('saas_empresa_usuarios.empresa_id', empresa_ativa_id());
+        }
+        $this->db->where('usuarios.idUsuarios', $id);
         $this->db->limit(1);
 
         return $this->db->get('usuarios')->row();
@@ -143,6 +155,10 @@ class Usuarios_model extends CI_Model
     public function getAll()
     {
         $this->db->select(self::CAMPOS_PUBLICOS);
+        if ($this->db->table_exists('saas_empresa_usuarios')) {
+            $this->db->join('saas_empresa_usuarios', 'saas_empresa_usuarios.usuario_id = usuarios.idUsuarios');
+            $this->db->where('saas_empresa_usuarios.empresa_id', empresa_ativa_id());
+        }
 
         return $this->db->get('usuarios')->result();
     }
@@ -151,6 +167,17 @@ class Usuarios_model extends CI_Model
     {
         $this->db->insert($table, $data);
         if ($this->db->affected_rows() == '1') {
+            $novoId = (int) $this->db->insert_id();
+            if ($table === 'usuarios' && $this->db->table_exists('saas_empresa_usuarios')) {
+                $this->db->insert('saas_empresa_usuarios', [
+                    'empresa_id' => empresa_ativa_id(),
+                    'usuario_id' => $novoId,
+                    'papel' => 'funcionario',
+                    'ativo' => 1,
+                    'criado_em' => date('Y-m-d H:i:s'),
+                ]);
+            }
+
             return true;
         }
 
@@ -202,6 +229,10 @@ class Usuarios_model extends CI_Model
             $this->db->where('usuario_id', $ID)->delete('usuarios_codigos_recuperacao');
         }
 
+        if ($table === 'usuarios' && $fieldID === 'idUsuarios' && $this->db->table_exists('saas_empresa_usuarios')) {
+            $this->db->where('usuario_id', $ID)->where('empresa_id', empresa_ativa_id())->delete('saas_empresa_usuarios');
+        }
+
         $this->db->where($fieldID, $ID);
         $this->db->delete($table);
         if ($this->db->affected_rows() == '1') {
@@ -213,6 +244,10 @@ class Usuarios_model extends CI_Model
 
     public function count($table)
     {
+        if ($table === 'usuarios' && $this->db->table_exists('saas_empresa_usuarios')) {
+            return $this->db->where('empresa_id', empresa_ativa_id())->count_all_results('saas_empresa_usuarios');
+        }
+
         return $this->db->count_all($table);
     }
 }

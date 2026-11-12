@@ -29,6 +29,10 @@ class Arquivos_model extends CI_Model
 
     private function aplicarFiltros(array $filtros): void
     {
+        if ($this->db->field_exists('empresa_id', 'documentos')) {
+            $this->db->where('documentos.empresa_id', empresa_ativa_id());
+        }
+
         if (($filtros['pesquisa'] ?? '') !== '') {
             $this->db->group_start()->like('documento', $filtros['pesquisa'])->or_like('descricao', $filtros['pesquisa'])->group_end();
         }
@@ -45,6 +49,9 @@ class Arquivos_model extends CI_Model
     public function getById($id)
     {
         $this->db->where('idDocumentos', $id);
+        if ($this->db->field_exists('empresa_id', 'documentos')) {
+            $this->db->where('empresa_id', empresa_ativa_id());
+        }
         $this->db->limit(1);
 
         return $this->db->get('documentos')->row();
@@ -52,6 +59,10 @@ class Arquivos_model extends CI_Model
 
     public function add($table, $data)
     {
+        if ($table === 'documentos' && $this->db->field_exists('empresa_id', 'documentos')) {
+            $data['empresa_id'] = $data['empresa_id'] ?? empresa_ativa_id();
+        }
+
         $this->db->insert($table, $data);
         if ($this->db->affected_rows() == '1') {
             return true;
@@ -63,6 +74,9 @@ class Arquivos_model extends CI_Model
     public function edit($table, $data, $fieldID, $ID)
     {
         $this->db->where($fieldID, $ID);
+        if ($table === 'documentos' && $this->db->field_exists('empresa_id', 'documentos')) {
+            $this->db->where('empresa_id', empresa_ativa_id());
+        }
         $this->db->update($table, $data);
 
         if ($this->db->affected_rows() >= 0) {
@@ -75,6 +89,9 @@ class Arquivos_model extends CI_Model
     public function delete($table, $fieldID, $ID)
     {
         $this->db->where($fieldID, $ID);
+        if ($table === 'documentos' && $this->db->field_exists('empresa_id', 'documentos')) {
+            $this->db->where('empresa_id', empresa_ativa_id());
+        }
         $this->db->delete($table);
         if ($this->db->affected_rows() == '1') {
             return true;

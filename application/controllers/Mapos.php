@@ -562,7 +562,7 @@ class Mapos extends MY_Controller
             if ($erros === []) {
                 $salvou = $emitente
                     ? $this->mapos_model->edit('emitente', $dados, 'id', (int) $emitente->id)
-                    : $this->mapos_model->add('emitente', $dados);
+                    : $this->mapos_model->add('emitente', $dados + ['empresa_id' => empresa_ativa_id()]);
 
                 if ($salvou) {
                     if (! empty($anterior)) {

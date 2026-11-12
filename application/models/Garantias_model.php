@@ -17,6 +17,9 @@ class Garantias_model extends CI_Model
         $this->db->from($table);
         $this->db->limit($perpage, $start);
         $this->db->join('usuarios', 'usuarios.idUsuarios = garantias.usuarios_id');
+        if ($table === 'garantias') {
+            $this->db->where('garantias.empresa_id', empresa_ativa_id());
+        }
         $this->db->order_by('idGarantias', 'asc');
         if ($where) {
             $this->db->where($where);
@@ -54,7 +57,7 @@ class Garantias_model extends CI_Model
      */
     public function osVinculadas(int $id): int
     {
-        return (int) $this->db->where('garantias_id', $id)->count_all_results('os');
+        return (int) $this->db->where('garantias_id', $id)->where('empresa_id', empresa_ativa_id())->count_all_results('os');
     }
 
     public function contar(array $filtros): int
@@ -66,6 +69,8 @@ class Garantias_model extends CI_Model
 
     private function aplicarFiltros(array $filtros): void
     {
+        $this->db->where('garantias.empresa_id', empresa_ativa_id());
+
         if (($filtros['pesquisa'] ?? '') !== '') {
             $this->db->group_start()
                 ->like('garantias.refGarantia', $filtros['pesquisa'])
@@ -80,6 +85,7 @@ class Garantias_model extends CI_Model
         $this->db->from('garantias');
         $this->db->join('usuarios', 'usuarios.idUsuarios = garantias.usuarios_id');
         $this->db->where('garantias.idGarantias', $id);
+        $this->db->where('garantias.empresa_id', empresa_ativa_id());
         $this->db->limit(1);
 
         return $this->db->get()->row();
@@ -94,6 +100,7 @@ class Garantias_model extends CI_Model
         $this->db->join('clientes', 'os.clientes_id = clientes.idClientes');
         $this->db->join('usuarios', 'os.usuarios_id = usuarios.idUsuarios');
         $this->db->where('os.idOs', $id);
+        $this->db->where('os.empresa_id', empresa_ativa_id());
         $this->db->limit(1);
 
         return $this->db->get()->row();
@@ -101,6 +108,10 @@ class Garantias_model extends CI_Model
 
     public function add($table, $data, $returnId = false)
     {
+        if ($table === 'garantias') {
+            $data['empresa_id'] = $data['empresa_id'] ?? empresa_ativa_id();
+        }
+
         $this->db->insert($table, $data);
         if ($this->db->affected_rows() == '1') {
             if ($returnId == true) {
@@ -116,6 +127,9 @@ class Garantias_model extends CI_Model
     public function edit($table, $data, $fieldID, $ID)
     {
         $this->db->where($fieldID, $ID);
+        if ($table === 'garantias') {
+            $this->db->where('empresa_id', empresa_ativa_id());
+        }
         $this->db->update($table, $data);
 
         if ($this->db->affected_rows() >= 0) {
@@ -128,6 +142,9 @@ class Garantias_model extends CI_Model
     public function delete($table, $fieldID, $ID)
     {
         $this->db->where($fieldID, $ID);
+        if ($table === 'garantias') {
+            $this->db->where('empresa_id', empresa_ativa_id());
+        }
         $this->db->delete($table);
         if ($this->db->affected_rows() == '1') {
             return true;
@@ -138,6 +155,10 @@ class Garantias_model extends CI_Model
 
     public function count($table)
     {
+        if ($table === 'garantias') {
+            return $this->db->where('empresa_id', empresa_ativa_id())->count_all_results('garantias');
+        }
+
         return $this->db->count_all($table);
     }
 }

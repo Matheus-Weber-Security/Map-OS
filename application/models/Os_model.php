@@ -23,6 +23,9 @@ class Os_model extends CI_Model
         $this->db->select($fields . ',clientes.nomeCliente, clientes.celular as celular_cliente');
         $this->db->from($table);
         $this->db->join('clientes', 'clientes.idClientes = os.clientes_id');
+        if ($table === 'os') {
+            $this->db->where('os.empresa_id', empresa_ativa_id());
+        }
         $this->db->limit($perpage, $start);
         $this->db->order_by('idOs', 'desc');
         if ($where) {
@@ -42,6 +45,7 @@ class Os_model extends CI_Model
         if ($where) {
             if (array_key_exists('pesquisa', $where)) {
                 $this->db->select('idClientes');
+                $this->db->where('empresa_id', empresa_ativa_id());
                 $this->db->like('nomeCliente', $where['pesquisa']);
                 $this->db->or_like('documento', $where['pesquisa']);
                 $this->db->limit(25);
@@ -58,6 +62,7 @@ class Os_model extends CI_Model
         $this->db->join('clientes', 'clientes.idClientes = os.clientes_id', 'left');
         $this->db->join('usuarios', 'usuarios.idUsuarios = os.usuarios_id', 'left');
         $this->db->join('garantias', 'garantias.idGarantias = os.garantias_id', 'left');
+        $this->db->where('os.empresa_id', empresa_ativa_id());
 
         // condicionais da pesquisa
 
@@ -123,8 +128,8 @@ class Os_model extends CI_Model
         $totalServicos = "(SELECT COALESCE(SUM({$valorServico}), 0)"
             . ' FROM servicos_os LEFT JOIN servicos ON servicos.idServicos = servicos_os.servicos_id WHERE servicos_os.os_id = os.idOs)';
 
-        $this->db->select('os.idOs, os.dataInicial, os.dataFinal, os.descricaoProduto, os.status, os.faturado, os.desconto, os.valor_desconto, os.clientes_id, os.usuarios_id');
-        $this->db->select('clientes.nomeCliente, usuarios.nome AS responsavel');
+        $this->db->select('os.idOs, os.dataInicial, os.dataFinal, os.descricaoProduto, os.observacoes, os.defeito, os.laudoTecnico, os.garantia, os.status, os.faturado, os.desconto, os.valor_desconto, os.clientes_id, os.usuarios_id');
+        $this->db->select('clientes.nomeCliente, clientes.celular AS celular_cliente, clientes.telefone AS telefone_cliente, usuarios.nome AS responsavel');
         $this->db->select($totalProdutos . ' AS totalProdutos', false);
         $this->db->select($totalServicos . ' AS totalServicos', false);
 
@@ -167,6 +172,7 @@ class Os_model extends CI_Model
         $this->db->from('os');
         $this->db->join('clientes', 'clientes.idClientes = os.clientes_id', 'left');
         $this->db->join('usuarios', 'usuarios.idUsuarios = os.usuarios_id', 'left');
+        $this->db->where('os.empresa_id', empresa_ativa_id());
 
         $pesquisa = $filtros['pesquisa'] ?? '';
         if ($pesquisa !== '') {
@@ -234,6 +240,7 @@ class Os_model extends CI_Model
         $this->db->join('usuarios', 'usuarios.idUsuarios = os.usuarios_id');
         $this->db->join('garantias', 'garantias.idGarantias = os.garantias_id', 'left');
         $this->db->where('os.idOs', $id);
+        $this->db->where('os.empresa_id', empresa_ativa_id());
         $this->db->limit(1);
 
         return $this->db->get()->row();
@@ -248,6 +255,7 @@ class Os_model extends CI_Model
         $this->db->join('cobrancas', 'cobrancas.os_id = os.idOs');
         $this->db->join('garantias', 'garantias.idGarantias = os.garantias_id', 'left');
         $this->db->where('os.idOs', $id);
+        $this->db->where('os.empresa_id', empresa_ativa_id());
         $this->db->limit(1);
 
         return $this->db->get()->row();
@@ -285,6 +293,9 @@ class Os_model extends CI_Model
 
     public function add($table, $data, $returnId = false)
     {
+        if (in_array($table, ['os', 'lancamentos'], true)) {
+            $data['empresa_id'] = $data['empresa_id'] ?? empresa_ativa_id();
+        }
         if ($table === 'os' && empty($data['idOs'])) {
             $data['idOs'] = $this->gerarProximoId();
         }
@@ -304,6 +315,9 @@ class Os_model extends CI_Model
     public function edit($table, $data, $fieldID, $ID)
     {
         $this->db->where($fieldID, $ID);
+        if (in_array($table, ['os', 'lancamentos'], true)) {
+            $this->db->where('empresa_id', empresa_ativa_id());
+        }
         $this->db->update($table, $data);
 
         if ($this->db->affected_rows() >= 0) {
@@ -316,6 +330,9 @@ class Os_model extends CI_Model
     public function delete($table, $fieldID, $ID)
     {
         $this->db->where($fieldID, $ID);
+        if (in_array($table, ['os', 'lancamentos'], true)) {
+            $this->db->where('empresa_id', empresa_ativa_id());
+        }
         $this->db->delete($table);
         if ($this->db->affected_rows() == '1') {
             return true;
@@ -326,6 +343,10 @@ class Os_model extends CI_Model
 
     public function count($table)
     {
+        if ($table === 'os') {
+            return $this->db->where('empresa_id', empresa_ativa_id())->count_all_results('os');
+        }
+
         return $this->db->count_all($table);
     }
 
@@ -348,6 +369,7 @@ class Os_model extends CI_Model
     private function produtosParaAutocomplete($q, bool $saida): array
     {
         $this->db->select('idProdutos, descricao, precoVenda, estoque');
+        $this->db->where('produtos.empresa_id', empresa_ativa_id());
         $this->db->limit(25);
         // O OR entre parênteses, para não anular o filtro de saída.
         $this->db->group_start()->like('codDeBarra', $q)->or_like('descricao', $q)->group_end();
@@ -373,11 +395,14 @@ class Os_model extends CI_Model
     public function autoCompleteCliente($q)
     {
         $this->db->select('idClientes, nomeCliente, telefone, celular, documento');
+        $this->db->where('clientes.empresa_id', empresa_ativa_id());
         $this->db->limit(25);
+        $this->db->group_start();
         $this->db->like('nomeCliente', $q);
         $this->db->or_like('telefone', $q);
         $this->db->or_like('celular', $q);
         $this->db->or_like('documento', $q);
+        $this->db->group_end();
 
         $itens = [];
         foreach ($this->db->get('clientes')->result_array() as $row) {
@@ -395,10 +420,12 @@ class Os_model extends CI_Model
 
     public function autoCompleteUsuario($q)
     {
-        $this->db->select('idUsuarios, nome, telefone');
+        $this->db->select('usuarios.idUsuarios, usuarios.nome, usuarios.telefone');
+        $this->db->join('saas_empresa_usuarios', 'saas_empresa_usuarios.usuario_id = usuarios.idUsuarios');
+        $this->db->where('saas_empresa_usuarios.empresa_id', empresa_ativa_id());
         $this->db->limit(25);
-        $this->db->like('nome', $q);
-        $this->db->where('situacao', 1);
+        $this->db->like('usuarios.nome', $q);
+        $this->db->where('usuarios.situacao', 1);
 
         $itens = [];
         foreach ($this->db->get('usuarios')->result_array() as $row) {
@@ -416,6 +443,7 @@ class Os_model extends CI_Model
     public function autoCompleteTermoGarantia($q)
     {
         $this->db->select('idGarantias, refGarantia');
+        $this->db->where('garantias.empresa_id', empresa_ativa_id());
         $this->db->limit(25);
         $this->db->like('LOWER(refGarantia)', $q);
 
@@ -430,6 +458,7 @@ class Os_model extends CI_Model
     public function autoCompleteServico($q)
     {
         $this->db->select('idServicos, nome, preco');
+        $this->db->where('servicos.empresa_id', empresa_ativa_id());
         $this->db->limit(25);
         $this->db->like('nome', $q);
 
@@ -456,6 +485,12 @@ class Os_model extends CI_Model
         $this->db->where($chave, $id);
         if ($ativo) {
             $this->db->where('situacao', 1);
+        }
+        if (in_array($tabela, ['clientes', 'produtos', 'servicos', 'garantias', 'os', 'lancamentos'], true)) {
+            $this->db->where('empresa_id', empresa_ativa_id());
+        } elseif ($tabela === 'usuarios') {
+            $this->db->join('saas_empresa_usuarios', 'saas_empresa_usuarios.usuario_id = usuarios.idUsuarios');
+            $this->db->where('saas_empresa_usuarios.empresa_id', empresa_ativa_id());
         }
 
         return $this->db->count_all_results($tabela) > 0;
@@ -630,13 +665,21 @@ class Os_model extends CI_Model
     /** Produto do cadastro (para conferir o id escolhido e o estoque), ou null. */
     public function getProdutoCadastro(int $id): ?object
     {
-        return $this->db->select('idProdutos, descricao, precoVenda, estoque')->where('idProdutos', $id)->get('produtos', 1)->row() ?: null;
+        return $this->db->select('idProdutos, descricao, precoVenda, estoque')
+            ->where('idProdutos', $id)
+            ->where('empresa_id', empresa_ativa_id())
+            ->get('produtos', 1)
+            ->row() ?: null;
     }
 
     /** Serviço do cadastro, ou null. */
     public function getServicoCadastro(int $id): ?object
     {
-        return $this->db->select('idServicos, nome, preco')->where('idServicos', $id)->get('servicos', 1)->row() ?: null;
+        return $this->db->select('idServicos, nome, preco')
+            ->where('idServicos', $id)
+            ->where('empresa_id', empresa_ativa_id())
+            ->get('servicos', 1)
+            ->row() ?: null;
     }
 
     /**

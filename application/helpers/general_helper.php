@@ -378,3 +378,22 @@ if (! function_exists('ufsDoBrasil')) {
         ];
     }
 }
+
+if (! function_exists('empresa_ativa_id')) {
+    /**
+     * Retorna o ID da empresa ativa do usuário autenticado na sessão.
+     * Fallback para 1 (Empresa Principal) quando não houver sessão ativa.
+     */
+    function empresa_ativa_id(): int
+    {
+        $ci = &get_instance();
+        if (! isset($ci->session)) {
+            return 1;
+        }
+
+        $empresaId = (int) $ci->session->userdata('empresa_id');
+
+        return $empresaId > 0 ? $empresaId : 1;
+    }
+}
+

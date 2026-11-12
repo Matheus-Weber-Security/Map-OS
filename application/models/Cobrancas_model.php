@@ -48,6 +48,7 @@ class Cobrancas_model extends CI_Model
     private function aplicarFiltros(array $filtros): void
     {
         $this->db->from('cobrancas');
+        $this->db->where('cobrancas.empresa_id', empresa_ativa_id());
 
         $pesquisa = $filtros['pesquisa'] ?? '';
         if ($pesquisa !== '') {
@@ -74,6 +75,7 @@ class Cobrancas_model extends CI_Model
         $this->db->select('cobrancas.*, clientes.*');
         $this->db->from('cobrancas');
         $this->db->where('cobrancas.idCobranca', $id);
+        $this->db->where('cobrancas.empresa_id', empresa_ativa_id());
         $this->db->join('clientes', 'clientes.idClientes = cobrancas.clientes_id', 'left');
         $this->db->limit(1);
 
@@ -106,6 +108,10 @@ class Cobrancas_model extends CI_Model
 
     public function add($table, $data, $returnId = false)
     {
+        if ($table === 'cobrancas') {
+            $data['empresa_id'] = $data['empresa_id'] ?? empresa_ativa_id();
+        }
+
         $this->db->insert($table, $data);
         if ($this->db->affected_rows() == '1') {
             if ($returnId == true) {
@@ -121,6 +127,9 @@ class Cobrancas_model extends CI_Model
     public function edit($table, $data, $fieldID, $ID)
     {
         $this->db->where($fieldID, $ID);
+        if ($table === 'cobrancas') {
+            $this->db->where('empresa_id', empresa_ativa_id());
+        }
         $this->db->update($table, $data);
 
         if ($this->db->affected_rows() >= 0) {
@@ -133,6 +142,9 @@ class Cobrancas_model extends CI_Model
     public function delete($table, $fieldID, $ID)
     {
         $this->db->where($fieldID, $ID);
+        if ($table === 'cobrancas') {
+            $this->db->where('empresa_id', empresa_ativa_id());
+        }
         $this->db->delete($table);
         if ($this->db->affected_rows() == '1') {
             return true;
@@ -143,6 +155,10 @@ class Cobrancas_model extends CI_Model
 
     public function count($table)
     {
+        if ($table === 'cobrancas') {
+            return $this->db->where('empresa_id', empresa_ativa_id())->count_all_results('cobrancas');
+        }
+
         return $this->db->count_all($table);
     }
 

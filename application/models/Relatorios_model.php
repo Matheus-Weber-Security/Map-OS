@@ -68,6 +68,7 @@ class Relatorios_model extends CI_Model
         dataCadastro, rua, numero, complemento, bairro, cidade, estado,
         cep');
         $this->db->from('clientes');
+        $this->db->where('empresa_id', empresa_ativa_id());
         $this->db->where('dataCadastro IS NOT NULL', null, false);
         if ($dataInicial != null) {
             $this->db->where('dataCadastro >=', $dataInicial);
@@ -99,12 +100,8 @@ class Relatorios_model extends CI_Model
         dataCadastro, rua, numero, complemento, bairro, cidade, estado,
         cep');
 
+        $this->db->where('empresa_id', empresa_ativa_id());
         $this->db->order_by('nomeCliente', 'asc');
-
-        $this->db->select('idClientes, nomeCliente, sexo, pessoa_fisica,
-        documento, telefone, celular, contato, email, fornecedor,
-        dataCadastro, rua, numero, complemento, bairro, cidade, estado,
-        cep');
 
         $result = $this->db->get('clientes');
         if ($array) {
@@ -116,29 +113,32 @@ class Relatorios_model extends CI_Model
 
     public function produtosRapid()
     {
-        $query = '
+        $empresaId = (int) empresa_ativa_id();
+        $query = "
             SELECT produtos.*,
             SUM(produtos.estoque * produtos.precoVenda) as valorEstoque,
             SUM(produtos.estoque * produtos.precoCompra) as valorEstoqueR
             FROM produtos
+            WHERE produtos.empresa_id = {$empresaId}
             GROUP BY produtos.idProdutos
             ORDER BY descricao
-        ';
+        ";
 
         return $this->db->query($query)->result();
     }
 
     public function produtosRapidMin()
     {
-        $query = '
+        $empresaId = (int) empresa_ativa_id();
+        $query = "
             SELECT produtos.*,
             SUM(produtos.estoque * produtos.precoVenda) as valorEstoque,
             SUM(produtos.estoque * produtos.precoCompra) as valorEstoqueR
             FROM produtos
-            WHERE estoque <= estoqueMinimo
+            WHERE produtos.empresa_id = {$empresaId} AND estoque <= estoqueMinimo
             GROUP BY produtos.idProdutos
             ORDER BY descricao
-        ';
+        ";
 
         return $this->db->query($query)->result();
     }
@@ -149,6 +149,7 @@ class Relatorios_model extends CI_Model
      */
     public function produtosCustom($precoInicial = null, $precoFinal = null, $estoqueInicial = null, $estoqueFinal = null, $produto = null)
     {
+        $empresaId = (int) empresa_ativa_id();
         $wherePreco = $this->faixa('precoVenda', $precoInicial, $precoFinal);
         $whereEstoque = $this->faixa('estoque', $estoqueInicial, $estoqueFinal);
         $whereProduto = '';
@@ -162,7 +163,7 @@ class Relatorios_model extends CI_Model
             SUM(produtos.estoque * produtos.precoVenda) as valorEstoque,
             SUM(produtos.estoque * produtos.precoCompra) as valorEstoqueR
             FROM produtos
-            WHERE estoque >= 0 $wherePreco $whereEstoque $whereProduto
+            WHERE produtos.empresa_id = {$empresaId} AND estoque >= 0 $wherePreco $whereEstoque $whereProduto
             GROUP BY produtos.idProdutos
             ORDER BY descricao
         ";
@@ -186,7 +187,8 @@ class Relatorios_model extends CI_Model
 
     public function produtosEtiquetas($de, $ate)
     {
-        $query = 'SELECT * FROM produtos WHERE idProdutos BETWEEN ' . $this->db->escape($de) . ' AND ' . $this->db->escape($ate) . ' ORDER BY idProdutos';
+        $empresaId = (int) empresa_ativa_id();
+        $query = 'SELECT * FROM produtos WHERE empresa_id = ' . $empresaId . ' AND idProdutos BETWEEN ' . $this->db->escape($de) . ' AND ' . $this->db->escape($ate) . ' ORDER BY idProdutos';
 
         $this->db->order_by('descricao', 'asc');
 
@@ -195,11 +197,13 @@ class Relatorios_model extends CI_Model
 
     public function skuRapid($array = false)
     {
+        $empresaId = (int) empresa_ativa_id();
         $this->db->select('clientes.idClientes, clientes.nomeCliente, produtos.idProdutos, produtos.descricao, itens_de_vendas.quantidade, vendas.idVendas as idRelacionado, vendas.dataVenda as dataOcorrencia, itens_de_vendas.preco, (itens_de_vendas.preco * itens_de_vendas.quantidade) as precoTotal, "venda" as origem');
         $this->db->from('vendas');
         $this->db->join('itens_de_vendas', 'vendas.idVendas = itens_de_vendas.vendas_id');
         $this->db->join('clientes', 'clientes.idClientes = vendas.clientes_id');
         $this->db->join('produtos', 'produtos.idProdutos = itens_de_vendas.produtos_id');
+        $this->db->where('vendas.empresa_id', $empresaId);
         $subQuery1 = $this->db->get_compiled_select();
         $this->db->reset_query();
 
@@ -208,6 +212,7 @@ class Relatorios_model extends CI_Model
         $this->db->join('produtos_os', 'produtos_os.os_id = os.idOs');
         $this->db->join('clientes', 'clientes.idClientes = os.clientes_id');
         $this->db->join('produtos', 'produtos.idProdutos = produtos_os.produtos_id');
+        $this->db->where('os.empresa_id', $empresaId);
         $subQuery2 = $this->db->get_compiled_select();
         $this->db->reset_query();
 
@@ -221,11 +226,13 @@ class Relatorios_model extends CI_Model
 
     public function skuCustom($dataInicial = null, $dataFinal = null, $cliente = null, $origem = null, $array = false)
     {
+        $empresaId = (int) empresa_ativa_id();
         $this->db->select('clientes.idClientes, clientes.nomeCliente, produtos.idProdutos, produtos.descricao, itens_de_vendas.quantidade, vendas.idVendas as idRelacionado, vendas.dataVenda as dataOcorrencia, itens_de_vendas.preco, (itens_de_vendas.preco * itens_de_vendas.quantidade) as precoTotal, "venda" as origem');
         $this->db->from('vendas');
         $this->db->join('itens_de_vendas', 'vendas.idVendas = itens_de_vendas.vendas_id');
         $this->db->join('clientes', 'clientes.idClientes = vendas.clientes_id');
         $this->db->join('produtos', 'produtos.idProdutos = itens_de_vendas.produtos_id');
+        $this->db->where('vendas.empresa_id', $empresaId);
         $subQuery1 = $this->db->get_compiled_select();
         $this->db->reset_query();
 
@@ -234,6 +241,7 @@ class Relatorios_model extends CI_Model
         $this->db->join('produtos_os', 'produtos_os.os_id = os.idOs');
         $this->db->join('clientes', 'clientes.idClientes = os.clientes_id');
         $this->db->join('produtos', 'produtos.idProdutos = produtos_os.produtos_id');
+        $this->db->where('os.empresa_id', $empresaId);
         $subQuery2 = $this->db->get_compiled_select();
         $this->db->reset_query();
 
@@ -271,6 +279,7 @@ class Relatorios_model extends CI_Model
 
     public function servicosRapid()
     {
+        $this->db->where('empresa_id', empresa_ativa_id());
         $this->db->order_by('nome', 'asc');
 
         return $this->db->get('servicos')->result();
@@ -278,12 +287,14 @@ class Relatorios_model extends CI_Model
 
     public function servicosCustom($precoInicial = null, $precoFinal = null, $servico = null, $cliente = null)
     {
+        $empresaId = (int) empresa_ativa_id();
         if (is_string($cliente) && trim($cliente) !== '') {
             $this->db->select('os.idOs, clientes.nomeCliente, servicos.nome, servicos.descricao, servicos_os.preco, servicos_os.quantidade, servicos_os.subTotal');
             $this->db->from('servicos_os');
             $this->db->join('os', 'os.idOs = servicos_os.os_id');
             $this->db->join('clientes', 'clientes.idClientes = os.clientes_id');
             $this->db->join('servicos', 'servicos.idServicos = servicos_os.servicos_id');
+            $this->db->where('os.empresa_id', $empresaId);
             $this->db->like('clientes.nomeCliente', trim($cliente));
             if ($precoInicial !== null && $precoInicial !== '') {
                 $this->db->where('servicos_os.preco >=', $precoInicial);
@@ -299,6 +310,7 @@ class Relatorios_model extends CI_Model
         }
 
         $this->db->from('servicos');
+        $this->db->where('empresa_id', $empresaId);
         if ($precoInicial !== null && $precoInicial !== '') {
             $this->db->where('preco >=', $precoInicial);
         }
@@ -314,6 +326,7 @@ class Relatorios_model extends CI_Model
 
     public function osRapid($array = false)
     {
+        $empresaId = (int) empresa_ativa_id();
         $query = 'CREATE TEMPORARY TABLE IF NOT EXISTS total_produtos SELECT SUM(subTotal) as total_produto, os_id FROM produtos_os GROUP BY os_id; ';
         $this->db->query($query);
 
@@ -325,6 +338,7 @@ class Relatorios_model extends CI_Model
         $this->db->join('clientes', 'clientes.idClientes = os.clientes_id');
         $this->db->join('total_produtos', 'total_produtos.os_id = os.idOs', 'left');
         $this->db->join('total_servicos', 'total_servicos.os_id = os.idOs', 'left');
+        $this->db->where('os.empresa_id', $empresaId);
         $this->db->order_by('os.dataInicial', 'DESC');
 
         $result = $this->db->get();
@@ -362,11 +376,12 @@ class Relatorios_model extends CI_Model
         $query = 'CREATE TEMPORARY TABLE IF NOT EXISTS total_servicos SELECT SUM(subTotal) as total_servico, os_id FROM servicos_os GROUP BY os_id; ';
         $this->db->query($query);
 
+        $empresaId = (int) empresa_ativa_id();
         $query = "SELECT os.*,clientes.nomeCliente, total_servicos.total_servico, total_produtos.total_produto FROM os
                    LEFT JOIN total_produtos ON total_produtos.os_id = os.idOs
                    LEFT JOIN total_servicos ON total_servicos.os_id = os.idOs
                    LEFT JOIN clientes ON os.clientes_id = clientes.idClientes
-                   WHERE idOs != 0 $whereData $whereCliente $whereResponsavel $whereStatus
+                   WHERE idOs != 0 AND os.empresa_id = {$empresaId} $whereData $whereCliente $whereResponsavel $whereStatus
                    ORDER BY os.dataInicial";
 
         $result = $this->db->query($query);
@@ -384,6 +399,7 @@ class Relatorios_model extends CI_Model
 
         $this->db->where('data_vencimento >=', $primeiroDiaMes->format('Y-m-d'));
         $this->db->where('data_vencimento <=', $ultimodiaMes->format('Y-m-d'));
+        $this->db->where('lancamentos.empresa_id', empresa_ativa_id());
         $this->db->order_by('data_vencimento', 'asc');
         $result = $this->db->get('lancamentos');
         if ($array) {
@@ -395,6 +411,8 @@ class Relatorios_model extends CI_Model
 
     public function financeiroCustom($dataInicial = null, $dataFinal = null, $tipo = null, $situacao = null, $forma = null, $array = false)
     {
+        $this->db->where('lancamentos.empresa_id', empresa_ativa_id());
+
         if ($dataInicial) {
             $this->db->where('data_vencimento >=', $dataInicial);
         }
@@ -542,7 +560,13 @@ class Relatorios_model extends CI_Model
 
     public function receitasBrutasRapid()
     {
-        $emitente = $this->db->query('SELECT * FROM emitente LIMIT 1')->row_array();
+        $empresaId = (int) empresa_ativa_id();
+        $emitente = $this->db->where('empresa_id', $empresaId)->get('emitente')->row_array();
+        if (! $emitente && $empresaId === 1) {
+            $emitente = $this->db->where('id', 1)->get('emitente')->row_array()
+                ?: ($this->db->order_by('id', 'ASC')->limit(1)->get('emitente')->row_array() ?: []);
+        }
+        $emitente = $emitente ?: [];
 
         $inicio = (new DateTime())->modify('first day of this month');
         $fim = (new DateTime())->modify('last day of this month');
@@ -554,7 +578,8 @@ class Relatorios_model extends CI_Model
                 SUM(case when descricao LIKE '%Fatura de OS%' then valor - desconto else 0 end) as totalServicos,
                 SUM(case when descricao LIKE '%Fatura de Venda%' then valor - desconto else 0 end) as totalVendas
             FROM lancamentos
-                WHERE baixado = 1
+                WHERE empresa_id = {$empresaId}
+                AND baixado = 1
                 AND tipo = 'receita'
                 AND data_vencimento >= ?
                 AND data_vencimento <= ?
@@ -579,8 +604,8 @@ class Relatorios_model extends CI_Model
         $periodo = sprintf('%s à %s', $inicio->format('d/m/Y'), $fim->format('d/m/Y'));
 
         return [
-            'cnpj' => $emitente['cnpj'],
-            'emitente' => $emitente['nome'],
+            'cnpj' => $emitente['cnpj'] ?? '',
+            'emitente' => $emitente['nome'] ?? '',
             'periodo' => $periodo,
             'mercadoriasTotalSemNf' => number_format($mercadoriasTotalSemNf, 2, ',', '.'),
             'mercadoriasTotalComNf' => number_format($mercadoriasTotalComNf, 2, ',', '.'),
@@ -592,13 +617,19 @@ class Relatorios_model extends CI_Model
             'servicosTotalComNf' => number_format($servicosTotalComNf, 2, ',', '.'),
             'servicosTotal' => number_format($servicosTotal, 2, ',', '.'),
             'totalMes' => number_format($totalMes, 2, ',', '.'),
-            'localEdata' => sprintf('%s, %s', $emitente['cidade'], (new DateTime())->format('d/m/Y')),
+            'localEdata' => sprintf('%s, %s', $emitente['cidade'] ?? '', (new DateTime())->format('d/m/Y')),
         ];
     }
 
     public function receitasBrutasCustom($dataInicial = null, $dataFinal = null)
     {
-        $emitente = $this->db->query('SELECT * FROM emitente LIMIT 1')->row_array();
+        $empresaId = (int) empresa_ativa_id();
+        $emitente = $this->db->where('empresa_id', $empresaId)->get('emitente')->row_array();
+        if (! $emitente && $empresaId === 1) {
+            $emitente = $this->db->where('id', 1)->get('emitente')->row_array()
+                ?: ($this->db->order_by('id', 'ASC')->limit(1)->get('emitente')->row_array() ?: []);
+        }
+        $emitente = $emitente ?: [];
 
         $query = "
             SELECT
@@ -607,7 +638,8 @@ class Relatorios_model extends CI_Model
                 SUM(case when descricao LIKE '%Fatura de OS%' then valor else 0 end) as totalServicos,
                 SUM(case when descricao LIKE '%Fatura de Venda%' then valor else 0 end) as totalVendas
             FROM lancamentos
-                WHERE baixado = 1
+                WHERE empresa_id = {$empresaId}
+                AND baixado = 1
                 AND tipo = 'receita'
                 AND data_vencimento >= ?
                 AND data_vencimento <= ?

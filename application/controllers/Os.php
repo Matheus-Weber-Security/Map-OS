@@ -220,7 +220,7 @@ class Os extends MY_Controller
     /** Cria a OS e devolve o id, ou null se não gravou. */
     private function criarOs(array $dados): ?int
     {
-        $id = $this->os_model->add('os', $dados + ['faturado' => 0], true);
+        $id = $this->os_model->add('os', $dados + ['faturado' => 0, 'empresa_id' => empresa_ativa_id()], true);
         if (! is_numeric($id)) {
             return null;
         }
@@ -1332,6 +1332,7 @@ class Os extends MY_Controller
 
         $this->db->trans_start();
 
+        $lancamento['empresa_id'] = empresa_ativa_id();
         $idLancamento = $this->os_model->add('lancamentos', $lancamento, true);
         if (! is_numeric($idLancamento)) {
             $this->db->trans_rollback();
