@@ -75,7 +75,7 @@ $config = [
         [
             'field' => 'descricao',
             'label' => 'Descrição',
-            'rules' => 'trim|max_length[45]',
+            'rules' => 'trim|max_length[100]',
         ],
         [
             'field' => 'preco',
@@ -336,7 +336,7 @@ $config = [
         [
             'field' => 'refGarantia',
             'label' => 'Referência',
-            'rules' => 'trim|max_length[15]',
+            'rules' => 'trim|max_length[50]',
         ],
         [
             'field' => 'textoGarantia',

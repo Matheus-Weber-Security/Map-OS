@@ -49,10 +49,10 @@ $errosDeCampo = array_diff_key($erros, ['_geral' => true]);
                 <?= component('input', [
                     'name' => 'descricao',
                     'label' => 'Descrição',
-                    'help' => 'Aparece junto do nome na OS. Até 45 caracteres.',
+                    'help' => 'Aparece junto do nome na OS. Até 100 caracteres.',
                     'value' => $valores['descricao'] !== '' ? $valores['descricao'] : null,
                     'error' => $errosDeCampo['descricao'] ?? null,
-                    'attrs' => ['maxlength' => 45],
+                    'attrs' => ['maxlength' => 100],
                 ]) ?>
             </div>
         </section>

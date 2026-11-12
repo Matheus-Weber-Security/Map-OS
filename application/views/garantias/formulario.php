@@ -29,14 +29,14 @@ $errosDeCampo = array_diff_key($erros, ['_geral' => true]);
         <input type="hidden" name="<?= e($this->security->get_csrf_token_name()) ?>" value="<?= e($this->security->get_csrf_hash()) ?>">
 
         <section class="flex flex-col gap-4 rounded-xl border border-border bg-surface p-4 sm:p-6" aria-label="Dados do termo">
-            <div class="sm:max-w-xs">
+            <div class="max-w-lg">
                 <?= component('input', [
                     'name' => 'refGarantia',
                     'label' => 'Referência',
-                    'help' => 'Nome curto para achar o termo, até 15 caracteres. Ex.: 90 dias.',
+                    'help' => 'Nome curto para achar o termo, até 50 caracteres. Ex.: 90 dias.',
                     'value' => $valores['refGarantia'] !== '' ? $valores['refGarantia'] : null,
                     'error' => $errosDeCampo['refGarantia'] ?? null,
-                    'attrs' => ['maxlength' => 15, 'autofocus' => ! $editando],
+                    'attrs' => ['maxlength' => 50, 'autofocus' => ! $editando],
                 ]) ?>
             </div>
             <?= component('textarea', [
