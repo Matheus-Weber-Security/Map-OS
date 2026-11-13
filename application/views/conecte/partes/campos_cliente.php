@@ -72,7 +72,7 @@ $grade = 'mt-4 grid gap-4 sm:grid-cols-2';
         <?= component('input', $campo('cep', ['label' => 'CEP', 'autocomplete' => 'postal-code', 'attrs' => ['data-mascara' => 'cep', 'inputmode' => 'numeric', 'maxlength' => 9]])) ?>
         <div class="hidden sm:block" aria-hidden="true"></div>
         <?= component('input', $campo('rua', ['label' => 'Rua', 'autocomplete' => 'address-line1', 'attrs' => ['maxlength' => 70]])) ?>
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-4">
             <?= component('input', $campo('numero', ['label' => 'Número', 'attrs' => ['maxlength' => 15]])) ?>
             <?= component('input', $campo('complemento', ['label' => 'Complemento', 'autocomplete' => 'address-line2', 'attrs' => ['maxlength' => 45]])) ?>
         </div>

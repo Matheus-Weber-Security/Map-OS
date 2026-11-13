@@ -73,7 +73,7 @@ $comForm = static fn (array $attrs) => ['form' => $idForm] + $attrs;
             component('input', $campo('cep', ['label' => 'CEP', 'attrs' => $comForm(['data-mascara' => 'cep', 'inputmode' => 'numeric', 'maxlength' => 9, 'autocomplete' => 'off'])])),
             new HtmlSeguro('<div class="hidden sm:block" aria-hidden="true"></div>'),
             component('input', $campo('rua', ['label' => 'Rua', 'attrs' => $comForm(['maxlength' => 70])])),
-            new HtmlSeguro('<div class="grid grid-cols-2 gap-4">'),
+            new HtmlSeguro('<div class="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-4">'),
             component('input', $campo('numero', ['label' => 'Número', 'attrs' => $comForm(['maxlength' => 15])])),
             component('input', $campo('complemento', ['label' => 'Complemento', 'attrs' => $comForm(['maxlength' => 45])])),
             new HtmlSeguro('</div>'),
