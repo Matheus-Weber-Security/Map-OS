@@ -104,7 +104,7 @@ if (! function_exists('configuracaoCampos')) {
                 'EMAIL_SMTP_PORT' => ['destino' => 'env', 'tipo' => 'numero', 'rotulo' => 'Porta', 'max' => 5, 'ajuda' => 'Porta de conexão do servidor SMTP. Use 587 para criptografia TLS (recomendada) ou 465 para SSL.'],
                 'EMAIL_SMTP_CRYPTO' => ['destino' => 'env', 'tipo' => 'opcao', 'rotulo' => 'Criptografia', 'opcoes' => ['tls' => 'TLS', 'ssl' => 'SSL']],
                 'EMAIL_SMTP_USER' => ['destino' => 'env', 'tipo' => 'texto', 'rotulo' => 'Usuário', 'max' => 255, 'ajuda' => 'Usuário de autenticação do servidor de e-mail (geralmente o seu endereço de e-mail completo, e não o usuário do sistema).'],
-                'EMAIL_SMTP_PASS' => ['destino' => 'env', 'tipo' => 'segredo', 'rotulo' => 'Senha', 'max' => 255],
+                'EMAIL_SMTP_PASS' => ['destino' => 'env', 'tipo' => 'segredo', 'rotulo' => 'Senha', 'max' => 255, 'ajuda' => 'Senha de autenticação do e-mail. No Gmail, use uma "Senha de app" gerada na sua conta Google (não a senha comum da conta).'],
                 'EMAIL_FROM' => ['destino' => 'env', 'tipo' => 'texto', 'rotulo' => 'Remetente padrão (From)', 'max' => 255, 'ajuda' => 'E-mail que seu cliente verá como remetente ao receber notificações, orçamentos e OS. Deixe em branco para usar automaticamente o mesmo e-mail do campo Usuário (recomendado). Preencha apenas se seu servidor de e-mail autorizar o envio por outro endereço ou alias (ex: contato@suaempresa.com.br).'],
             ],
             'pagamentos' => [
