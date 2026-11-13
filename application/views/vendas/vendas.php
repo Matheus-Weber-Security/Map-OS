@@ -34,23 +34,27 @@ $colunas = [
         $numero = 'venda ' . $v->idVendas;
         // Mesma regra da OS: faturada ou cancelada só edita com a configuração ligada.
         $editavel = osEditavel($v, $pode['editar'], $controle_edicao);
-        $acoes = [
-            component('button', ['label' => 'Ver ' . $numero, 'icon' => 'eye', 'icon_only' => true, 'variant' => 'ghost', 'size' => 'sm', 'href' => site_url('vendas/visualizar/' . $v->idVendas)]),
+        $itens = [
+            ['label' => 'Ver venda', 'icon' => 'eye', 'href' => site_url('vendas/visualizar/' . $v->idVendas)],
         ];
         if ($editavel) {
-            $acoes[] = component('button', ['label' => 'Editar ' . $numero, 'icon' => 'pencil', 'icon_only' => true, 'variant' => 'ghost', 'size' => 'sm', 'href' => site_url('vendas/editar/' . $v->idVendas)]);
+            $itens[] = ['label' => 'Editar venda', 'icon' => 'pencil', 'href' => site_url('vendas/editar/' . $v->idVendas)];
         }
+        $itens[] = ['label' => 'Imprimir', 'icon' => 'printer', 'href' => site_url('vendas/imprimir/' . $v->idVendas), 'attrs' => ['target' => '_blank', 'rel' => 'noopener']];
+        $itens[] = ['label' => 'Cupom 80mm', 'icon' => 'receipt', 'href' => site_url('vendas/imprimirTermica/' . $v->idVendas), 'attrs' => ['target' => '_blank', 'rel' => 'noopener']];
+        $itens[] = osMenuItemWhatsApp($v->whatsapp ?? null);
         // Como na v4: excluir exige dVenda e uma venda que ainda pode ser alterada (eVenda não entra).
         if ($pode['excluir'] && osEditavel($v, true, $controle_edicao)) {
-            $acoes[] = component('button', ['label' => 'Excluir ' . $numero, 'icon' => 'trash-2', 'icon_only' => true, 'variant' => 'ghost', 'size' => 'sm', 'class' => 'hover:text-danger-ink', 'attrs' => [
+            $itens[] = ['separador' => true];
+            $itens[] = ['label' => 'Excluir venda', 'icon' => 'trash-2', 'danger' => true, 'attrs' => [
                 'data-modal-abrir' => 'excluir-venda',
                 'data-valor-id' => (string) $v->idVendas,
                 'data-valor-numero' => (string) $v->idVendas,
                 'data-valor-cliente' => (string) ($v->nomeCliente ?? 'cliente removido'),
-            ]]);
+            ]];
         }
 
-        return $acoes;
+        return component('menu-acoes', ['label' => 'Ações da ' . $numero, 'items' => $itens]);
     }],
 ];
 

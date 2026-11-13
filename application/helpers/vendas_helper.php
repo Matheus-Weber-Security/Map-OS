@@ -195,3 +195,39 @@ if (! function_exists('vendaFaturaDoFormulario')) {
         return [$lancamento + ['vendas_id' => (int) $venda->idVendas], []];
     }
 }
+
+if (! function_exists('vendaDadosWhatsApp')) {
+    /**
+     * Telefone normalizado e resumo da venda para o link de WhatsApp (wa.me).
+     * Retorna null quando o cliente não tem telefone válido.
+     *
+     * @return array{telefone: string, texto: string}|null
+     */
+    function vendaDadosWhatsApp(object $venda, ?object $emitente, float $total): ?array
+    {
+        $telefone = osTelefoneWhatsApp(($venda->celular_cliente ?? null) ?: ($venda->telefone_cliente ?? null));
+        if ($telefone === null) {
+            return null;
+        }
+
+        $cliente = trim((string) ($venda->nomeCliente ?? 'Cliente'));
+        $texto = sprintf(
+            'Olá %s! Seguem os dados da Venda #%d (%s) no valor total de %s.',
+            $cliente,
+            (int) $venda->idVendas,
+            (string) ($venda->status ?? ''),
+            dinheiro($total)
+        );
+
+        $nomeEmitente = trim((string) ($emitente->nome ?? ''));
+        $foneEmitente = trim((string) ($emitente->telefone ?? ''));
+        if ($nomeEmitente !== '') {
+            $texto .= ' Atenciosamente, ' . $nomeEmitente . ($foneEmitente !== '' ? ' ' . $foneEmitente : '') . '.';
+        }
+
+        return [
+            'telefone' => $telefone,
+            'texto' => $texto,
+        ];
+    }
+}

@@ -771,6 +771,72 @@ if (! function_exists('osTextoWhatsApp')) {
     }
 }
 
+if (! function_exists('osDadosWhatsApp')) {
+    /**
+     * Telefone normalizado e mensagem preenchida (notifica_whats) para o link
+     * de WhatsApp de uma OS. Retorna null sem telefone válido.
+     *
+     * @param  array<string, mixed>  $configuracao
+     * @return array{telefone: string, texto: string}|null
+     */
+    function osDadosWhatsApp(object $os, ?object $emitente, array $configuracao, float $total): ?array
+    {
+        $telefone = osTelefoneWhatsApp(($os->celular_cliente ?? null) ?: ($os->telefone_cliente ?? null));
+        if ($telefone === null) {
+            return null;
+        }
+
+        $troca = [
+            '{CLIENTE_NOME}' => (string) ($os->nomeCliente ?? ''),
+            '{NUMERO_OS}' => (string) (int) $os->idOs,
+            '{STATUS_OS}' => (string) ($os->status ?? ''),
+            '{VALOR_OS}' => dinheiro($total),
+            '{DESCRI_PRODUTOS}' => (string) ($os->descricaoProduto ?? ''),
+            '{EMITENTE}' => (string) ($emitente->nome ?? ''),
+            '{TELEFONE_EMITENTE}' => (string) ($emitente->telefone ?? ''),
+            '{OBS_OS}' => (string) ($os->observacoes ?? ''),
+            '{DEFEITO_OS}' => (string) ($os->defeito ?? ''),
+            '{LAUDO_OS}' => (string) ($os->laudoTecnico ?? ''),
+            '{DATA_FINAL}' => dataBr($os->dataFinal ?? null),
+            '{DATA_INICIAL}' => dataBr($os->dataInicial ?? null),
+            '{DATA_GARANTIA}' => (string) ($os->garantia ?? 0) . ' dias',
+        ];
+
+        return [
+            'telefone' => $telefone,
+            'texto' => osTextoWhatsApp($configuracao['notifica_whats'] ?? '', $troca),
+        ];
+    }
+}
+
+if (! function_exists('osMenuItemWhatsApp')) {
+    /**
+     * Item de menu "Enviar pelo WhatsApp" para component('menu-acoes').
+     * Quando não há telefone válido, devolve o item desabilitado com aviso.
+     *
+     * @param  array{telefone: string, texto: string}|null  $whatsapp
+     * @return array<string, mixed>
+     */
+    function osMenuItemWhatsApp(?array $whatsapp): array
+    {
+        if ($whatsapp === null) {
+            return [
+                'label' => 'Enviar pelo WhatsApp',
+                'icon' => 'message-circle',
+                'disabled' => true,
+                'description' => 'Cliente sem telefone cadastrado',
+            ];
+        }
+
+        return [
+            'label' => 'Enviar pelo WhatsApp',
+            'icon' => 'message-circle',
+            'href' => 'https://wa.me/' . $whatsapp['telefone'] . '?text=' . rawurlencode($whatsapp['texto']),
+            'attrs' => ['target' => '_blank', 'rel' => 'noopener'],
+        ];
+    }
+}
+
 if (! function_exists('gatewayEstaConfigurado')) {
     /**
      * Verifica se o gateway possui as credenciais mínimas configuradas para operar.

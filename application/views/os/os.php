@@ -31,23 +31,27 @@ $colunas = [
     ['label' => 'Ações', 'align' => 'right', 'nowrap' => true, 'render' => function ($o) use ($pode, $controle_editos) {
         $numero = 'OS ' . $o->idOs;
         $editavel = osEditavel($o, $pode['editar'], $controle_editos);
-        $acoes = [
-            component('button', ['label' => 'Ver ' . $numero, 'icon' => 'eye', 'icon_only' => true, 'variant' => 'ghost', 'size' => 'sm', 'href' => site_url('os/visualizar/' . $o->idOs)]),
+        $itens = [
+            ['label' => 'Ver OS', 'icon' => 'eye', 'href' => site_url('os/visualizar/' . $o->idOs)],
         ];
         if ($editavel) {
-            $acoes[] = component('button', ['label' => 'Editar ' . $numero, 'icon' => 'pencil', 'icon_only' => true, 'variant' => 'ghost', 'size' => 'sm', 'href' => site_url('os/editar/' . $o->idOs)]);
+            $itens[] = ['label' => 'Editar OS', 'icon' => 'pencil', 'href' => site_url('os/editar/' . $o->idOs)];
         }
+        $itens[] = ['label' => 'Imprimir', 'icon' => 'printer', 'href' => site_url('os/imprimir/' . $o->idOs), 'attrs' => ['target' => '_blank', 'rel' => 'noopener']];
+        $itens[] = ['label' => 'Cupom 80mm', 'icon' => 'receipt', 'href' => site_url('os/imprimirTermica/' . $o->idOs), 'attrs' => ['target' => '_blank', 'rel' => 'noopener']];
+        $itens[] = osMenuItemWhatsApp($o->whatsapp ?? null);
         // Como na v4: excluir exige dOs e uma OS que ainda pode ser editada.
         if ($pode['excluir'] && $editavel) {
-            $acoes[] = component('button', ['label' => 'Excluir ' . $numero, 'icon' => 'trash-2', 'icon_only' => true, 'variant' => 'ghost', 'size' => 'sm', 'class' => 'hover:text-danger-ink', 'attrs' => [
+            $itens[] = ['separador' => true];
+            $itens[] = ['label' => 'Excluir OS', 'icon' => 'trash-2', 'danger' => true, 'attrs' => [
                 'data-modal-abrir' => 'excluir-os',
                 'data-valor-id' => (string) $o->idOs,
                 'data-valor-numero' => (string) $o->idOs,
                 'data-valor-cliente' => (string) ($o->nomeCliente ?? 'cliente removido'),
-            ]]);
+            ]];
         }
 
-        return $acoes;
+        return component('menu-acoes', ['label' => 'Ações da ' . $numero, 'items' => $itens]);
     }],
 ];
 

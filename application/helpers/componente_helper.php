@@ -309,6 +309,13 @@ if (! function_exists('componenteEspecificacoes')) {
                     'external' => false,
                 ],
             ],
+            'menu-acoes' => [
+                'obrigatorias' => ['label', 'items'],
+                'padrao' => [
+                    'icon' => 'ellipsis-vertical',
+                ],
+                'formatos' => ['icon' => COMPONENTE_ICONE],
+            ],
         ];
     }
 }

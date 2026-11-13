@@ -27,26 +27,31 @@ $colunas = [
         : (string) (int) $p->estoque],
     ['label' => 'Preço', 'align' => 'right', 'nowrap' => true, 'render' => fn ($p) => dinheiro($p->precoVenda)],
     ['label' => 'Ações', 'align' => 'right', 'nowrap' => true, 'render' => function ($p) use ($pode) {
-        // A descrição já leva à ficha: sem botão "ver", para a tabela caber a partir de 640px.
-        $acoes = [];
+        // A descrição já leva à ficha: mantendo no menu só as ações existentes.
+        $itens = [];
         if ($pode['editar']) {
-            $acoes[] = component('button', ['label' => 'Entrada de estoque de ' . $p->descricao, 'icon' => 'package-plus', 'icon_only' => true, 'variant' => 'ghost', 'size' => 'sm', 'attrs' => [
+            $itens[] = ['label' => 'Entrada de estoque', 'icon' => 'package-plus', 'attrs' => [
                 'data-modal-abrir' => 'estoque-produto',
                 'data-valor-id' => (string) $p->idProdutos,
                 'data-valor-nome' => $p->descricao,
                 'data-valor-atual' => (int) $p->estoque . ' ' . $p->unidade,
-            ]]);
-            $acoes[] = component('button', ['label' => 'Editar ' . $p->descricao, 'icon' => 'pencil', 'icon_only' => true, 'variant' => 'ghost', 'size' => 'sm', 'href' => site_url('produtos/editar/' . $p->idProdutos)]);
+            ]];
+            $itens[] = ['label' => 'Editar produto', 'icon' => 'pencil', 'href' => site_url('produtos/editar/' . $p->idProdutos)];
         }
         if ($pode['excluir']) {
-            $acoes[] = component('button', ['label' => 'Excluir ' . $p->descricao, 'icon' => 'trash-2', 'icon_only' => true, 'variant' => 'ghost', 'size' => 'sm', 'class' => 'hover:text-danger-ink', 'attrs' => [
+            $itens[] = ['separador' => true];
+            $itens[] = ['label' => 'Excluir produto', 'icon' => 'trash-2', 'danger' => true, 'attrs' => [
                 'data-modal-abrir' => 'excluir-produto',
                 'data-valor-id' => (string) $p->idProdutos,
                 'data-valor-nome' => $p->descricao,
-            ]]);
+            ]];
         }
 
-        return $acoes;
+        if ($itens === []) {
+            return '';
+        }
+
+        return component('menu-acoes', ['label' => 'Ações de ' . $p->descricao, 'items' => $itens]);
     }],
 ];
 

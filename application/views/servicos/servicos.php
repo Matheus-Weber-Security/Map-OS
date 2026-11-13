@@ -20,19 +20,24 @@ $colunas = [
     ['key' => 'descricao', 'label' => 'Descrição', 'hide_until' => 'md'],
     ['label' => 'Preço', 'align' => 'right', 'nowrap' => true, 'render' => fn ($s) => dinheiro($s->preco)],
     ['label' => 'Ações', 'align' => 'right', 'nowrap' => true, 'render' => function ($s) use ($pode) {
-        $acoes = [];
+        $itens = [];
         if ($pode['editar']) {
-            $acoes[] = component('button', ['label' => 'Editar ' . $s->nome, 'icon' => 'pencil', 'icon_only' => true, 'variant' => 'ghost', 'size' => 'sm', 'href' => site_url('servicos/editar/' . $s->idServicos)]);
+            $itens[] = ['label' => 'Editar serviço', 'icon' => 'pencil', 'href' => site_url('servicos/editar/' . $s->idServicos)];
         }
         if ($pode['excluir']) {
-            $acoes[] = component('button', ['label' => 'Excluir ' . $s->nome, 'icon' => 'trash-2', 'icon_only' => true, 'variant' => 'ghost', 'size' => 'sm', 'class' => 'hover:text-danger-ink', 'attrs' => [
+            $itens[] = ['separador' => true];
+            $itens[] = ['label' => 'Excluir serviço', 'icon' => 'trash-2', 'danger' => true, 'attrs' => [
                 'data-modal-abrir' => 'excluir-servico',
                 'data-valor-id' => (string) $s->idServicos,
                 'data-valor-nome' => $s->nome,
-            ]]);
+            ]];
         }
 
-        return $acoes;
+        if ($itens === []) {
+            return '';
+        }
+
+        return component('menu-acoes', ['label' => 'Ações de ' . $s->nome, 'items' => $itens]);
     }],
 ];
 
