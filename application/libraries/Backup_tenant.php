@@ -83,16 +83,15 @@ class Backup_tenant
         $tabelas = [
             // 1. Estrutura e Tabelas Globais de Apoio
             'migrations' => 'SELECT * FROM migrations',
-            'configuracoes' => "SELECT * FROM configuracoes WHERE config NOT IN ('saas_master_key', 'jwt_secret')",
+            'configuracoes' => "SELECT * FROM configuracoes WHERE config NOT IN ('saas_master_key', 'jwt_secret', 'pix_key')",
             'permissoes' => 'SELECT * FROM permissoes',
             'categorias' => 'SELECT * FROM categorias',
             'contas' => 'SELECT * FROM contas',
-            'documentos' => 'SELECT * FROM documentos',
             'marcas' => 'SELECT * FROM marcas',
-            'equipamentos' => 'SELECT * FROM equipamentos',
+            'equipamentos' => "SELECT * FROM equipamentos WHERE clientes_id IS NULL OR clientes_id IN (SELECT idClientes FROM clientes WHERE empresa_id = {$empresaId})",
 
-            // 2. Usuários da empresa
-            'usuarios' => "SELECT * FROM usuarios WHERE idUsuarios IN (SELECT usuario_id FROM saas_empresa_usuarios WHERE empresa_id = {$empresaId}) OR idUsuarios IN (SELECT DISTINCT usuarios_id FROM os WHERE empresa_id = {$empresaId}) OR idUsuarios IN (SELECT DISTINCT usuarios_id FROM vendas WHERE empresa_id = {$empresaId}) OR idUsuarios IN (SELECT DISTINCT usuarios_id FROM compras WHERE empresa_id = {$empresaId})",
+            // 2. Usuários da empresa (exclui contas de Superadmin da plataforma SaaS)
+            'usuarios' => "SELECT * FROM usuarios WHERE (is_superadmin = 0 OR is_superadmin IS NULL) AND (idUsuarios IN (SELECT usuario_id FROM saas_empresa_usuarios WHERE empresa_id = {$empresaId}) OR idUsuarios IN (SELECT DISTINCT usuarios_id FROM os WHERE empresa_id = {$empresaId}) OR idUsuarios IN (SELECT DISTINCT usuarios_id FROM vendas WHERE empresa_id = {$empresaId}) OR idUsuarios IN (SELECT DISTINCT usuarios_id FROM compras WHERE empresa_id = {$empresaId}))",
 
             // 3. Cadastros Operacionais da Empresa
             'emitente' => "SELECT * FROM emitente WHERE empresa_id = {$empresaId}",
@@ -106,7 +105,7 @@ class Backup_tenant
             'produtos_fornecedores' => "SELECT * FROM produtos_fornecedores WHERE empresa_id = {$empresaId}",
             'lancamentos' => "SELECT * FROM lancamentos WHERE empresa_id = {$empresaId}",
             'cobrancas' => "SELECT * FROM cobrancas WHERE empresa_id = {$empresaId}",
-            'arquivos' => "SELECT * FROM arquivos WHERE empresa_id = {$empresaId}",
+            'documentos' => "SELECT * FROM documentos WHERE empresa_id = {$empresaId}",
 
             // 4. Filhas de OS
             'produtos_os' => "SELECT * FROM produtos_os WHERE os_id IN (SELECT idOs FROM os WHERE empresa_id = {$empresaId})",
