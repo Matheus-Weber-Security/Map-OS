@@ -252,4 +252,274 @@ class Produtos extends MY_Controller
 
         return $produto;
     }
+
+    /**
+     * Tela de envio do arquivo CSV para importação de produtos (Etapa 1).
+     */
+    public function importar()
+    {
+        if (! $this->permission->checkPermission($this->session->userdata('permissao'), 'aProduto')) {
+            $this->session->set_flashdata('error', 'Você não tem permissão para adicionar produtos.');
+            redirect(site_url('produtos'));
+        }
+
+        $this->data['view'] = 'produtos/importar';
+
+        return $this->layout();
+    }
+
+    /**
+     * Download de planilha modelo de exemplo (.csv) com cabeçalhos recomendados.
+     */
+    public function modeloCsv()
+    {
+        if (! $this->permission->checkPermission($this->session->userdata('permissao'), 'aProduto')) {
+            $this->session->set_flashdata('error', 'Você não tem permissão para adicionar produtos.');
+            redirect(site_url('produtos'));
+        }
+
+        $linhas = [
+            ['codigo_barras', 'descricao', 'unidade', 'preco_compra', 'preco_venda', 'estoque', 'estoque_minimo'],
+            ['7891234567890', 'Cabo HDMI 2.0 2 Metros', 'UNID', '15,00', '35,00', '20', '5'],
+            ['7899876543210', 'Memória RAM DDR4 8GB 3200MHz', 'UNID', '120,00', '210,00', '10', '2'],
+            ['', 'Mouse Óptico USB Preto', 'UNID', '18,50', '39,90', '15', '3'],
+        ];
+
+        $fp = fopen('php://memory', 'r+');
+        foreach ($linhas as $linha) {
+            fputcsv($fp, $linha, ';');
+        }
+        rewind($fp);
+        $csv = stream_get_contents($fp);
+        fclose($fp);
+
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="modelo_importacao_produtos.csv"');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+        echo "\xEF\xBB\xBF";
+        echo $csv;
+        exit;
+    }
+
+    /**
+     * Processa o upload do CSV e abre a tela de mapeamento e prévia (Etapa 2).
+     */
+    public function processarCsv()
+    {
+        if (! $this->permission->checkPermission($this->session->userdata('permissao'), 'aProduto')) {
+            $this->session->set_flashdata('error', 'Você não tem permissão para adicionar produtos.');
+            redirect(site_url('produtos'));
+        }
+
+        if (empty($_FILES['arquivo_csv']['tmp_name']) || ! is_uploaded_file($_FILES['arquivo_csv']['tmp_name'])) {
+            $this->session->set_flashdata('error', 'Por favor, selecione um arquivo CSV para enviar.');
+            redirect(site_url('produtos/importar'));
+        }
+
+        $tamanho = (int) ($_FILES['arquivo_csv']['size'] ?? 0);
+        if ($tamanho <= 0 || $tamanho > 10 * 1024 * 1024) {
+            $this->session->set_flashdata('error', 'O arquivo enviado é inválido ou excede o limite de 10 MB.');
+            redirect(site_url('produtos/importar'));
+        }
+
+        $conteudo = (string) file_get_contents($_FILES['arquivo_csv']['tmp_name']);
+        [$cabecalhos, $linhas] = produtoLerLinhasCsv($conteudo);
+
+        if ($cabecalhos === [] || $linhas === []) {
+            $this->session->set_flashdata('error', 'Não foi possível ler os dados do arquivo CSV. Verifique se o arquivo possui cabeçalho e linhas de dados.');
+            redirect(site_url('produtos/importar'));
+        }
+
+        // Limpa arquivos temporários antigos (> 2 horas)
+        $cacheDir = APPPATH . 'cache' . DIRECTORY_SEPARATOR;
+        foreach ((array) glob($cacheDir . 'import_prod_*.json') as $arqAntigo) {
+            if (is_file($arqAntigo) && (time() - filemtime($arqAntigo)) > 7200) {
+                @unlink($arqAntigo);
+            }
+        }
+
+        $token = bin2hex(random_bytes(16));
+        $arquivoTemp = $cacheDir . 'import_prod_' . $token . '.json';
+        file_put_contents($arquivoTemp, json_encode([
+            'token' => $token,
+            'empresa_id' => empresa_ativa_id(),
+            'cabecalhos' => $cabecalhos,
+            'linhas' => $linhas,
+            'criado_em' => time(),
+        ], JSON_UNESCAPED_UNICODE));
+
+        $this->data['token'] = $token;
+        $this->data['cabecalhos'] = $cabecalhos;
+        $this->data['totalLinhas'] = count($linhas);
+        $this->data['previas'] = array_slice($linhas, 0, 10);
+        $this->data['view'] = 'produtos/mapear_csv';
+
+        return $this->layout();
+    }
+
+    /**
+     * Executa a gravação dos produtos no banco a partir do mapeamento de colunas.
+     */
+    public function concluirImportacao()
+    {
+        if (! $this->permission->checkPermission($this->session->userdata('permissao'), 'aProduto')) {
+            $this->session->set_flashdata('error', 'Você não tem permissão para adicionar produtos.');
+            redirect(site_url('produtos'));
+        }
+
+        $token = (string) $this->input->post('token');
+        if (! preg_match('/^[a-f0-9]{32}$/', $token)) {
+            $this->session->set_flashdata('error', 'Sessão de importação inválida.');
+            redirect(site_url('produtos/importar'));
+        }
+
+        $arquivoTemp = APPPATH . 'cache' . DIRECTORY_SEPARATOR . 'import_prod_' . $token . '.json';
+        if (! is_file($arquivoTemp)) {
+            $this->session->set_flashdata('error', 'A sessão desta importação expirou. Por favor, envie o arquivo novamente.');
+            redirect(site_url('produtos/importar'));
+        }
+
+        $dadosJson = json_decode((string) file_get_contents($arquivoTemp), true);
+        @unlink($arquivoTemp);
+
+        if (! is_array($dadosJson) || empty($dadosJson['linhas'])) {
+            $this->session->set_flashdata('error', 'Dados da importação corrompidos ou vazios.');
+            redirect(site_url('produtos/importar'));
+        }
+
+        $colunaDescricao = (string) $this->input->post('coluna_descricao');
+        $colunaPrecoVenda = (string) $this->input->post('coluna_precoVenda');
+
+        if ($colunaDescricao === '' || $colunaPrecoVenda === '') {
+            $this->session->set_flashdata('error', 'As colunas de Descrição e Preço de venda são obrigatórias.');
+            redirect(site_url('produtos/importar'));
+        }
+
+        $colunaPrecoCompra = (string) $this->input->post('coluna_precoCompra');
+        $colunaEstoque = (string) $this->input->post('coluna_estoque');
+        $colunaEstoqueMinimo = (string) $this->input->post('coluna_estoqueMinimo');
+        $colunaCodDeBarra = (string) $this->input->post('coluna_codDeBarra');
+        $colunaUnidade = (string) $this->input->post('coluna_unidade');
+        $estrategia = $this->input->post('estrategia_duplicados') === 'atualizar' ? 'atualizar' : 'pular';
+
+        $empresaId = empresa_ativa_id();
+        $linhas = (array) $dadosJson['linhas'];
+
+        $produtosExistentes = [];
+        $queryExistentes = $this->db->select('idProdutos, codDeBarra, estoque')
+            ->where('empresa_id', $empresaId)
+            ->where('codDeBarra IS NOT NULL')
+            ->where('codDeBarra !=', '')
+            ->get('produtos')
+            ->result();
+        foreach ($queryExistentes as $pEx) {
+            $produtosExistentes[(string) $pEx->codDeBarra] = $pEx;
+        }
+
+        $proximoCodigo = $this->produtos_model->gerarProximoCodigo($empresaId);
+        $importados = 0;
+        $atualizados = 0;
+        $ignorados = 0;
+
+        foreach ($linhas as $linha) {
+            $descricao = trim((string) ($linha[$colunaDescricao] ?? ''));
+            if ($descricao === '') {
+                $ignorados++;
+                continue;
+            }
+
+            $precoVendaRaw = $linha[$colunaPrecoVenda] ?? '0.00';
+            $precoVenda = valorDecimal($precoVendaRaw) ?? '0.00';
+
+            $precoCompra = '0.00';
+            if ($colunaPrecoCompra !== '' && isset($linha[$colunaPrecoCompra])) {
+                $precoCompra = valorDecimal($linha[$colunaPrecoCompra]) ?? '0.00';
+            }
+
+            $estoque = 0;
+            if ($colunaEstoque !== '' && isset($linha[$colunaEstoque])) {
+                $estoqueLimpo = preg_replace('/[^\d]/', '', (string) $linha[$colunaEstoque]);
+                $estoque = max(0, (int) $estoqueLimpo);
+            }
+
+            $estoqueMinimo = null;
+            if ($colunaEstoqueMinimo !== '' && isset($linha[$colunaEstoqueMinimo])) {
+                $minLimpo = preg_replace('/[^\d]/', '', (string) $linha[$colunaEstoqueMinimo]);
+                if ($minLimpo !== '') {
+                    $estoqueMinimo = (int) $minLimpo;
+                }
+            }
+
+            $codDeBarra = '';
+            if ($colunaCodDeBarra !== '' && isset($linha[$colunaCodDeBarra])) {
+                $codDeBarra = substr(trim((string) $linha[$colunaCodDeBarra]), 0, 70);
+            }
+
+            $unidade = 'UNID';
+            if ($colunaUnidade !== '' && isset($linha[$colunaUnidade])) {
+                $u = substr(strtoupper(trim((string) $linha[$colunaUnidade])), 0, 10);
+                if ($u !== '') {
+                    $unidade = $u;
+                }
+            }
+
+            $existente = ($codDeBarra !== '' && isset($produtosExistentes[$codDeBarra])) ? $produtosExistentes[$codDeBarra] : null;
+
+            if ($existente !== null) {
+                if ($estrategia === 'atualizar') {
+                    $dadosUpdate = [
+                        'descricao' => $descricao,
+                        'precoVenda' => $precoVenda,
+                        'unidade' => $unidade,
+                    ];
+                    if ((float) $precoCompra > 0) {
+                        $dadosUpdate['precoCompra'] = $precoCompra;
+                    }
+                    if ($estoque > 0) {
+                        $dadosUpdate['estoque'] = (int) $existente->estoque + $estoque;
+                    }
+                    if ($estoqueMinimo !== null) {
+                        $dadosUpdate['estoqueMinimo'] = $estoqueMinimo;
+                    }
+                    $this->produtos_model->edit('produtos', $dadosUpdate, 'idProdutos', (int) $existente->idProdutos);
+                    $atualizados++;
+                } else {
+                    $ignorados++;
+                }
+            } else {
+                $dadosInsert = [
+                    'empresa_id' => $empresaId,
+                    'codigo' => $proximoCodigo++,
+                    'descricao' => $descricao,
+                    'precoVenda' => $precoVenda,
+                    'precoCompra' => $precoCompra,
+                    'estoque' => $estoque,
+                    'estoqueMinimo' => $estoqueMinimo,
+                    'codDeBarra' => $codDeBarra,
+                    'unidade' => $unidade,
+                    'entrada' => 1,
+                    'saida' => 1,
+                ];
+                $this->produtos_model->add('produtos', $dadosInsert);
+                if ($codDeBarra !== '') {
+                    $produtosExistentes[$codDeBarra] = (object) ['estoque' => $estoque];
+                }
+                $importados++;
+            }
+        }
+
+        log_info("Importação de produtos via CSV finalizada. Cadastrados: {$importados}, Atualizados: {$atualizados}, Ignorados: {$ignorados}.");
+
+        $mensagem = "{$importados} produto(s) cadastrado(s) com sucesso!";
+        if ($atualizados > 0) {
+            $mensagem .= " {$atualizados} produto(s) existente(s) atualizado(s).";
+        }
+        if ($ignorados > 0) {
+            $mensagem .= " {$ignorados} linha(s) ignorada(s).";
+        }
+
+        $this->session->set_flashdata('success', $mensagem);
+        redirect(site_url('produtos'));
+    }
 }

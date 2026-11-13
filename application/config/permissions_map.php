@@ -202,6 +202,10 @@ $config['permissions_map'] = [
         'editar' => 'eProduto',
         'atualizar_estoque' => 'eProduto',
         'excluir' => 'dProduto',
+        'importar' => 'aProduto',
+        'processarCsv' => 'aProduto',
+        'concluirImportacao' => 'aProduto',
+        'modeloCsv' => 'aProduto',
     ],
 
     'Relatorios' => [

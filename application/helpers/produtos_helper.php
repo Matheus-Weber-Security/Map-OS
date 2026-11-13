@@ -68,3 +68,137 @@ if (! function_exists('produtoEstoqueBaixo')) {
         return $minimo > 0 && (int) $produto->estoque <= $minimo;
     }
 }
+
+if (! function_exists('produtoDetectarDelimitadorCsv')) {
+    /**
+     * Detecta o delimitador mais provável de um arquivo CSV (; , ou \t).
+     */
+    function produtoDetectarDelimitadorCsv(string $primeiraLinha): string
+    {
+        $contadores = [
+            ';' => substr_count($primeiraLinha, ';'),
+            ',' => substr_count($primeiraLinha, ','),
+            "\t" => substr_count($primeiraLinha, "\t"),
+        ];
+
+        arsort($contadores);
+        $melhor = key($contadores);
+
+        return $contadores[$melhor] > 0 ? $melhor : ';';
+    }
+}
+
+if (! function_exists('produtoLerLinhasCsv')) {
+    /**
+     * Lê e normaliza o conteúdo de um arquivo CSV em UTF-8, retornando cabeçalhos e linhas.
+     *
+     * @return array{0: list<string>, 1: list<array<string, string>>} [cabecalhos, linhas]
+     */
+    function produtoLerLinhasCsv(string $conteudo): array
+    {
+        // 1. Converte encoding se necessário
+        if (! mb_check_encoding($conteudo, 'UTF-8')) {
+            $conteudo = (string) mb_convert_encoding($conteudo, 'UTF-8', 'ISO-8859-1, Windows-1252, ASCII');
+        }
+
+        // 2. Remove UTF-8 BOM se presente
+        if (str_starts_with($conteudo, "\xEF\xBB\xBF")) {
+            $conteudo = substr($conteudo, 3);
+        }
+
+        $linhasBrutas = preg_split("/\r\n|\n|\r/", trim($conteudo));
+        if ($linhasBrutas === false || $linhasBrutas === [] || trim($linhasBrutas[0]) === '') {
+            return [[], []];
+        }
+
+        $delimitador = produtoDetectarDelimitadorCsv($linhasBrutas[0]);
+
+        $cabecalhos = [];
+        $linhas = [];
+
+        foreach ($linhasBrutas as $idx => $linhaStr) {
+            $linhaStr = trim($linhaStr);
+            if ($linhaStr === '') {
+                continue;
+            }
+
+            $colunas = str_getcsv($linhaStr, $delimitador);
+            if ($idx === 0) {
+                // Cabeçalhos
+                $cabecalhos = array_values(array_map('trim', $colunas));
+                continue;
+            }
+
+            if ($cabecalhos === []) {
+                continue;
+            }
+
+            // Mapeia colunas pelo nome do cabeçalho
+            $registro = [];
+            foreach ($cabecalhos as $colIdx => $colNome) {
+                if ($colNome === '') {
+                    continue;
+                }
+                $registro[$colNome] = isset($colunas[$colIdx]) ? trim((string) $colunas[$colIdx]) : '';
+            }
+
+            if ($registro !== []) {
+                $linhas[] = $registro;
+            }
+        }
+
+        return [$cabecalhos, $linhas];
+    }
+}
+
+if (! function_exists('produtoSugerirMapeamento')) {
+    /**
+     * Tenta identificar automaticamente qual coluna do CSV corresponde ao campo do sistema.
+     *
+     * @param  string        $campo       descricao, precoVenda, precoCompra, estoque, estoqueMinimo, codDeBarra, unidade
+     * @param  list<string>  $colunasCsv  Cabeçalhos detectados no CSV
+     * @return string|null   Nome da coluna sugerida ou null
+     */
+    function produtoSugerirMapeamento(string $campo, array $colunasCsv): ?string
+    {
+        $termosPorCampo = [
+            'descricao' => ['descricao', 'descrição', 'nome', 'produto', 'item', 'description'],
+            'precoVenda' => ['preco_venda', 'preço_venda', 'precovenda', 'valor_venda', 'preco', 'preço', 'valor', 'venda', 'price'],
+            'precoCompra' => ['preco_compra', 'preço_compra', 'precocompra', 'valor_compra', 'custo', 'compra', 'cost'],
+            'estoque' => ['estoque', 'quantidade', 'qtd', 'saldo', 'stock', 'qty'],
+            'estoqueMinimo' => ['estoque_minimo', 'estoqueminimo', 'minimo', 'mínimo', 'qtd_minima', 'min'],
+            'codDeBarra' => ['codigo_barras', 'código_barras', 'codbarras', 'coddebarra', 'codigo_de_barras', 'código_de_barras', 'cod_barra', 'barra', 'barras', 'ean', 'gtin', 'barcode', 'sku', 'codigo', 'código'],
+            'unidade' => ['unidade', 'unid', 'un', 'medida', 'unit'],
+        ];
+
+        $candidatos = $termosPorCampo[$campo] ?? [];
+        if ($candidatos === [] || $colunasCsv === []) {
+            return null;
+        }
+
+        $normalizar = static fn (string $str) => strtolower(preg_replace('/[^a-zA-Z0-9]/', '', (string) iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $str) ?: $str));
+
+        // 1. Busca por igualdade exata
+        foreach ($colunasCsv as $coluna) {
+            $colunaNorm = $normalizar($coluna);
+            foreach ($candidatos as $termo) {
+                if ($colunaNorm === $normalizar($termo)) {
+                    return $coluna;
+                }
+            }
+        }
+
+        // 2. Busca por substring
+        foreach ($colunasCsv as $coluna) {
+            $colunaNorm = $normalizar($coluna);
+            foreach ($candidatos as $termo) {
+                $termoNorm = $normalizar($termo);
+                if (str_contains($colunaNorm, $termoNorm)) {
+                    return $coluna;
+                }
+            }
+        }
+
+        return null;
+    }
+}

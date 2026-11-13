@@ -79,9 +79,14 @@ $vazio = $temFiltro
                 <?= e(($total === 1 ? '1 produto' : number_format($total, 0, ',', '.') . ' produtos') . ($temFiltro ? ($total === 1 ? ' encontrado' : ' encontrados') . ' com os filtros' : '')) ?>
             </p>
         </div>
-        <?php if ($pode['etiquetas']) { ?>
-            <?= component('button', ['label' => 'Etiquetas', 'icon' => 'barcode', 'variant' => 'outline', 'attrs' => ['data-modal-abrir' => 'etiquetas-produtos']]) ?>
-        <?php } ?>
+        <div class="flex flex-wrap items-center gap-2">
+            <?php if ($pode['adicionar']) { ?>
+                <?= component('button', ['label' => 'Importar produtos', 'icon' => 'upload', 'variant' => 'outline', 'href' => site_url('produtos/importar')]) ?>
+            <?php } ?>
+            <?php if ($pode['etiquetas']) { ?>
+                <?= component('button', ['label' => 'Etiquetas', 'icon' => 'barcode', 'variant' => 'outline', 'attrs' => ['data-modal-abrir' => 'etiquetas-produtos']]) ?>
+            <?php } ?>
+        </div>
     </header>
 
     <form method="get" action="<?= e(site_url('produtos')) ?>" role="search" aria-label="Filtrar produtos" class="grid items-end gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-[minmax(0,1fr)_12rem_auto]">
