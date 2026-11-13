@@ -63,19 +63,16 @@ $grade = 'mt-4 grid gap-4 sm:grid-cols-2';
             <h2 id="secao-acesso" class="text-heading-sm text-text">Acesso</h2>
             <div class="<?= e($grade) ?>">
                 <?= component('input', $campo('email', ['label' => 'E-mail', 'type' => 'email', 'required' => true, 'autocomplete' => 'username', 'help' => 'Usado para entrar no painel.', 'attrs' => ['maxlength' => 80, 'data-msg-vazio' => 'Informe o e-mail.']])) ?>
-                <div class="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
-                    <?= component('input', [
-                        'name' => 'senha',
-                        'label' => 'Senha',
-                        'type' => 'password',
-                        'required' => ! $editando,
-                        'autocomplete' => 'new-password',
-                        'error' => $errosDeCampo['senha'] ?? null,
-                        'help' => $editando ? 'Deixe em branco para manter a senha atual. Mínimo de 6 caracteres.' : 'Mínimo de 6 caracteres.',
-                        'attrs' => ['minlength' => USUARIO_SENHA_MINIMA, 'data-msg-vazio' => 'Informe a senha.', 'data-msg-invalido' => 'A senha precisa ter no mínimo 6 caracteres.'],
-                    ]) ?>
-                    <?= component('button', ['label' => 'Mostrar senha', 'icon' => 'eye', 'icon_only' => true, 'variant' => 'ghost', 'class' => 'mt-7', 'attrs' => ['data-mostrar-senha' => 'campo-senha', 'aria-controls' => 'campo-senha', 'aria-pressed' => 'false']]) ?>
-                </div>
+                <?= component('input', [
+                    'name' => 'senha',
+                    'label' => 'Senha',
+                    'type' => 'password',
+                    'required' => ! $editando,
+                    'autocomplete' => 'new-password',
+                    'error' => $errosDeCampo['senha'] ?? null,
+                    'help' => $editando ? 'Deixe em branco para manter a senha atual. Mínimo de 6 caracteres.' : 'Mínimo de 6 caracteres.',
+                    'attrs' => ['minlength' => USUARIO_SENHA_MINIMA, 'data-msg-vazio' => 'Informe a senha.', 'data-msg-invalido' => 'A senha precisa ter no mínimo 6 caracteres.'],
+                ]) ?>
                 <?= component('select', [
                     'name' => 'permissoes_id',
                     'label' => 'Grupo de permissão',
