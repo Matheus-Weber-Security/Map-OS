@@ -103,7 +103,7 @@ if (! function_exists('configuracaoCampos')) {
                 'EMAIL_SMTP_HOST' => ['destino' => 'env', 'tipo' => 'texto', 'rotulo' => 'Servidor SMTP', 'max' => 255, 'ajuda' => 'Endereço do servidor de e-mail do seu provedor (ex: smtp.gmail.com, smtp.office365.com ou mail.seudominio.com.br).'],
                 'EMAIL_SMTP_PORT' => ['destino' => 'env', 'tipo' => 'numero', 'rotulo' => 'Porta', 'max' => 5, 'ajuda' => 'Porta de conexão do servidor SMTP. Use 587 para criptografia TLS (recomendada) ou 465 para SSL.'],
                 'EMAIL_SMTP_CRYPTO' => ['destino' => 'env', 'tipo' => 'opcao', 'rotulo' => 'Criptografia', 'opcoes' => ['tls' => 'TLS', 'ssl' => 'SSL']],
-                'EMAIL_SMTP_USER' => ['destino' => 'env', 'tipo' => 'texto', 'rotulo' => 'Usuário', 'max' => 255],
+                'EMAIL_SMTP_USER' => ['destino' => 'env', 'tipo' => 'texto', 'rotulo' => 'Usuário', 'max' => 255, 'ajuda' => 'Usuário de autenticação do servidor de e-mail (geralmente o seu endereço de e-mail completo, e não o usuário do sistema).'],
                 'EMAIL_SMTP_PASS' => ['destino' => 'env', 'tipo' => 'segredo', 'rotulo' => 'Senha', 'max' => 255],
                 'EMAIL_FROM' => ['destino' => 'env', 'tipo' => 'texto', 'rotulo' => 'Remetente padrão (From)', 'max' => 255, 'ajuda' => 'E-mail exibido como remetente nos envios (padrão: nao-responder@nexustkt.com.br).'],
             ],
