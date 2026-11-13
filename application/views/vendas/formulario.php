@@ -59,7 +59,7 @@ $statusOpcoes = array_combine(array_keys(OS_STATUS_VARIANTES), array_keys(OS_STA
     <header class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div class="flex flex-col gap-1">
             <div class="flex flex-wrap items-center gap-3">
-                <h1 class="font-display text-heading-xl text-text"><?= e($editando ? 'Editar venda #' . $venda->idVendas : 'Nova venda') ?></h1>
+                <h1 class="font-display text-heading-xl text-text"><?= e($editando ? 'Editar venda #' . ($venda->codigo ?? $venda->idVendas) : 'Nova venda') ?></h1>
                 <?php if ($editando) { ?>
                     <?= component('pill-status', osStatusPill($venda->status)) ?>
                 <?php } ?>

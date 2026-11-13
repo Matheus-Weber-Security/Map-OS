@@ -36,7 +36,7 @@ $faturada = (int) $compra->faturado === 1;
                 <?= component('button', ['label' => 'Excluir', 'icon' => 'trash-2', 'variant' => 'ghost', 'class' => 'hover:text-danger-ink', 'attrs' => [
                     'data-modal-abrir' => 'excluir-compra',
                     'data-valor-id' => (string) $compra->idCompras,
-                    'data-valor-numero' => (string) $compra->idCompras,
+                    'data-valor-numero' => (string) ($compra->codigo ?? $compra->idCompras),
                     'data-valor-fornecedor' => (string) ($compra->nomeFornecedor ?? 'Fornecedor avulso'),
                 ]]) ?>
             <?php } ?>

@@ -58,7 +58,7 @@ $dados = $campos([
     <header class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div class="min-w-0">
             <div class="flex flex-wrap items-center gap-3">
-                <h1 class="font-display text-heading-xl text-text"><?= e('Cobrança #' . $id) ?></h1>
+                <h1 class="font-display text-heading-xl text-text"><?= e('Cobrança #' . ($result->codigo ?? $id)) ?></h1>
                 <?= component('pill-status', cobrancaStatusPill($result->status)) ?>
             </div>
             <p class="text-caption [overflow-wrap:anywhere] text-muted"><?= e(cobrancaDescricaoDoStatus($gateways, $result->payment_gateway, $result->status)) ?></p>

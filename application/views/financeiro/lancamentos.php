@@ -44,7 +44,7 @@ $colunas = [
     ['label' => 'Valor', 'align' => 'right', 'nowrap' => true, 'render' => fn ($l) => dinheiro(financeiroLiquido($l))],
     ['label' => 'Ações', 'align' => 'right', 'nowrap' => true, 'render' => function ($l) use ($pode, $filtros, $permite_editar_pago, $permite_excluir_pago) {
         $acoes = [];
-        $nome = 'lançamento ' . $l->idLancamentos;
+        $nome = 'lançamento ' . ($l->codigo ?? $l->idLancamentos);
         $editavel = ((int) $l->baixado !== 1) || $permite_editar_pago;
         $excluivel = ((int) $l->baixado !== 1) || $permite_excluir_pago;
 

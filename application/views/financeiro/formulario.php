@@ -37,7 +37,7 @@ for ($i = 1; $i <= FINANCEIRO_PARCELAS_MAX; $i++) {
 <div class="flex max-w-4xl flex-col gap-4 pt-2 pb-8 mx-auto w-full" <?= js_module('financeiro/formulario') ?>>
     <header class="flex flex-col gap-1">
         <div class="flex flex-wrap items-center gap-3">
-            <h1 class="font-display text-heading-xl text-text"><?= e($editando ? 'Editar lançamento #' . $lancamento->idLancamentos : 'Novo lançamento') ?></h1>
+            <h1 class="font-display text-heading-xl text-text"><?= e($editando ? 'Editar lançamento #' . ($lancamento->codigo ?? $lancamento->idLancamentos) : 'Novo lançamento') ?></h1>
             <?php if ($editando) { ?>
                 <?= component('pill-status', financeiroStatusPill($lancamento, date('Y-m-d'))) ?>
             <?php } ?>

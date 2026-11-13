@@ -7,10 +7,10 @@
  * @var object $result  Termo, com nome, telefone e e-mail do responsável
  * @var array{editar: bool, excluir: bool} $pode
  */
-$nome = trim((string) $result->refGarantia) !== '' ? $result->refGarantia : 'Termo #' . (int) $result->idGarantias;
+$nome = trim((string) $result->refGarantia) !== '' ? $result->refGarantia : 'Termo #' . (int) ($result->codigo ?? $result->idGarantias);
 $caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
 $dados = array_filter([
-    'Código' => '#' . (int) $result->idGarantias,
+    'Código' => '#' . (int) ($result->codigo ?? $result->idGarantias),
     'Data' => dataBr($result->dataGarantia),
     'Responsável' => (string) $result->nome,
     'Telefone' => (string) $result->telefone,

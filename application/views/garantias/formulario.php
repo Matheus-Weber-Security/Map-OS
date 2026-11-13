@@ -16,7 +16,7 @@ $errosDeCampo = array_diff_key($erros, ['_geral' => true]);
 <div class="flex max-w-4xl flex-col gap-4 pt-2 pb-8 mx-auto w-full">
     <header>
         <h1 class="font-display text-heading-xl text-text"><?= e($editando ? 'Editar termo de garantia' : 'Novo termo de garantia') ?></h1>
-        <p class="text-caption text-muted"><?= e($editando ? 'Termo #' . (int) $garantia->idGarantias . ' · ' . dataBr($garantia->dataGarantia) . ' · ' . $garantia->nome : 'O texto sai na impressão da OS e da venda que usarem este termo.') ?></p>
+        <p class="text-caption text-muted"><?= e($editando ? 'Termo #' . (int) ($garantia->codigo ?? $garantia->idGarantias) . ' · ' . dataBr($garantia->dataGarantia) . ' · ' . $garantia->nome : 'O texto sai na impressão da OS e da venda que usarem este termo.') ?></p>
     </header>
 
     <?php if ($erroGeral !== null) { ?>

@@ -109,11 +109,13 @@ class Produtos_model extends CI_Model
     public function add($table, $data)
     {
         if ($table === 'produtos') {
+            $empresaId = (int) ($data['empresa_id'] ?? empresa_ativa_id());
+            $data['empresa_id'] = $empresaId;
+            if (empty($data['codigo'])) {
+                $data['codigo'] = $this->gerarProximoCodigo($empresaId);
+            }
             if (empty($data['idProdutos'])) {
                 $data['idProdutos'] = $this->gerarProximoId();
-            }
-            if (empty($data['empresa_id'])) {
-                $data['empresa_id'] = empresa_ativa_id();
             }
         }
 

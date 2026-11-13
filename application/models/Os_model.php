@@ -317,6 +317,11 @@ class Os_model extends CI_Model
         if ($table === 'os' && empty($data['idOs'])) {
             $data['idOs'] = $this->gerarProximoId();
         }
+        if ($table === 'lancamentos' && empty($data['codigo'])) {
+            $empresaId = (int) ($data['empresa_id'] ?? empresa_ativa_id());
+            $ultimo = $this->db->select_max('codigo')->where('empresa_id', $empresaId)->get('lancamentos')->row();
+            $data['codigo'] = ($ultimo && (int) $ultimo->codigo > 0) ? ((int) $ultimo->codigo + 1) : 1;
+        }
 
         $this->db->insert($table, $data);
         if ($this->db->affected_rows() == '1') {

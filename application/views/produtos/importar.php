@@ -43,7 +43,7 @@ $caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
                 <label for="arquivo_csv" class="text-label-md text-text">Arquivo (.csv) *</label>
                 <input type="file" id="arquivo_csv" name="arquivo_csv" accept=".csv,text/csv,text/plain" required
                        class="block w-full rounded-sm border border-input bg-field px-3 py-2 text-body-md text-text file:mr-3 file:rounded-sm file:border-0 file:bg-surface-subtle file:px-3 file:py-1 file:text-label-md file:text-text focus:outline-3 focus:outline-offset-0 focus:outline-ring cursor-pointer">
-                <p class="text-caption text-muted">Formatos suportados: .csv delimitado por vírgula ou ponto e vírgula (máximo 10 MB).</p>
+                <p class="text-caption text-muted">Formatos suportados: .csv delimitado por vírgula ou ponto e vírgula (máximo 50 MB).</p>
             </div>
 
             <div class="mt-6 flex justify-end gap-2">

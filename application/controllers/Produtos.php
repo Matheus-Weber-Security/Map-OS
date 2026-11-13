@@ -318,8 +318,8 @@ class Produtos extends MY_Controller
         }
 
         $tamanho = (int) ($_FILES['arquivo_csv']['size'] ?? 0);
-        if ($tamanho <= 0 || $tamanho > 10 * 1024 * 1024) {
-            $this->session->set_flashdata('error', 'O arquivo enviado é inválido ou excede o limite de 10 MB.');
+        if ($tamanho <= 0 || $tamanho > 50 * 1024 * 1024) {
+            $this->session->set_flashdata('error', 'O arquivo enviado é inválido ou excede o limite de 50 MB.');
             redirect(site_url('produtos/importar'));
         }
 

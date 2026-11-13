@@ -14,12 +14,12 @@ $temFiltro = $filtros !== [];
 
 $colunas = [
     ['label' => 'Cód.', 'align' => 'right', 'nowrap' => true, 'render' => fn ($g) => (string) ($g->codigo ?? $g->idGarantias)],
-    ['label' => 'Referência', 'class' => 'min-w-32', 'render' => fn ($g) => component('link', ['label' => trim((string) $g->refGarantia) !== '' ? $g->refGarantia : 'Termo #' . (int) $g->idGarantias, 'href' => site_url('garantias/visualizar/' . (int) $g->idGarantias), 'class' => 'font-medium'])],
+    ['label' => 'Referência', 'class' => 'min-w-32', 'render' => fn ($g) => component('link', ['label' => trim((string) $g->refGarantia) !== '' ? $g->refGarantia : 'Termo #' . (int) ($g->codigo ?? $g->idGarantias), 'href' => site_url('garantias/visualizar/' . (int) $g->idGarantias), 'class' => 'font-medium'])],
     ['label' => 'Termo', 'class' => 'min-w-48 [overflow-wrap:anywhere]', 'hide_until' => 'md', 'render' => fn ($g) => osTextoCurto($g->textoGarantia, 80)],
     ['label' => 'Responsável', 'nowrap' => true, 'hide_until' => 'lg', 'render' => fn ($g) => (string) ($g->nome ?? '')],
     ['label' => 'Data', 'align' => 'right', 'nowrap' => true, 'hide_until' => 'lg', 'render' => fn ($g) => dataBr($g->dataGarantia)],
     ['label' => 'Ações', 'align' => 'right', 'nowrap' => true, 'render' => function ($g) use ($pode) {
-        $nome = trim((string) $g->refGarantia) !== '' ? $g->refGarantia : 'termo #' . (int) $g->idGarantias;
+        $nome = trim((string) $g->refGarantia) !== '' ? $g->refGarantia : 'termo #' . (int) ($g->codigo ?? $g->idGarantias);
         $acoes = [
             component('button', ['label' => 'Ver ' . $nome, 'icon' => 'eye', 'icon_only' => true, 'variant' => 'ghost', 'size' => 'sm', 'href' => site_url('garantias/visualizar/' . (int) $g->idGarantias)]),
             component('button', ['label' => 'Imprimir ' . $nome, 'icon' => 'printer', 'icon_only' => true, 'variant' => 'ghost', 'size' => 'sm', 'href' => site_url('garantias/imprimir/' . (int) $g->idGarantias), 'attrs' => ['target' => '_blank', 'rel' => 'noopener']]),

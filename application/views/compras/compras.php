@@ -25,13 +25,13 @@ $colunas = [
     ['label' => 'Total', 'align' => 'right', 'nowrap' => true, 'render' => fn ($c) => dinheiro($c->total)],
     ['label' => 'Ações', 'align' => 'right', 'nowrap' => true, 'render' => function ($c) use ($pode) {
         $acoes = [
-            component('button', ['label' => 'Ver compra ' . $c->idCompras, 'icon' => 'eye', 'icon_only' => true, 'variant' => 'ghost', 'size' => 'sm', 'href' => site_url('compras/visualizar/' . $c->idCompras)]),
+            component('button', ['label' => 'Ver compra ' . ($c->codigo ?? $c->idCompras), 'icon' => 'eye', 'icon_only' => true, 'variant' => 'ghost', 'size' => 'sm', 'href' => site_url('compras/visualizar/' . $c->idCompras)]),
         ];
         if ($pode['excluir']) {
-            $acoes[] = component('button', ['label' => 'Excluir compra ' . $c->idCompras, 'icon' => 'trash-2', 'icon_only' => true, 'variant' => 'ghost', 'size' => 'sm', 'class' => 'hover:text-danger-ink', 'attrs' => [
+            $acoes[] = component('button', ['label' => 'Excluir compra ' . ($c->codigo ?? $c->idCompras), 'icon' => 'trash-2', 'icon_only' => true, 'variant' => 'ghost', 'size' => 'sm', 'class' => 'hover:text-danger-ink', 'attrs' => [
                 'data-modal-abrir' => 'excluir-compra',
                 'data-valor-id' => (string) $c->idCompras,
-                'data-valor-numero' => (string) $c->idCompras,
+                'data-valor-numero' => (string) ($c->codigo ?? $c->idCompras),
                 'data-valor-fornecedor' => (string) ($c->nomeFornecedor ?? 'Fornecedor avulso'),
             ]]);
         }
