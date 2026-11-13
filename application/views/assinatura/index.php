@@ -151,7 +151,7 @@ $primeiraForma = $formasAtivas[0];
             <!-- Botão Principal de Renovação (+30 dias) -->
             <div class="pt-2">
                 <button id="btn-pagar-assinatura" type="button" class="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary-hover active:bg-primary-hover text-on-primary font-bold py-3.5 px-6 shadow-sm transition-all text-body-lg">
-                    <?= icon($primeiraForma->icone ?: 'qr-code', ['class' => 'size-5', 'id' => 'btn-icone']) ?>
+                    <?= icon($primeiraForma->icone ?: 'qr-code', ['class' => 'size-5']) ?>
                     <span id="btn-label">Renovar assinatura via <?= e($primeiraForma->nome) ?> - R$ <?= number_format($valorFinal, 2, ',', '.') ?>/mês</span>
                 </button>
             </div>
@@ -322,7 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const seletorFormas = document.getElementById('seletor-formas-pagamento');
     const btnPagar = document.getElementById('btn-pagar-assinatura');
     const btnLabel = document.getElementById('btn-label');
-    const btnIcone = document.getElementById('btn-icone');
+
     const csrfName = '<?= e($this->security->get_csrf_token_name()) ?>';
     const csrfHash = '<?= e($this->security->get_csrf_hash()) ?>';
 
