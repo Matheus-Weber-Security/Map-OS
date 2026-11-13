@@ -6,9 +6,9 @@ $totalProdutos = 0;
 <html lang="pt-br">
 
 <head>
-    <title><?= e($this->config->item('app_name')) ?> - <?= e($result->idOs) ?> - <?= e($result->nomeCliente) ?></title>
+    <title><?= e($this->config->item('app_name')) ?> - <?= e($result->codigo ?? $result->idOs) ?> - <?= e($result->nomeCliente) ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="<?= base_url() ?>assets/dist/imprimir.css">
+    <link rel="stylesheet" href="<?= base_url() ?>assets/dist/imprimir.css?v=<?= file_exists(FCPATH . 'assets/dist/imprimir.css') ? filemtime(FCPATH . 'assets/dist/imprimir.css') : '1.0' ?>">
 </head>
 <body>
     <div class="doc-folha">
@@ -20,7 +20,7 @@ $totalProdutos = 0;
                     </div>
                 <?php else : ?>
                     <div class="flex items-center shrink-0">
-                        <img src="<?= e(emitenteLogoSrc($emitente->url_logo ?? null)) ?>" class="h-auto w-[100px] max-w-full" alt="">
+                        <img src="<?= e(emitenteLogoSrc($emitente->url_logo ?? null)) ?>" width="100" style="max-width:100px;max-height:75px;object-fit:contain;" class="h-auto w-[100px] max-w-full" alt="">
                     </div>
                     <div class="flex-1 min-w-0 mt-0.5 px-2.5">
                         <span class="text-base"><b><?= e($emitente->nome) ?></b></span><br>

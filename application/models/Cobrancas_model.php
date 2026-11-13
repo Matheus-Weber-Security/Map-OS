@@ -72,7 +72,7 @@ class Cobrancas_model extends CI_Model
 
     public function getById($id)
     {
-        $this->db->select('cobrancas.*, clientes.*');
+        $this->db->select('cobrancas.*, clientes.*, cobrancas.codigo as codigo, cobrancas.idCobranca as idCobranca, clientes.codigo as codigo_cliente');
         $this->db->from('cobrancas');
         $this->db->where('cobrancas.idCobranca', $id);
         $this->db->where('cobrancas.empresa_id', empresa_ativa_id());
