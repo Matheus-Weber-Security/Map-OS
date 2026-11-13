@@ -33,9 +33,12 @@ class Audit_model extends CI_Model
 
     public function add($data)
     {
-        if (! isset($data['empresa_id']) && $this->db->field_exists('empresa_id', 'logs')) {
-            $data['empresa_id'] = empresa_ativa_id();
+        if ($this->db->field_exists('empresa_id', 'logs')) {
+            $data['empresa_id'] = $data['empresa_id'] ?? empresa_ativa_id();
+        } else {
+            unset($data['empresa_id']);
         }
+
         $this->db->insert('logs', $data);
         if ($this->db->affected_rows() == '1') {
             return true;

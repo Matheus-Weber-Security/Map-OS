@@ -59,8 +59,12 @@ class Arquivos_model extends CI_Model
 
     public function add($table, $data)
     {
-        if ($table === 'documentos' && $this->db->field_exists('empresa_id', 'documentos')) {
-            $data['empresa_id'] = $data['empresa_id'] ?? empresa_ativa_id();
+        if ($table === 'documentos') {
+            if ($this->db->field_exists('empresa_id', 'documentos')) {
+                $data['empresa_id'] = $data['empresa_id'] ?? empresa_ativa_id();
+            } else {
+                unset($data['empresa_id']);
+            }
         }
 
         $this->db->insert($table, $data);
