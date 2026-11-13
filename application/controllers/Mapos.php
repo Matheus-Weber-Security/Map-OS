@@ -501,7 +501,7 @@ class Mapos extends MY_Controller
         }
 
         $isSuperadmin = (bool) $this->session->userdata('is_superadmin');
-        $empresaId = (int) ($this->session->userdata('empresa_id') ?: 1);
+        $empresaId = empresa_ativa_id();
         $tipo = $this->input->get('tipo');
 
         $this->load->library('backup_tenant');
@@ -790,7 +790,7 @@ class Mapos extends MY_Controller
             redirect($voltar);
         }
 
-        $empresaId = (int) ($this->session->userdata('empresa_id') ?: 1);
+        $empresaId = empresa_ativa_id();
         if ($this->db->table_exists('email_logs')) {
             $this->db->where('email_id', $id)->where('empresa_id', $empresaId)->delete('email_logs');
         }
