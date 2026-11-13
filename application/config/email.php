@@ -1,8 +1,28 @@
 <?php
 
-$envEmail = static fn (string $chave, mixed $padrao = null) => ($_ENV[$chave] ?? null) !== null && $_ENV[$chave] !== ''
-    ? $_ENV[$chave]
-    : (getenv($chave) !== false && getenv($chave) !== '' ? getenv($chave) : $padrao);
+$empresaId = 1;
+$configsTenant = [];
+if (function_exists('get_instance')) {
+    $ci = &get_instance();
+    if (isset($ci->session) && $ci->session->userdata('empresa_id')) {
+        $empresaId = (int) $ci->session->userdata('empresa_id');
+    }
+    if (isset($ci->data['configuration'])) {
+        $configsTenant = $ci->data['configuration'];
+    }
+}
+
+$envEmail = static function (string $chave, mixed $padrao = null) use ($empresaId, $configsTenant) {
+    if (isset($configsTenant[$chave]) && $configsTenant[$chave] !== '') {
+        return $configsTenant[$chave];
+    }
+    if ($empresaId === 1) {
+        return ($_ENV[$chave] ?? null) !== null && $_ENV[$chave] !== ''
+            ? $_ENV[$chave]
+            : (getenv($chave) !== false && getenv($chave) !== '' ? getenv($chave) : $padrao);
+    }
+    return $padrao;
+};
 
 $config['protocol'] = (string) $envEmail('EMAIL_PROTOCOL', 'smtp');
 $config['smtp_host'] = (string) $envEmail('EMAIL_SMTP_HOST', 'smtp.gmail.com');

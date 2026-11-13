@@ -621,22 +621,43 @@ class Mapos_model extends CI_Model
      * @param  array  $data
      * @return bool
      */
-    public function saveConfiguracao($data)
+    public function saveConfiguracao($data, ?int $empresaId = null)
     {
         try {
-            foreach ($data as $key => $valor) {
-                // Upsert: um banco antigo (instalado pelo banco.sql antes das
-                // migrations de tema) pode não ter a linha da config. Um UPDATE
-                // puro não casaria nada e a configuração nunca seria gravada,
-                // por isso insere quando a linha ainda não existe.
-                $existe = $this->db->where('config', $key)->count_all_results('configuracoes') > 0;
+            $empresaId = (int) ($empresaId ?: (function_exists('empresa_ativa_id') ? empresa_ativa_id() : ($this->session->userdata('empresa_id') ?: 1)));
+            if ($empresaId <= 0) {
+                $empresaId = 1;
+            }
+            $temEmpresaId = $this->db->field_exists('empresa_id', 'configuracoes');
 
-                if ($existe) {
-                    $this->db->set('valor', $valor);
-                    $this->db->where('config', $key);
-                    $this->db->update('configuracoes');
+            foreach ($data as $key => $valor) {
+                if ($temEmpresaId) {
+                    $existe = $this->db->where('config', $key)
+                        ->where('empresa_id', $empresaId)
+                        ->count_all_results('configuracoes') > 0;
+
+                    if ($existe) {
+                        $this->db->set('valor', $valor);
+                        $this->db->where('config', $key);
+                        $this->db->where('empresa_id', $empresaId);
+                        $this->db->update('configuracoes');
+                    } else {
+                        $this->db->insert('configuracoes', [
+                            'empresa_id' => $empresaId,
+                            'config' => $key,
+                            'valor' => $valor,
+                        ]);
+                    }
                 } else {
-                    $this->db->insert('configuracoes', ['config' => $key, 'valor' => $valor]);
+                    $existe = $this->db->where('config', $key)->count_all_results('configuracoes') > 0;
+
+                    if ($existe) {
+                        $this->db->set('valor', $valor);
+                        $this->db->where('config', $key);
+                        $this->db->update('configuracoes');
+                    } else {
+                        $this->db->insert('configuracoes', ['config' => $key, 'valor' => $valor]);
+                    }
                 }
             }
         } catch (Exception $e) {

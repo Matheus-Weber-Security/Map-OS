@@ -822,24 +822,26 @@ class Mapos extends MY_Controller
         $empresaId = (int) ($this->session->userdata('empresa_id') ?: 1);
         $ehMaster = ($empresaId === 1 || (bool) $this->session->userdata('is_superadmin'));
 
-        if (! $ehMaster && in_array($aba, ['email', 'pagamentos', 'api', 'sistema'], true)) {
-            $this->session->set_flashdata('error', 'Esta seção de configurações é restrita ao administrador da plataforma.');
-
-            return redirect(site_url('mapos/configurar?aba=geral'));
-        }
-
         if ($this->input->method() === 'post' && $aba !== 'sistema') {
             $postDados = $this->input->post();
-            if (! $ehMaster && $aba === 'financeiro') {
-                unset($postDados['pix_key']);
-            }
             [$config, $env, $erros] = configuracaoDadosDoFormulario($aba, $postDados);
 
-            if ($erros === [] && $env !== [] && !$this->gravarEnv($env)) {
-                $erros['_geral'] = 'Não foi possível gravar o arquivo application/.env. Confira a permissão de escrita.';
+            // Todas as configurações da aba são salvas no banco para a empresa ativa
+            $dadosParaSalvar = array_merge($config, $env);
+
+            // Se for a empresa master (id 1) e tiver variáveis de env, sincroniza com o .env também
+            if ($ehMaster && $empresaId === 1 && $env !== []) {
+                $this->gravarEnv($env);
             }
 
-            if ($erros === [] && ($config === [] || $this->mapos_model->saveConfiguracao($config))) {
+            if ($erros === [] && ($dadosParaSalvar === [] || $this->mapos_model->saveConfiguracao($dadosParaSalvar, $empresaId))) {
+                // Sincroniza a chave PIX no emitente se informada na aba financeiro
+                if ($aba === 'financeiro' && isset($postDados['pix_key']) && $this->db->table_exists('emitente') && $this->db->field_exists('pix_key', 'emitente')) {
+                    $this->db->where('empresa_id', $empresaId)->update('emitente', [
+                        'pix_key' => trim((string) $postDados['pix_key']),
+                    ]);
+                }
+
                 log_info('Alterou as configurações do sistema (' . CONFIG_ABAS[$aba] . ').');
                 $this->session->set_flashdata('success', 'Configurações salvas.');
 
@@ -851,12 +853,8 @@ class Mapos extends MY_Controller
 
         $this->data['menuConfiguracoes'] = 'Sistema';
         $this->data['aba'] = $aba;
-        $camposAba = configuracaoCampos($aba);
-        if (! $ehMaster && $aba === 'financeiro') {
-            unset($camposAba['pix_key']);
-        }
-        $this->data['campos'] = $camposAba;
-        $this->data['valores'] = configuracaoValores($aba, $this->input->method() === 'post' ? $this->input->post() : null, $this->data['configuration'], $_ENV);
+        $this->data['campos'] = configuracaoCampos($aba);
+        $this->data['valores'] = configuracaoValores($aba, $this->input->method() === 'post' ? $this->input->post() : null, $this->data['configuration'], $_ENV, $empresaId);
         $this->data['erros'] = $erros;
         $this->data['pode_backup'] = $this->permite('cBackup');
         $this->data['is_superadmin'] = $ehMaster;

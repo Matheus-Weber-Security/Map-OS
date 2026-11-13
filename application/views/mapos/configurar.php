@@ -27,9 +27,6 @@ $curtos = ['os' => 'OS', 'vendas' => 'Vendas', 'pagamentos' => 'Gateways', 'sist
 
 $abas = [];
 foreach (CONFIG_ABAS as $chave => $rotulo) {
-    if (empty($is_superadmin) && in_array($chave, ['email', 'pagamentos', 'api', 'sistema'], true)) {
-        continue;
-    }
     $abas[] = ['label' => $rotulo, 'short' => $curtos[$chave] ?? null, 'url' => site_url('mapos/configurar') . ($chave === 'geral' ? '' : listagemQuery(['aba' => $chave])), 'active' => $aba === $chave, 'icon' => $icones[$chave]];
 }
 
@@ -119,12 +116,14 @@ foreach ($campos as $nome => $def) {
     <?php if ($aba === 'sistema') { ?>
         <section class="<?= e($caixa) ?>" aria-labelledby="secao-banco">
             <h2 id="secao-banco" class="text-heading-sm text-text">Banco de dados</h2>
-            <p class="mt-1 text-caption text-muted">O sistema opera com sincronização em tempo real. Esta opção aplica migrações de estrutura (novas tabelas ou colunas) quando houver novas versões do sistema.</p>
+            <p class="mt-1 text-caption text-muted">O sistema opera com sincronização em tempo real dos seus dados.</p>
             <div class="mt-4 flex flex-wrap gap-2">
-                <?= component('button', ['label' => 'Atualizar banco de dados', 'icon' => 'download', 'variant' => 'outline', 'attrs' => ['data-modal-abrir' => 'atualizar-banco']]) ?>
+                <?php if (! empty($is_superadmin)) { ?>
+                    <?= component('button', ['label' => 'Atualizar banco de dados', 'icon' => 'download', 'variant' => 'outline', 'attrs' => ['data-modal-abrir' => 'atualizar-banco']]) ?>
+                <?php } ?>
                 <?php if ($pode_backup) { ?>
                     <?= component('button', ['label' => 'Baixar backup da empresa', 'icon' => 'archive', 'variant' => 'ghost', 'href' => site_url('mapos/backup')]) ?>
-                    <?php if (!empty($is_superadmin)) { ?>
+                    <?php if (! empty($is_superadmin)) { ?>
                         <?= component('button', ['label' => 'Baixar backup completo (todas as empresas)', 'icon' => 'download', 'variant' => 'outline', 'href' => site_url('mapos/backup?tipo=completo')]) ?>
                     <?php } ?>
                 <?php } ?>
@@ -132,10 +131,13 @@ foreach ($campos as $nome => $def) {
         </section>
         <section class="<?= e($caixa) ?>" aria-labelledby="secao-mapos">
             <h2 id="secao-mapos" class="text-heading-sm text-text">Nexus Ticket</h2>
-            <p class="mt-1 text-caption text-muted">Consulta a última release do GitHub, mostra o que mudou e, se você confirmar, substitui os arquivos depois de conferir o SHA256 do zip. O <code>.env</code> e os uploads não são alterados.</p>
-            <div class="mt-4">
-                <?= component('button', ['label' => 'Verificar atualização', 'icon' => 'download', 'variant' => 'outline', 'href' => site_url('mapos/atualizacao')]) ?>
-            </div>
+            <p class="mt-1 text-caption text-muted">Versão do sistema: <strong><?= e($this->config->item('app_version') ?: '5.2.2') ?></strong>.</p>
+            <?php if (! empty($is_superadmin)) { ?>
+                <p class="mt-1 text-caption text-muted">Consulta a última release do GitHub, mostra o que mudou e, se você confirmar, substitui os arquivos depois de conferir o SHA256 do zip. O <code>.env</code> e os uploads não são alterados.</p>
+                <div class="mt-4">
+                    <?= component('button', ['label' => 'Verificar atualização', 'icon' => 'download', 'variant' => 'outline', 'href' => site_url('mapos/atualizacao')]) ?>
+                </div>
+            <?php } ?>
         </section>
 
         <form id="form-atualizar-banco" method="post" action="<?= e(site_url('mapos/atualizarBanco')) ?>" hidden><input type="hidden" name="<?= e($this->security->get_csrf_token_name()) ?>" value="<?= e($this->security->get_csrf_hash()) ?>"></form>

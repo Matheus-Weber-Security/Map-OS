@@ -487,10 +487,36 @@ class MY_Controller extends CI_Controller
     {
         $this->CI = &get_instance();
         $this->CI->load->database();
-        $configuracoes = $this->CI->db->get('configuracoes')->result();
 
-        foreach ($configuracoes as $c) {
-            $this->data['configuration'][$c->config] = $c->valor;
+        $empresaId = (int) ($this->session->userdata('empresa_id') ?: 1);
+        if ($empresaId <= 0) {
+            $empresaId = 1;
+        }
+        $temEmpresaId = $this->CI->db->field_exists('empresa_id', 'configuracoes');
+
+        if ($temEmpresaId) {
+            // 1. Carrega configurações base da empresa 1
+            $configuracoesPadrao = $this->CI->db->where('empresa_id', 1)->get('configuracoes')->result();
+            foreach ($configuracoesPadrao as $c) {
+                // Não herdar credenciais privadas de e-mail, gateway e PIX da empresa 1 para outras empresas
+                if ($empresaId > 1 && $this->isConfigSensivel($c->config)) {
+                    continue;
+                }
+                $this->data['configuration'][$c->config] = $c->valor;
+            }
+
+            // 2. Se for outra empresa, carrega e sobrepõe as configurações específicas dela
+            if ($empresaId > 1) {
+                $configuracoesTenant = $this->CI->db->where('empresa_id', $empresaId)->get('configuracoes')->result();
+                foreach ($configuracoesTenant as $c) {
+                    $this->data['configuration'][$c->config] = $c->valor;
+                }
+            }
+        } else {
+            $configuracoes = $this->CI->db->get('configuracoes')->result();
+            foreach ($configuracoes as $c) {
+                $this->data['configuration'][$c->config] = $c->valor;
+            }
         }
 
         // Nome do sistema fixo e bloqueado para manter o original
@@ -503,12 +529,19 @@ class MY_Controller extends CI_Controller
 
         // Chave PIX personalizada por empresa (tabela emitente)
         if ($this->CI->db->table_exists('emitente') && $this->CI->db->field_exists('pix_key', 'emitente')) {
-            $empresaId = (int) ($this->session->userdata('empresa_id') ?: 1);
             $emitenteTenant = $this->CI->db->where('empresa_id', $empresaId)->get('emitente', 1)->row();
             if ($emitenteTenant && ! empty($emitenteTenant->pix_key)) {
                 $this->data['configuration']['pix_key'] = $emitenteTenant->pix_key;
             }
         }
+    }
+
+    private function isConfigSensivel(string $key): bool
+    {
+        return str_starts_with($key, 'EMAIL_')
+            || str_starts_with($key, 'PAYMENT_GATEWAYS_')
+            || str_starts_with($key, 'API_')
+            || $key === 'pix_key';
     }
 
     /**

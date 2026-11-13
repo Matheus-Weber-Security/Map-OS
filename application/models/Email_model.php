@@ -274,6 +274,29 @@ class Email_model extends CI_Model
         $this->config->load('email', true);
         $emailConfig = (array) $this->config->item('email');
 
+        // Se houver configurações personalizadas de e-mail para a empresa ativa ou do e-mail
+        $empresaIdEnvio = $this->empresaIdSessao();
+        if ($empresaIdEnvio > 0 && $this->db->table_exists('configuracoes') && $this->db->field_exists('empresa_id', 'configuracoes')) {
+            $configsPersonalizadas = $this->db->where('empresa_id', $empresaIdEnvio)
+                ->where_in('config', ['EMAIL_PROTOCOL', 'EMAIL_SMTP_HOST', 'EMAIL_SMTP_PORT', 'EMAIL_SMTP_CRYPTO', 'EMAIL_SMTP_USER', 'EMAIL_SMTP_PASS', 'EMAIL_FROM'])
+                ->get('configuracoes')
+                ->result();
+
+            foreach ($configsPersonalizadas as $cfg) {
+                if ($cfg->valor === null || $cfg->valor === '') continue;
+                match ($cfg->config) {
+                    'EMAIL_PROTOCOL' => $emailConfig['protocol'] = $cfg->valor,
+                    'EMAIL_SMTP_HOST' => $emailConfig['smtp_host'] = $cfg->valor,
+                    'EMAIL_SMTP_PORT' => $emailConfig['smtp_port'] = (int) $cfg->valor,
+                    'EMAIL_SMTP_CRYPTO' => $emailConfig['smtp_crypto'] = $cfg->valor,
+                    'EMAIL_SMTP_USER' => $emailConfig['smtp_user'] = $cfg->valor,
+                    'EMAIL_SMTP_PASS' => $emailConfig['smtp_pass'] = $cfg->valor,
+                    'EMAIL_FROM' => $emailConfig['from_address'] = $cfg->valor,
+                    default => null,
+                };
+            }
+        }
+
         $protocolo = (string) ($emailConfig['protocol'] ?? 'smtp');
         $smtpHost = trim((string) ($emailConfig['smtp_host'] ?? ''));
         $smtpUser = trim((string) ($emailConfig['smtp_user'] ?? ''));

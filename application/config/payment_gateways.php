@@ -4,17 +4,39 @@ if (! defined('BASEPATH')) {
     exit('No direct script access allowed');
 }
 
+$empresaId = 1;
+$configsTenant = [];
+if (function_exists('get_instance')) {
+    $ci = &get_instance();
+    if (isset($ci->session) && $ci->session->userdata('empresa_id')) {
+        $empresaId = (int) $ci->session->userdata('empresa_id');
+    }
+    if (isset($ci->data['configuration'])) {
+        $configsTenant = $ci->data['configuration'];
+    }
+}
+
+$obterConfigGateway = static function (string $chave, mixed $padrao = '') use ($empresaId, $configsTenant) {
+    if (isset($configsTenant[$chave]) && $configsTenant[$chave] !== '') {
+        return $configsTenant[$chave];
+    }
+    if ($empresaId === 1) {
+        return $_ENV[$chave] ?? (getenv($chave) !== false ? getenv($chave) : $padrao);
+    }
+    return $padrao;
+};
+
 $config['payment_gateways'] = [
     'GerencianetSdk' => [
         'name' => 'GerenciaNet (Efí)',
         'library_name' => 'GerencianetSdk',
-        'production' => isset($_ENV['PAYMENT_GATEWAYS_EFI_PRODUCTION']) ? filter_var($_ENV['PAYMENT_GATEWAYS_EFI_PRODUCTION'], FILTER_VALIDATE_BOOLEAN) : false,
+        'production' => filter_var($obterConfigGateway('PAYMENT_GATEWAYS_EFI_PRODUCTION', false), FILTER_VALIDATE_BOOLEAN),
         'credentials' => [
-            'client_id' => $_ENV['PAYMENT_GATEWAYS_EFI_CREDENTIAIS_CLIENT_ID'] ?? '',
-            'client_secret' => $_ENV['PAYMENT_GATEWAYS_EFI_CREDENTIAIS_CLIENT_SECRET'] ?? '',
+            'client_id' => $obterConfigGateway('PAYMENT_GATEWAYS_EFI_CREDENTIAIS_CLIENT_ID', ''),
+            'client_secret' => $obterConfigGateway('PAYMENT_GATEWAYS_EFI_CREDENTIAIS_CLIENT_SECRET', ''),
         ],
-        'timeout' => $_ENV['PAYMENT_GATEWAYS_EFI_TIMEOUT'] ?? 30,
-        'boleto_expiration' => $_ENV['PAYMENT_GATEWAYS_EFI_BOLETO_EXPIRATION'] ?? 'P3D',
+        'timeout' => (int) $obterConfigGateway('PAYMENT_GATEWAYS_EFI_TIMEOUT', 30),
+        'boleto_expiration' => $obterConfigGateway('PAYMENT_GATEWAYS_EFI_BOLETO_EXPIRATION', 'P3D'),
         'payment_methods' => [
             [
                 'name' => 'Boleto',
@@ -46,15 +68,15 @@ $config['payment_gateways'] = [
         'name' => 'MercadoPago',
         'library_name' => 'MercadoPago',
         'credentials' => [
-            'access_token' => $_ENV['PAYMENT_GATEWAYS_MERCADO_PAGO_CREDENTIALS_ACCESS_TOKEN'] ?? '',
-            'public_key' => $_ENV['PAYMENT_GATEWAYS_MERCADO_PAGO_CREDENTIALS_PUBLIC_KEY'] ?? '',
-            'client_id' => $_ENV['PAYMENT_GATEWAYS_MERCADO_PAGO_CREDENTIALS_CLIENT_ID'] ?? '',
-            'client_secret' => $_ENV['PAYMENT_GATEWAYS_MERCADO_PAGO_CREDENTIALS_CLIENT_SECRET'] ?? '',
-            'integrator_id' => $_ENV['PAYMENT_GATEWAYS_MERCADO_PAGO_CREDENTIALS_INTEGRATOR_ID'] ?? '',
-            'platform_id' => $_ENV['PAYMENT_GATEWAYS_MERCADO_PAGO_CREDENTIALS_PLATFORM_ID'] ?? '',
-            'corporation_id' => $_ENV['PAYMENT_GATEWAYS_MERCADO_PAGO_CREDENTIALS_CORPORATION_ID'] ?? '',
+            'access_token' => $obterConfigGateway('PAYMENT_GATEWAYS_MERCADO_PAGO_CREDENTIALS_ACCESS_TOKEN', ''),
+            'public_key' => $obterConfigGateway('PAYMENT_GATEWAYS_MERCADO_PAGO_CREDENTIALS_PUBLIC_KEY', ''),
+            'client_id' => $obterConfigGateway('PAYMENT_GATEWAYS_MERCADO_PAGO_CREDENTIALS_CLIENT_ID', ''),
+            'client_secret' => $obterConfigGateway('PAYMENT_GATEWAYS_MERCADO_PAGO_CREDENTIALS_CLIENT_SECRET', ''),
+            'integrator_id' => $obterConfigGateway('PAYMENT_GATEWAYS_MERCADO_PAGO_CREDENTIALS_INTEGRATOR_ID', ''),
+            'platform_id' => $obterConfigGateway('PAYMENT_GATEWAYS_MERCADO_PAGO_CREDENTIALS_PLATFORM_ID', ''),
+            'corporation_id' => $obterConfigGateway('PAYMENT_GATEWAYS_MERCADO_PAGO_CREDENTIALS_CORPORATION_ID', ''),
         ],
-        'boleto_expiration' => $_ENV['PAYMENT_GATEWAYS_MERCADO_PAGO_BOLETO_EXPIRATION'] ?? 'P3D',
+        'boleto_expiration' => $obterConfigGateway('PAYMENT_GATEWAYS_MERCADO_PAGO_BOLETO_EXPIRATION', 'P3D'),
         'payment_methods' => [
             [
                 'name' => 'Boleto',
@@ -76,37 +98,32 @@ $config['payment_gateways'] = [
     'Asaas' => [
         'name' => 'Asaas',
         'library_name' => 'Asaas',
-        'production' => isset($_ENV['PAYMENT_GATEWAYS_ASAAS_PRODUCTION']) ? filter_var($_ENV['PAYMENT_GATEWAYS_ASAAS_PRODUCTION'], FILTER_VALIDATE_BOOLEAN) : false,
-        'notify' => isset($_ENV['PAYMENT_GATEWAYS_ASAAS_NOTIFY']) ? filter_var($_ENV['PAYMENT_GATEWAYS_ASAAS_NOTIFY'], FILTER_VALIDATE_BOOLEAN) : false,
+        'production' => filter_var($obterConfigGateway('PAYMENT_GATEWAYS_ASAAS_PRODUCTION', false), FILTER_VALIDATE_BOOLEAN),
+        'notify' => filter_var($obterConfigGateway('PAYMENT_GATEWAYS_ASAAS_NOTIFY', false), FILTER_VALIDATE_BOOLEAN),
         'credentials' => [
-            'api_key' => $_ENV['PAYMENT_GATEWAYS_ASAAS_CREDENTIAIS_API_KEY'] ?? '',
+            'api_key' => $obterConfigGateway('PAYMENT_GATEWAYS_ASAAS_CREDENTIAIS_API_KEY', ''),
         ],
-        'boleto_expiration' => $_ENV['PAYMENT_GATEWAYS_ASAAS_BOLETO_EXPIRATION'] ?? 'P3D',
+        'boleto_expiration' => $obterConfigGateway('PAYMENT_GATEWAYS_ASAAS_BOLETO_EXPIRATION', 'P3D'),
         'payment_methods' => [
             [
                 'name' => 'Boleto',
                 'value' => 'boleto',
             ],
-            [
-                'name' => 'Link',
-                'value' => 'link',
-            ],
         ],
         'transaction_status' => [
             'PENDING' => 'Aguardando pagamento',
-            'RECEIVED' => 'Recebida (saldo já creditado na conta)',
+            'RECEIVED' => 'Recebida (saldo já creditado)',
             'CONFIRMED' => 'Pagamento confirmado (saldo ainda não creditado)',
             'OVERDUE' => 'Vencida',
             'REFUNDED' => 'Estornada',
-            'RECEIVED_IN_CASH' => 'Recebida em dinheiro (não gera saldo na conta)',
+            'RECEIVED_IN_CASH' => 'Recebida em dinheiro (não gera créditos no saldo)',
             'REFUND_REQUESTED' => 'Estorno Solicitado',
             'CHARGEBACK_REQUESTED' => 'Recebido chargeback',
-            'CHARGEBACK_DISPUTE' => 'Em disputa de chargeback (caso sejam apresentados documentos para contestação)',
-            'AWAITING_CHARGEBACK_REVERSAL' => 'Disputa vencida, aguardando repasse da adquirente',
-            'DUNNING_REQUESTED' => 'Em processo de recuperação',
+            'CHARGEBACK_DISPUTE' => 'Em disputa de chargeback (aguardando análise do emissor)',
+            'AWAITING_CHARGEBACK_REVERSAL' => 'Disputa vencida, aguardando repasse',
+            'DUNNING_REQUESTED' => 'Em processo de recuperação de dívida',
             'DUNNING_RECEIVED' => 'Recuperada',
-            'AWAITING_RISK_ANALYSIS' => 'Pagamento em análise',
-            'DELETED' => 'Cobrança excluída ou cancelada',
+            'AWAITING_RISK_ANALYSIS' => 'Pagamento em análise de risco',
         ],
     ],
 ];

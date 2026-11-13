@@ -289,11 +289,19 @@ if (! function_exists('configuracaoValores')) {
      *
      * @return array<string, mixed>
      */
-    function configuracaoValores(string $aba, ?array $post, array $configuracao, array $env): array
+    function configuracaoValores(string $aba, ?array $post, array $configuracao, array $env, int $empresaId = 1): array
     {
         $valores = [];
         foreach (configuracaoCampos($aba) as $nome => $campo) {
-            $atual = $campo['destino'] === 'env' ? ($env[$nome] ?? '') : ($configuracao[$nome] ?? '');
+            if (isset($configuracao[$nome]) && $configuracao[$nome] !== '') {
+                $atual = $configuracao[$nome];
+            } elseif ($empresaId === 1 && $campo['destino'] === 'env') {
+                $atual = $env[$nome] ?? '';
+            } elseif ($campo['destino'] === 'config') {
+                $atual = $configuracao[$nome] ?? '';
+            } else {
+                $atual = '';
+            }
 
             $valores[$nome] = match ($campo['tipo']) {
                 'segredo' => ['definido' => (string) $atual !== ''],
