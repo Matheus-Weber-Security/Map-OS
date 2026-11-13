@@ -178,7 +178,7 @@ class GerencianetSdk extends BasePaymentGateway
         ];
 
         $documento = preg_replace('/[^0-9]/', '', $entity->documento);
-        $telefone = preg_replace('/[^0-9]/', '', $entity->telefone);
+        $telefone = preg_replace('/[^0-9]/', '', ! empty($entity->celular) ? $entity->celular : (! empty($entity->telefone) ? $entity->telefone : ($entity->celular_cliente ?? $entity->telefone_cliente ?? '')));
         if (strlen($documento) == 11) {
             $customer = [
                 'name' => $entity->nomeCliente,

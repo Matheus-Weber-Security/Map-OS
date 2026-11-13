@@ -332,11 +332,16 @@ class Asaas extends BasePaymentGateway
             return $cliente['asaas_id'];
         }
 
+        $contatoCel = preg_replace('/[^0-9]/', '', (string) ($cliente['celular'] ?? ''));
+        $contatoTel = preg_replace('/[^0-9]/', '', (string) ($cliente['telefone'] ?? ''));
+        $phone = $contatoTel ?: $contatoCel;
+        $mobilePhone = $contatoCel ?: $contatoTel;
+
         $result = $this->asaasApi->Cliente()->create([
             'name' => $cliente['nomeCliente'],
             'email' => $cliente['email'],
-            'phone' => preg_replace('/[^0-9]/', '', $cliente['telefone']),
-            'mobilePhone' => preg_replace('/[^0-9]/', '', $cliente['celular']),
+            'phone' => $phone,
+            'mobilePhone' => $mobilePhone,
             'cpfCnpj' => preg_replace('/[^0-9]/', '', $cliente['documento']),
             'postalCode' => $cliente['cep'],
             'address' => $cliente['rua'],

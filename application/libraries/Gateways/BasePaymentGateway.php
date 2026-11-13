@@ -75,7 +75,7 @@ abstract class BasePaymentGateway implements PaymentGateway
         }
         $error_list = "Por favor preencher os seguintes dados do(a) seu(ua) cliente!\n\n";
         $check = false;
-        $list = ['rua', 'numero', 'bairro', 'cep', 'cidade', 'estado', 'documento', 'telefone', 'nomeCliente', 'email'];
+        $list = ['rua', 'numero', 'bairro', 'cep', 'cidade', 'estado', 'documento', 'nomeCliente', 'email'];
         foreach ($entity as $key => $value) {
             if (in_array($key, $list)) {
                 if ((empty($value) || strlen($value) < 2) && ! is_numeric($value)) {
@@ -84,6 +84,28 @@ abstract class BasePaymentGateway implements PaymentGateway
                 }
             }
         }
+
+        // Validação de contato: celular ou telefone (prioridade celular)
+        $celular = is_object($entity) ? ($entity->celular ?? $entity->celular_cliente ?? '') : ($entity['celular'] ?? $entity['celular_cliente'] ?? '');
+        $telefone = is_object($entity) ? ($entity->telefone ?? $entity->telefone_cliente ?? '') : ($entity['telefone'] ?? $entity['telefone_cliente'] ?? '');
+        $celularLimpo = preg_replace('/[^0-9]/', '', (string) $celular);
+        $telefoneLimpo = preg_replace('/[^0-9]/', '', (string) $telefone);
+
+        if (empty($celularLimpo) && empty($telefoneLimpo)) {
+            $error_list .= "- celular / telefone\n";
+            $check = true;
+        } else {
+            // Se o telefone estiver vazio mas o celular preenchido, sincroniza no objeto
+            // para compatibilidade com gateways que leem apenas a propriedade telefone.
+            if (empty($telefoneLimpo) && ! empty($celularLimpo)) {
+                if (is_object($entity)) {
+                    $entity->telefone = (string) $celular;
+                } elseif (is_array($entity)) {
+                    $entity['telefone'] = (string) $celular;
+                }
+            }
+        }
+
         if (! $check) {
             return null;
         }
