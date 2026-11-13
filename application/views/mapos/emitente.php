@@ -85,11 +85,12 @@ $logo = (string) ($emitente->url_logo ?? '');
         <section class="<?= e($caixa) ?>" aria-labelledby="secao-logo">
             <h2 id="secao-logo" class="text-heading-sm text-text">Logo</h2>
             <div class="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start">
-                <?php if ($logo !== '') { ?>
-                    <img src="<?= e(emitenteLogoSrc($logo)) ?>" alt="Logo atual do emitente" class="h-24 w-auto max-w-56 shrink-0 rounded-md border border-border bg-field object-contain p-2">
+                <?php $logoSrc = emitenteLogoSrc($logo); ?>
+                <?php if ($logoSrc !== '') { ?>
+                    <img src="<?= e($logoSrc) ?>" alt="Logo atual do emitente" class="h-24 w-auto max-w-56 shrink-0 rounded-md border border-border bg-field object-contain p-2">
                 <?php } ?>
                 <div class="flex min-w-0 flex-1 flex-col gap-1.5">
-                    <label for="emitente-logo" class="text-label-md text-text"><?= e($logo !== '' ? 'Trocar o logo' : 'Logo') ?></label>
+                    <label for="emitente-logo" class="text-label-md text-text"><?= e($logoSrc !== '' ? 'Trocar o logo' : 'Logo') ?></label>
                     <input type="file" id="emitente-logo" name="userfile" accept=".png,.jpg,.jpeg,.bmp"
                            aria-describedby="emitente-logo-ajuda<?= isset($errosDeCampo['userfile']) ? ' emitente-logo-erro' : '' ?>"<?= isset($errosDeCampo['userfile']) ? ' aria-invalid="true"' : '' ?>
                            class="block w-full rounded-sm border border-input bg-field px-3 py-2 text-body-md text-text file:mr-3 file:rounded-sm file:border-0 file:bg-surface-subtle file:px-3 file:py-1 file:text-label-md file:text-text focus:outline-3 focus:outline-offset-0 focus:outline-ring">

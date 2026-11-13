@@ -68,6 +68,10 @@ if (! function_exists('emitenteLogoSrc')) {
             return base_url('assets/uploads/' . $nome);
         }
 
+        if (str_contains($urlLogo, 'assets/uploads/')) {
+            return '';
+        }
+
         return str_starts_with($urlLogo, 'http://') || str_starts_with($urlLogo, 'https://')
             ? $urlLogo
             : base_url('assets/uploads/' . $nome);

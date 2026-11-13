@@ -69,6 +69,9 @@ RUN mkdir -p /var/www/html/application/storage \
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
+# Volumes persistentes para uploads de emitente, fotos de perfil, storage e logs
+VOLUME ["/var/www/html/assets/uploads", "/var/www/html/assets/userImage", "/var/www/html/application/storage", "/var/www/html/application/logs"]
+
 EXPOSE 80
 
 ENTRYPOINT ["docker-entrypoint.sh"]

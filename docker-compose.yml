@@ -1,0 +1,32 @@
+services:
+  nexus-ticket:
+    build: .
+    image: nexus-ticket:latest
+    container_name: nexus_ticket
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    environment:
+      - APP_NAME=Nexus Ticket
+      - APP_SUBNAME=Sistema de Controle de Ordens de Serviço
+      - APP_TIMEZONE=America/Sao_Paulo
+      - APP_BASEURL=${APP_BASEURL:-https://nexustkt.com.br/}
+      - APP_ENVIRONMENT=production
+      - CI_ENV=production
+      - DB_HOSTNAME=${DB_HOSTNAME:-}
+      - DB_PORT=${DB_PORT:-3306}
+      - DB_USERNAME=${DB_USERNAME:-}
+      - DB_PASSWORD=${DB_PASSWORD:-}
+      - DB_DATABASE=${DB_DATABASE:-NexusDB}
+      - DB_SSL=${DB_SSL:-true}
+    volumes:
+      - uploads_data:/var/www/html/assets/uploads
+      - userimage_data:/var/www/html/assets/userImage
+      - storage_data:/var/www/html/application/storage
+      - logs_data:/var/www/html/application/logs
+
+volumes:
+  uploads_data:
+  userimage_data:
+  storage_data:
+  logs_data:
