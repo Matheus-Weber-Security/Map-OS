@@ -13,16 +13,16 @@ $totalProdutos = 0;
 <body>
     <div class="doc-folha">
         <div>
-            <header class="doc-cabecalho">
+            <header class="doc-cabecalho flex-nowrap">
                 <?php if ($emitente == null) : ?>
                     <div class="w-full bg-danger-soft p-2 text-danger-ink" role="alert">
                         Você precisa configurar os dados do emitente. >>> <a href="<?=base_url()?>index.php/mapos/emitente">Configurar</a>
                     </div>
                 <?php else : ?>
-                    <div class="flex items-center">
-                        <img src="<?= e(emitenteLogoSrc($emitente->url_logo ?? null)) ?>" class="h-auto w-[140px] max-w-full" alt="">
+                    <div class="flex items-center shrink-0">
+                        <img src="<?= e(emitenteLogoSrc($emitente->url_logo ?? null)) ?>" class="h-auto w-[100px] max-w-full" alt="">
                     </div>
-                    <div class="mt-0.5 px-2.5">
+                    <div class="flex-1 min-w-0 mt-0.5 px-2.5">
                         <span class="text-base"><b><?= e($emitente->nome) ?></b></span><br>
                         <?php if ($emitente->cnpj != "00.000.000/0000-00") : ?>
                             <span>CNPJ: <?= e($emitente->cnpj) ?></span><br>
@@ -32,7 +32,7 @@ $totalProdutos = 0;
                             <?= e($emitente->cidade.' - '.$emitente->uf.' - '.$emitente->cep) ?>
                         </span>
                     </div>
-                    <div class="mt-2.5 max-w-[230px] text-right">
+                    <div class="mt-2.5 max-w-[230px] shrink-0 text-right">
                         <span class="font-bold">Tel: <?= e($emitente->telefone) ?></span><br>
                         <span class="font-bold"><?= e($emitente->email) ?></span><br>
                         <span class="break-words">Responsável: <b><?= e($result->nome) ?></b></span>

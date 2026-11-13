@@ -5,3 +5,7 @@
 .cupom-tabela thead th,.cupom-tabela-grade thead th{border-top:1px solid #1f1633!important;border-bottom:1px solid #1f1633!important;border-left:none!important;border-right:none!important;background:transparent!important;background-color:transparent!important}
 .cupom-tabela-grade tbody td{border-left:none!important;border-right:none!important;border-top:none!important;border-bottom:none!important}
 .cupom-totais-linha td{border-top:1px solid #1f1633!important}
+.doc-cabecalho{flex-wrap:nowrap!important}
+.w-\[100px\]{width:100px!important}
+.shrink-0{flex-shrink:0!important}
+.min-w-0{min-width:0!important}
