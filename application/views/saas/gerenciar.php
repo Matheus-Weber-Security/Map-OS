@@ -71,23 +71,23 @@
     <!-- Gráficos Centrais -->
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <!-- Evolução da Receita -->
-        <section class="flex flex-col justify-between rounded-xl border border-border bg-surface p-5 shadow-card lg:col-span-2">
+        <section class="flex flex-col rounded-xl border border-border bg-surface p-5 shadow-card lg:col-span-2">
             <div class="mb-4 flex items-center justify-between border-b border-border pb-3">
                 <h2 class="font-display text-base font-semibold text-text">Evolução da Receita</h2>
                 <span class="text-caption text-muted">Últimos 6 meses</span>
             </div>
-            <div class="relative flex h-64 w-full items-center justify-center">
+            <div class="relative h-64 w-full">
                 <canvas id="chart-evolucao"></canvas>
             </div>
         </section>
 
         <!-- Formas de Pagamento -->
-        <section class="flex flex-col justify-between rounded-xl border border-border bg-surface p-5 shadow-card">
+        <section class="flex flex-col rounded-xl border border-border bg-surface p-5 shadow-card">
             <div class="mb-4 flex items-center justify-between border-b border-border pb-3">
                 <h2 class="font-display text-base font-semibold text-text">Formas de Pagamento</h2>
                 <span class="text-caption text-muted">Distribuição</span>
             </div>
-            <div class="relative flex h-64 w-full items-center justify-center">
+            <div class="relative h-56 w-full">
                 <canvas id="chart-pagamento"></canvas>
             </div>
             <div class="mt-4 flex items-center justify-around text-xs font-semibold text-muted">
@@ -106,7 +106,7 @@
     <!-- Rodapé: Últimos Assinantes e Gerenciar Preços -->
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <!-- Tabela: Últimos Assinantes -->
-        <section class="flex flex-col justify-between rounded-xl border border-border bg-surface p-5 shadow-card lg:col-span-2">
+        <section class="flex flex-col rounded-xl border border-border bg-surface p-5 shadow-card lg:col-span-2">
             <div class="mb-4 flex items-center justify-between border-b border-border pb-3">
                 <h2 class="font-display text-base font-semibold text-text">Últimos Assinantes</h2>
                 <?php if (! empty($podeAssinantes)) { ?>
@@ -157,7 +157,7 @@
         </section>
 
         <!-- Card: Gerenciar Preço da Assinatura -->
-        <section class="flex flex-col justify-between rounded-xl border border-border bg-surface p-5 shadow-card">
+        <section class="flex flex-col rounded-xl border border-border bg-surface p-5 shadow-card">
             <div>
                 <div class="mb-4 flex items-center justify-between border-b border-border pb-3">
                     <h2 class="font-display text-base font-semibold text-text">Gerenciar Preço da Assinatura</h2>

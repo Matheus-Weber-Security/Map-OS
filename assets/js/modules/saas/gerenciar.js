@@ -100,13 +100,18 @@ export default async function iniciar(raiz, { doc = document } = {}) {
         // 2. Gráfico de Formas de Pagamento
         if (canvasPagamento) {
             const ctxPagamento = canvasPagamento.getContext('2d');
+            const totalPagamentos = (Number(dados.manual) || 0) + (Number(dados.pix) || 0);
+            const temDadosPagamento = totalPagamentos > 0;
+
             graficos.push(new Chart(ctxPagamento, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Manual', 'PIX'],
+                    labels: temDadosPagamento ? ['Manual', 'PIX'] : ['Sem transações'],
                     datasets: [{
-                        data: [dados.manual, dados.pix],
-                        backgroundColor: [cores.primary || '#f97316', cores.info || '#0284c7'],
+                        data: temDadosPagamento ? [dados.manual, dados.pix] : [1],
+                        backgroundColor: temDadosPagamento
+                            ? [cores.primary || '#f97316', cores.info || '#0284c7']
+                            : [cores.grade || '#e2e8f0'],
                         borderColor: cores.fundo,
                         borderWidth: 2,
                     }],
@@ -118,6 +123,7 @@ export default async function iniciar(raiz, { doc = document } = {}) {
                     plugins: {
                         legend: { display: false },
                         tooltip: {
+                            enabled: temDadosPagamento,
                             callbacks: {
                                 label: (contexto) => ` ${contexto.label}: ${contexto.parsed}%`,
                             },
