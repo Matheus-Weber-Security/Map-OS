@@ -161,6 +161,24 @@ if (! function_exists('configuracaoDadosDoFormulario')) {
                     break;
                 case 'opcao':
                     if (! array_key_exists($texto, $campo['opcoes'])) {
+                        // Se for campo de vencimento de boleto de um gateway sem credenciais preenchidas, ignora a validação
+                        if ($aba === 'pagamentos' && $texto === '') {
+                            $ehVencimentoSemCredencial = match ($nome) {
+                                'PAYMENT_GATEWAYS_EFI_BOLETO_EXPIRATION' => trim((string) ($post['PAYMENT_GATEWAYS_EFI_CREDENTIAIS_CLIENT_ID'] ?? '')) === ''
+                                    && trim((string) ($post['PAYMENT_GATEWAYS_EFI_CREDENTIAIS_CLIENT_SECRET'] ?? '')) === '',
+                                'PAYMENT_GATEWAYS_MERCADO_PAGO_BOLETO_EXPIRATION' => trim((string) ($post['PAYMENT_GATEWAYS_MERCADO_PAGO_CREDENTIALS_ACCESS_TOKEN'] ?? '')) === ''
+                                    && trim((string) ($post['PAYMENT_GATEWAYS_MERCADO_PAGO_CREDENTIALS_PUBLIC_KEY'] ?? '')) === ''
+                                    && trim((string) ($post['PAYMENT_GATEWAYS_MERCADO_PAGO_CREDENTIALS_CLIENT_ID'] ?? '')) === ''
+                                    && trim((string) ($post['PAYMENT_GATEWAYS_MERCADO_PAGO_CREDENTIALS_CLIENT_SECRET'] ?? '')) === '',
+                                'PAYMENT_GATEWAYS_ASAAS_BOLETO_EXPIRATION' => trim((string) ($post['PAYMENT_GATEWAYS_ASAAS_CREDENTIAIS_API_KEY'] ?? '')) === '',
+                                default => false,
+                            };
+
+                            if ($ehVencimentoSemCredencial) {
+                                break;
+                            }
+                        }
+
                         $erros[$nome] = 'Escolha uma opção da lista.';
                         break;
                     }
