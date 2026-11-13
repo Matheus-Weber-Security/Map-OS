@@ -181,6 +181,7 @@ class Os_model extends CI_Model
                 ->or_like('clientes.documento', $pesquisa)
                 ->or_like('os.descricaoProduto', $pesquisa);
             if (ctype_digit($pesquisa)) {
+                $this->db->or_where('os.codigo', (int) $pesquisa);
                 $this->db->or_where('os.idOs', (int) $pesquisa);
             }
             $this->db->group_end();
@@ -284,6 +285,16 @@ class Os_model extends CI_Model
     /**
      * Gera o próximo ID sequencial de OS (1, 2, 3...) para evitar saltos de auto-increment do TiDB.
      */
+    public function gerarProximoCodigo(int $empresaId): int
+    {
+        $ultimo = $this->db->select_max('codigo')
+            ->where('empresa_id', $empresaId)
+            ->get('os')
+            ->row();
+
+        return ($ultimo && (int) $ultimo->codigo > 0) ? ((int) $ultimo->codigo + 1) : 1;
+    }
+
     public function gerarProximoId(): int
     {
         $ultimo = $this->db->select_max('idOs')->get('os')->row();
@@ -295,6 +306,13 @@ class Os_model extends CI_Model
     {
         if (in_array($table, ['os', 'lancamentos'], true)) {
             $data['empresa_id'] = $data['empresa_id'] ?? empresa_ativa_id();
+        }
+        if ($table === 'os') {
+            $empresaId = (int) ($data['empresa_id'] ?? empresa_ativa_id());
+            $data['empresa_id'] = $empresaId;
+            if (empty($data['codigo'])) {
+                $data['codigo'] = $this->gerarProximoCodigo($empresaId);
+            }
         }
         if ($table === 'os' && empty($data['idOs'])) {
             $data['idOs'] = $this->gerarProximoId();

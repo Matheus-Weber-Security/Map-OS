@@ -63,6 +63,7 @@ class Compras_model extends CI_Model
                 ->or_like('compras.numero_nfe', $pesquisa)
                 ->or_like('compras.chave_nfe', $pesquisa);
             if (ctype_digit($pesquisa)) {
+                $this->db->or_where('compras.codigo', (int) $pesquisa);
                 $this->db->or_where('compras.idCompras', (int) $pesquisa);
             }
             $this->db->group_end();
@@ -321,8 +322,26 @@ class Compras_model extends CI_Model
         return $primeiroId;
     }
 
+    public function gerarProximoCodigo(int $empresaId): int
+    {
+        $ultimo = $this->db->select_max('codigo')
+            ->where('empresa_id', $empresaId)
+            ->get('compras')
+            ->row();
+
+        return ($ultimo && (int) $ultimo->codigo > 0) ? ((int) $ultimo->codigo + 1) : 1;
+    }
+
     public function add(string $table, array $data, bool $returnId = false)
     {
+        if ($table === 'compras') {
+            $empresaId = (int) ($data['empresa_id'] ?? empresa_ativa_id());
+            $data['empresa_id'] = $empresaId;
+            if (empty($data['codigo'])) {
+                $data['codigo'] = $this->gerarProximoCodigo($empresaId);
+            }
+        }
+
         $this->db->insert($table, $data);
         if ($this->db->affected_rows() === '1') {
             return $returnId ? $this->db->insert_id() : true;

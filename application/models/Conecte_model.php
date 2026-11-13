@@ -16,6 +16,11 @@ class Conecte_model extends CI_Model
 
     public function add($table, $data, $returnId = false)
     {
+        if ($table === 'os' && empty($data['codigo']) && ! empty($data['empresa_id']) && $this->db->field_exists('codigo', 'os')) {
+            $this->load->model('os_model');
+            $data['codigo'] = $this->os_model->gerarProximoCodigo((int) $data['empresa_id']);
+        }
+
         $this->db->insert($table, $data);
         if ($this->db->affected_rows() == '1') {
             if ($returnId == true) {

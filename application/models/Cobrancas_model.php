@@ -54,7 +54,7 @@ class Cobrancas_model extends CI_Model
         if ($pesquisa !== '') {
             $this->db->group_start()->like('clientes.nomeCliente', $pesquisa);
             if (ctype_digit($pesquisa)) {
-                $this->db->or_where('cobrancas.idCobranca', (int) $pesquisa)->or_where('cobrancas.charge_id', (int) $pesquisa);
+                $this->db->or_where('cobrancas.codigo', (int) $pesquisa)->or_where('cobrancas.idCobranca', (int) $pesquisa)->or_where('cobrancas.charge_id', (int) $pesquisa);
             }
             $this->db->group_end();
         }
@@ -106,10 +106,24 @@ class Cobrancas_model extends CI_Model
         return $this->db->get()->row();
     }
 
+    public function gerarProximoCodigo(int $empresaId): int
+    {
+        $ultimo = $this->db->select_max('codigo')
+            ->where('empresa_id', $empresaId)
+            ->get('cobrancas')
+            ->row();
+
+        return ($ultimo && (int) $ultimo->codigo > 0) ? ((int) $ultimo->codigo + 1) : 1;
+    }
+
     public function add($table, $data, $returnId = false)
     {
         if ($table === 'cobrancas') {
-            $data['empresa_id'] = $data['empresa_id'] ?? empresa_ativa_id();
+            $empresaId = (int) ($data['empresa_id'] ?? empresa_ativa_id());
+            $data['empresa_id'] = $empresaId;
+            if (empty($data['codigo'])) {
+                $data['codigo'] = $this->gerarProximoCodigo($empresaId);
+            }
         }
 
         $this->db->insert($table, $data);

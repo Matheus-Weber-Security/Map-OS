@@ -34,7 +34,12 @@ class Arquivos_model extends CI_Model
         }
 
         if (($filtros['pesquisa'] ?? '') !== '') {
-            $this->db->group_start()->like('documento', $filtros['pesquisa'])->or_like('descricao', $filtros['pesquisa'])->group_end();
+            $this->db->group_start()->like('documento', $filtros['pesquisa'])->or_like('descricao', $filtros['pesquisa']);
+            if (ctype_digit((string) $filtros['pesquisa'])) {
+                $this->db->or_where('codigo', (int) $filtros['pesquisa']);
+                $this->db->or_where('idDocumentos', (int) $filtros['pesquisa']);
+            }
+            $this->db->group_end();
         }
 
         if (($filtros['de'] ?? '') !== '') {
@@ -57,13 +62,23 @@ class Arquivos_model extends CI_Model
         return $this->db->get('documentos')->row();
     }
 
+    public function gerarProximoCodigo(int $empresaId): int
+    {
+        $ultimo = $this->db->select_max('codigo')
+            ->where('empresa_id', $empresaId)
+            ->get('documentos')
+            ->row();
+
+        return ($ultimo && (int) $ultimo->codigo > 0) ? ((int) $ultimo->codigo + 1) : 1;
+    }
+
     public function add($table, $data)
     {
         if ($table === 'documentos') {
-            if ($this->db->field_exists('empresa_id', 'documentos')) {
-                $data['empresa_id'] = $data['empresa_id'] ?? empresa_ativa_id();
-            } else {
-                unset($data['empresa_id']);
+            $empresaId = (int) ($data['empresa_id'] ?? empresa_ativa_id());
+            $data['empresa_id'] = $empresaId;
+            if (empty($data['codigo'])) {
+                $data['codigo'] = $this->gerarProximoCodigo($empresaId);
             }
         }
 

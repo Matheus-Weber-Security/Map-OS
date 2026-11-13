@@ -120,7 +120,7 @@ if (!empty($result->cidade) || !empty($result->estado) || !empty($result->cep)) 
         </div>
 
         <div class="mt-2 border-t border-hairline-cool pt-1 text-center text-xs">
-            <b>N° OS: </b><span><?php echo e($result->idOs);?></span>
+            <b>N° OS: </b><span><?php echo e($result->codigo ?? $result->idOs);?></span>
             <span class="pl-[5%]"><b>Status: </b><?php echo e($result->status);?></span><br>
             <b>Emissão:</b> <?php echo date('d/m/Y H:i:s') ?>
         </div>
@@ -308,7 +308,7 @@ if (!empty($result->cidade) || !empty($result->estado) || !empty($result->cep)) 
         </div>
 
         <div class="mt-2 border-t border-hairline-cool pt-1 text-center text-xs">
-            <b>N° OS: </b><span><?php echo e($result->idOs);?></span>
+            <b>N° OS: </b><span><?php echo e($result->codigo ?? $result->idOs);?></span>
             <span class="pl-[5%]"><b>Status: </b><?php echo e($result->status);?></span><br>
             <b>Emissão:</b> <?php echo date('d/m/Y') ?>
         </div>

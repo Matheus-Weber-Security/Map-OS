@@ -31,7 +31,7 @@ $saldo = round($totais['receitas'] - $totais['despesas'], 2);
 $caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
 
 $colunas = [
-    ['key' => 'idLancamentos', 'label' => 'Nº', 'align' => 'right', 'nowrap' => true],
+    ['label' => 'Nº', 'align' => 'right', 'nowrap' => true, 'render' => fn ($l) => (string) ($l->codigo ?? $l->idLancamentos)],
     ['label' => 'Vencimento', 'align' => 'right', 'nowrap' => true, 'render' => fn ($l) => dataBr($l->data_vencimento)],
     ['label' => 'Tipo', 'nowrap' => true, 'render' => fn ($l) => component('pill-status', $l->tipo === 'receita' ? ['label' => 'Receita', 'variant' => 'info'] : ['label' => 'Despesa', 'variant' => 'neutral'])],
     ['label' => 'Descrição', 'class' => 'min-w-40 [overflow-wrap:anywhere]', 'render' => fn ($l) => (string) $l->descricao],

@@ -75,6 +75,7 @@ class Financeiro_model extends CI_Model
                 ->or_like('lancamentos.descricao', $pesquisa)
                 ->or_like('lancamentos.observacoes', $pesquisa);
             if (ctype_digit($pesquisa)) {
+                $this->db->or_where('lancamentos.codigo', (int) $pesquisa);
                 $this->db->or_where('lancamentos.idLancamentos', (int) $pesquisa);
             }
             $this->db->group_end();
@@ -290,9 +291,23 @@ class Financeiro_model extends CI_Model
     }
 
     /** Grava um lançamento e devolve o id, ou null se não gravou. */
+    public function gerarProximoCodigo(int $empresaId): int
+    {
+        $ultimo = $this->db->select_max('codigo')
+            ->where('empresa_id', $empresaId)
+            ->get('lancamentos')
+            ->row();
+
+        return ($ultimo && (int) $ultimo->codigo > 0) ? ((int) $ultimo->codigo + 1) : 1;
+    }
+
     public function adicionar(array $dados): ?int
     {
-        $dados['empresa_id'] = $dados['empresa_id'] ?? empresa_ativa_id();
+        $empresaId = (int) ($dados['empresa_id'] ?? empresa_ativa_id());
+        $dados['empresa_id'] = $empresaId;
+        if (empty($dados['codigo'])) {
+            $dados['codigo'] = $this->gerarProximoCodigo($empresaId);
+        }
         $this->db->insert('lancamentos', $dados);
 
         return $this->db->affected_rows() === 1 ? (int) $this->db->insert_id() : null;
@@ -308,9 +323,13 @@ class Financeiro_model extends CI_Model
     {
         $this->db->trans_begin();
 
-        $empresaId = empresa_ativa_id();
+        $empresaId = (int) empresa_ativa_id();
+        $proximoCodigo = $this->gerarProximoCodigo($empresaId);
         foreach ($linhas as $linha) {
             $linha['empresa_id'] = $linha['empresa_id'] ?? $empresaId;
+            if (empty($linha['codigo'])) {
+                $linha['codigo'] = $proximoCodigo++;
+            }
             $this->db->insert('lancamentos', $linha);
             if ($this->db->affected_rows() !== 1) {
                 $this->db->trans_rollback();

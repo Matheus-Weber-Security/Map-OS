@@ -42,7 +42,7 @@ $totalProdutos = 0;
             <section class="w-full py-2.5">
                 <div class="doc-titulo">
                     <?php if ($configuration['control_2vias']) : ?><span class="doc-so-impressao absolute left-1 text-[13px]">Via cliente</span><?php endif; ?>
-                    ORDEM DE SERVIÇO #<?= e(str_pad($result->idOs, 4, 0, STR_PAD_LEFT)) ?>
+                    ORDEM DE SERVIÇO #<?= e(str_pad($result->codigo ?? $result->idOs, 4, 0, STR_PAD_LEFT)) ?>
                     <span class="absolute right-1 text-[13px]">Emissão: <?= date('d/m/Y H:i:s') ?></span>
                 </div>
 
@@ -253,7 +253,7 @@ $totalProdutos = 0;
             <footer class="doc-rodape">
                 <div class="flex justify-between">
                     <span>Data inicial: <b><?= date('d/m/Y', strtotime($result->dataInicial)) ?></b></span>
-                    <span>ORDEM DE SERVIÇO <b>#<?= e(str_pad($result->idOs, 4, 0, STR_PAD_LEFT)) ?></b></span>
+                    <span>ORDEM DE SERVIÇO <b>#<?= e(str_pad($result->codigo ?? $result->idOs, 4, 0, STR_PAD_LEFT)) ?></b></span>
                     <span>Data final: <b><?= $result->dataFinal ? date('d/m/Y', strtotime($result->dataFinal)) : '' ?></b></span>
                 </div>
                 <div class="flex justify-around">
@@ -297,7 +297,7 @@ $totalProdutos = 0;
                         <?php $totalServico = 0;
 $totalProdutos = 0; ?>
                         <?php if ($configuration['control_2vias']) : ?><span class="doc-so-impressao absolute left-1 text-[13px]">Via Empresa</span><?php endif; ?>
-                        ORDEM DE SERVIÇO #<?= e(str_pad($result->idOs, 4, 0, STR_PAD_LEFT)) ?>
+                        ORDEM DE SERVIÇO #<?= e(str_pad($result->codigo ?? $result->idOs, 4, 0, STR_PAD_LEFT)) ?>
                         <span class="absolute right-1 text-[13px]">Emissão: <?= date('d/m/Y') ?></span>
                     </div>
 
@@ -508,7 +508,7 @@ $totalProdutos = 0; ?>
                 <footer class="doc-rodape">
                     <div class="flex justify-between">
                         <span>Data inicial: <b><?= date('d/m/Y', strtotime($result->dataInicial)) ?></b></span>
-                        <span>ORDEM DE SERVIÇO <b>#<?= e(str_pad($result->idOs, 4, 0, STR_PAD_LEFT)) ?></b></span>
+                        <span>ORDEM DE SERVIÇO <b>#<?= e(str_pad($result->codigo ?? $result->idOs, 4, 0, STR_PAD_LEFT)) ?></b></span>
                         <span>Data final: <b><?= $result->dataFinal ? date('d/m/Y', strtotime($result->dataFinal)) : '' ?></b></span>
                     </div>
                     <div class="flex justify-around">
@@ -549,7 +549,7 @@ $totalProdutos = 0; ?>
                 </header>
                 <section class="w-full py-2.5">
                     <div class="doc-titulo">
-                        ORDEM DE SERVIÇO #<?= e(str_pad($result->idOs, 4, 0, STR_PAD_LEFT)) ?>
+                        ORDEM DE SERVIÇO #<?= e(str_pad($result->codigo ?? $result->idOs, 4, 0, STR_PAD_LEFT)) ?>
                         <span class="absolute right-1 text-[13px]">Emissão: <?= date('d/m/Y') ?></span>
                     </div>
                     <div class="doc-subtitulo">ANEXO(S)</div>

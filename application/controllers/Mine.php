@@ -963,6 +963,16 @@ class Mine extends CI_Controller
 
     private function configuracao(string $nome): string
     {
+        if ($nome === 'pix_key') {
+            $empresaId = (int) ($this->session->userdata('empresa_id') ?: 1);
+            if ($this->db->table_exists('emitente') && $this->db->field_exists('pix_key', 'emitente')) {
+                $emitente = $this->db->where('empresa_id', $empresaId)->get('emitente', 1)->row();
+                if ($emitente && ! empty($emitente->pix_key)) {
+                    return (string) $emitente->pix_key;
+                }
+            }
+        }
+
         return $this->configuracoes()[$nome] ?? '';
     }
 

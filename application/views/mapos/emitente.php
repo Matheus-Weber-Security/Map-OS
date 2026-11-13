@@ -53,6 +53,9 @@ $logo = (string) ($emitente->url_logo ?? '');
                 <?= component('input', $campo('ie', ['label' => 'Inscrição estadual', 'attrs' => ['maxlength' => 50]])) ?>
                 <?= component('input', $campo('telefone', ['label' => 'Telefone', 'type' => 'tel', 'autocomplete' => 'tel', 'attrs' => ['data-mascara' => 'telefone', 'maxlength' => 20]])) ?>
                 <?= component('input', $campo('email', ['label' => 'E-mail', 'type' => 'email', 'autocomplete' => 'email', 'help' => 'Remetente dos e-mails do sistema.', 'attrs' => ['maxlength' => 255]])) ?>
+                <div class="sm:col-span-2">
+                    <?= component('input', $campo('pix_key', ['label' => 'Chave PIX', 'help' => 'CPF, CNPJ, e-mail, telefone com DDD ou chave aleatória para o QR Code nas suas OS e vendas.', 'attrs' => ['maxlength' => 100]])) ?>
+                </div>
             </div>
         </section>
 

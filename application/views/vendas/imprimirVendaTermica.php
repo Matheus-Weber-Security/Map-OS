@@ -92,7 +92,7 @@
                 <span><?php echo e('Fone: ' . $emitente->telefone); ?></span>
             </div>
             <div class="mt-2">
-                <b>#Venda: </b><span><?php echo e($result->idVendas);?></span>
+                <b>#Venda: </b><span><?php echo e($result->codigo ?? $result->idVendas);?></span>
                 <span class="px-[1em]">Emissão: <?php echo date('d/m/Y H:i:s'); ?></span>
                 <?php if ($result->faturado) : ?>
                     <br>

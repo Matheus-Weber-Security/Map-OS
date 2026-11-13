@@ -500,6 +500,15 @@ class MY_Controller extends CI_Controller
         $this->data['configuration']['tema_usuario_modo'] = (string) $this->session->userdata('tema_modo_admin');
         // Cor do próprio usuário (#3032); separada de app_tema_cor, a cor padrão do sistema.
         $this->data['configuration']['tema_usuario_cor'] = (string) $this->session->userdata('tema_cor_admin');
+
+        // Chave PIX personalizada por empresa (tabela emitente)
+        if ($this->CI->db->table_exists('emitente') && $this->CI->db->field_exists('pix_key', 'emitente')) {
+            $empresaId = (int) ($this->session->userdata('empresa_id') ?: 1);
+            $emitenteTenant = $this->CI->db->where('empresa_id', $empresaId)->get('emitente', 1)->row();
+            if ($emitenteTenant && ! empty($emitenteTenant->pix_key)) {
+                $this->data['configuration']['pix_key'] = $emitenteTenant->pix_key;
+            }
+        }
     }
 
     /**

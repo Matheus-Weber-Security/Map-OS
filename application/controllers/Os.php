@@ -1245,7 +1245,11 @@ class Os extends MY_Controller
     private function enviarAnexo($id, bool $miniatura, bool $baixar): void
     {
         $anexo = $id != null && is_numeric($id) ? $this->db->where('idAnexos', (int) $id)->get('anexos', 1)->row() : null;
-        $arquivo = $anexo ? armazenamentoArquivoDoAnexo($anexo, $miniatura) : null;
+        $os = null;
+        if ($anexo) {
+            $os = $this->os_model->getById($anexo->os_id);
+        }
+        $arquivo = ($anexo && $os) ? armazenamentoArquivoDoAnexo($anexo, $miniatura) : null;
 
         if ($arquivo === null) {
             if ($miniatura) {

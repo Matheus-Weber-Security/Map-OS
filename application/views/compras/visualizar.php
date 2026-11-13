@@ -18,7 +18,7 @@ $faturada = (int) $compra->faturado === 1;
                 </a>
             </div>
             <div class="flex items-center gap-3">
-                <h1 class="font-display text-heading-xl text-text">Compra #<?= e($compra->idCompras) ?></h1>
+                <h1 class="font-display text-heading-xl text-text">Compra #<?= e($compra->codigo ?? $compra->idCompras) ?></h1>
                 <?= component('pill-status', comprasStatusPill($compra->status)) ?>
                 <?php if ($faturada) { ?>
                     <?= component('pill-status', ['label' => 'Faturado no Financeiro', 'variant' => 'success']) ?>

@@ -360,6 +360,7 @@ if (! function_exists('emitenteDadosDoFormulario')) {
             'estado' => [null, 20],
             'telefone' => [null, 20],
             'email' => [null, 255],
+            'pix_key' => [null, 100],
         ];
 
         $dados = [];
@@ -386,6 +387,9 @@ if (! function_exists('emitenteDadosDoFormulario')) {
         }
         if ($dados['cnpj'] !== '' && ! isset($erros['cnpj']) && ! verific_cpf_cnpj($dados['cnpj'])) {
             $erros['cnpj'] = 'Informe um CNPJ ou CPF válido.';
+        }
+        if ($dados['pix_key'] !== '' && ! isset($erros['pix_key']) && function_exists('valid_pix_key') && ! valid_pix_key($dados['pix_key'])) {
+            $erros['pix_key'] = 'Chave PIX inválida. Use CPF, CNPJ, e-mail, telefone com DDD ou a chave aleatória.';
         }
 
         return [$dados, $erros];

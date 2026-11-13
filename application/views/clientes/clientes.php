@@ -23,7 +23,7 @@
 $temFiltro = $filtros !== [];
 
 $colunas = [
-    ['key' => 'idClientes', 'label' => 'Cód.', 'align' => 'right', 'nowrap' => true],
+    ['label' => 'Cód.', 'align' => 'right', 'nowrap' => true, 'render' => fn ($c) => (string) ($c->codigo ?? $c->idClientes)],
     ['label' => 'Nome', 'class' => 'min-w-40', 'render' => fn ($c) => component('link', ['label' => $c->nomeCliente, 'href' => site_url('clientes/visualizar/' . $c->idClientes), 'class' => 'font-medium'])],
     ['key' => 'documento', 'label' => 'CPF/CNPJ', 'nowrap' => true, 'hide_until' => '2xl'],
     ['label' => 'Celular', 'nowrap' => true, 'hide_until' => 'md', 'render' => fn ($c) => $c->celular ?: ($c->telefone ?: '—')],

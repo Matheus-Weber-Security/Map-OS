@@ -58,7 +58,7 @@ $secoes = [
                 <h1 class="font-display text-heading-xl [overflow-wrap:anywhere] text-text"><?= e($cliente->nomeCliente) ?></h1>
                 <?= component('pill-status', $cliente->fornecedor ? ['label' => 'Fornecedor', 'variant' => 'info'] : ['label' => 'Cliente', 'variant' => 'neutral']) ?>
             </div>
-            <p class="text-caption text-muted"><?= e('Cliente nº ' . $id . ($cliente->documento ? ' · ' . $cliente->documento : '')) ?></p>
+            <p class="text-caption text-muted"><?= e('Cliente nº ' . ($cliente->codigo ?? $id) . ($cliente->documento ? ' · ' . $cliente->documento : '')) ?></p>
         </div>
         <div class="flex flex-wrap gap-2">
             <?php if ($cliente->email) { ?>
@@ -105,7 +105,7 @@ $secoes = [
             'rows' => $os,
             'empty' => component('empty-state', ['title' => 'Nenhuma ordem de serviço', 'message' => 'As ordens de serviço deste cliente aparecem aqui.', 'icon' => 'file-text', 'class' => 'border-0']),
             'columns' => [
-                ['key' => 'idOs', 'label' => 'Nº', 'align' => 'right', 'nowrap' => true],
+                ['label' => 'Nº', 'align' => 'right', 'nowrap' => true, 'render' => fn ($o) => (string) ($o->codigo ?? $o->idOs)],
                 ['label' => 'Status', 'nowrap' => true, 'render' => fn ($o) => component('pill-status', osStatusPill($o->status))],
                 ['label' => 'Entrada', 'align' => 'right', 'nowrap' => true, 'render' => fn ($o) => dataBr($o->dataInicial)],
                 ['label' => 'Previsão', 'align' => 'right', 'nowrap' => true, 'hide_until' => 'md', 'render' => fn ($o) => dataBr($o->dataFinal)],
@@ -130,7 +130,7 @@ $secoes = [
             'rows' => $vendas,
             'empty' => component('empty-state', ['title' => 'Nenhuma venda', 'message' => 'As vendas para este cliente aparecem aqui.', 'icon' => 'shopping-cart', 'class' => 'border-0']),
             'columns' => [
-                ['key' => 'idVendas', 'label' => 'Nº', 'align' => 'right', 'nowrap' => true],
+                ['label' => 'Nº', 'align' => 'right', 'nowrap' => true, 'render' => fn ($v) => (string) ($v->codigo ?? $v->idVendas)],
                 ['label' => 'Data', 'align' => 'right', 'nowrap' => true, 'render' => fn ($v) => dataBr($v->dataVenda)],
                 ['label' => 'Situação', 'nowrap' => true, 'render' => fn ($v) => component('pill-status', vendaFaturadaPill($v->faturado))],
                 ['label' => 'Total', 'align' => 'right', 'nowrap' => true, 'render' => fn ($v) => dinheiro($v->valorTotal)],

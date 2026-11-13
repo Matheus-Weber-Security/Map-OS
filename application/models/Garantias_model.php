@@ -74,8 +74,12 @@ class Garantias_model extends CI_Model
         if (($filtros['pesquisa'] ?? '') !== '') {
             $this->db->group_start()
                 ->like('garantias.refGarantia', $filtros['pesquisa'])
-                ->or_like('garantias.textoGarantia', $filtros['pesquisa'])
-                ->group_end();
+                ->or_like('garantias.textoGarantia', $filtros['pesquisa']);
+            if (ctype_digit((string) $filtros['pesquisa'])) {
+                $this->db->or_where('garantias.codigo', (int) $filtros['pesquisa']);
+                $this->db->or_where('garantias.idGarantias', (int) $filtros['pesquisa']);
+            }
+            $this->db->group_end();
         }
     }
 
@@ -106,10 +110,24 @@ class Garantias_model extends CI_Model
         return $this->db->get()->row();
     }
 
+    public function gerarProximoCodigo(int $empresaId): int
+    {
+        $ultimo = $this->db->select_max('codigo')
+            ->where('empresa_id', $empresaId)
+            ->get('garantias')
+            ->row();
+
+        return ($ultimo && (int) $ultimo->codigo > 0) ? ((int) $ultimo->codigo + 1) : 1;
+    }
+
     public function add($table, $data, $returnId = false)
     {
         if ($table === 'garantias') {
-            $data['empresa_id'] = $data['empresa_id'] ?? empresa_ativa_id();
+            $empresaId = (int) ($data['empresa_id'] ?? empresa_ativa_id());
+            $data['empresa_id'] = $empresaId;
+            if (empty($data['codigo'])) {
+                $data['codigo'] = $this->gerarProximoCodigo($empresaId);
+            }
         }
 
         $this->db->insert($table, $data);

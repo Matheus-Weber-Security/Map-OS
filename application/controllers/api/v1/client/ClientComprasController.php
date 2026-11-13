@@ -70,8 +70,9 @@ class ClientComprasController extends REST_Controller
             ], REST_Controller::HTTP_NOT_FOUND);
         }
 
-        $pixKey = $this->CI->db->get_where('configuracoes', ['config' => 'pix_key'])->row_object()->valor;
         $emitente = $this->mapos_model->getEmitente();
+        $pixConfig = $this->CI->db->get_where('configuracoes', ['config' => 'pix_key'])->row();
+        $pixKey = !empty($emitente->pix_key) ? (string) $emitente->pix_key : (string) ($pixConfig->valor ?? '');
         $qrCode = $this->os_model->getQrCode(
             $vendaId,
             $pixKey,

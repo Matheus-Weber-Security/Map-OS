@@ -13,7 +13,7 @@
 $temFiltro = $filtros !== [];
 
 $colunas = [
-    ['key' => 'idServicos', 'label' => 'Cód.', 'align' => 'right', 'nowrap' => true],
+    ['label' => 'Cód.', 'align' => 'right', 'nowrap' => true, 'render' => fn ($s) => (string) ($s->codigo ?? $s->idServicos)],
     ['label' => 'Nome', 'class' => 'min-w-40', 'render' => fn ($s) => $pode['editar']
         ? component('link', ['label' => $s->nome, 'href' => site_url('servicos/editar/' . $s->idServicos), 'class' => 'font-medium'])
         : $s->nome],

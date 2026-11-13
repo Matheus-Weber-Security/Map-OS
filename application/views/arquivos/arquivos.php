@@ -14,7 +14,7 @@ $temFiltro = $filtros !== [];
 $imagem = static fn (object $a): bool => in_array(strtolower(ltrim((string) $a->tipo, '.')), ['jpg', 'jpeg', 'gif', 'png'], true);
 
 $colunas = [
-    ['key' => 'idDocumentos', 'label' => 'Cód.', 'align' => 'right', 'nowrap' => true],
+    ['label' => 'Cód.', 'align' => 'right', 'nowrap' => true, 'render' => fn ($a) => (string) ($a->codigo ?? $a->idDocumentos)],
     ['label' => 'Prévia', 'nowrap' => true, 'hide_until' => 'md', 'render' => fn ($a) => $imagem($a)
         ? html_purificado('<img src="' . e(componenteUrl($a->url)) . '" alt="" width="40" height="40" loading="lazy" class="size-10 rounded-md border border-border object-cover">')
         : icon('file', ['class' => 'size-5 text-muted'])],

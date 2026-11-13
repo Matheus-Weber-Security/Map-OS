@@ -49,7 +49,7 @@ $textos = $campos([
     <header class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div class="min-w-0">
             <div class="flex flex-wrap items-center gap-3">
-                <h1 class="font-display text-heading-xl text-text"><?= e('Venda #' . $idVenda) ?></h1>
+                <h1 class="font-display text-heading-xl text-text"><?= e('Venda #' . ($venda->codigo ?? $idVenda)) ?></h1>
                 <?= component('pill-status', osStatusPill($venda->status)) ?>
             </div>
             <p class="text-caption [overflow-wrap:anywhere] text-muted"><?= e($venda->nomeCliente . ' · Vendedor: ' . $venda->nome) ?></p>

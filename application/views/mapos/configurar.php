@@ -27,6 +27,9 @@ $curtos = ['os' => 'OS', 'vendas' => 'Vendas', 'pagamentos' => 'Gateways', 'sist
 
 $abas = [];
 foreach (CONFIG_ABAS as $chave => $rotulo) {
+    if (empty($is_superadmin) && in_array($chave, ['email', 'pagamentos', 'api', 'sistema'], true)) {
+        continue;
+    }
     $abas[] = ['label' => $rotulo, 'short' => $curtos[$chave] ?? null, 'url' => site_url('mapos/configurar') . ($chave === 'geral' ? '' : listagemQuery(['aba' => $chave])), 'active' => $aba === $chave, 'icon' => $icones[$chave]];
 }
 

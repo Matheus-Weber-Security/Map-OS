@@ -13,7 +13,7 @@
 $temFiltro = $filtros !== [];
 
 $colunas = [
-    ['key' => 'idGarantias', 'label' => 'Cód.', 'align' => 'right', 'nowrap' => true],
+    ['label' => 'Cód.', 'align' => 'right', 'nowrap' => true, 'render' => fn ($g) => (string) ($g->codigo ?? $g->idGarantias)],
     ['label' => 'Referência', 'class' => 'min-w-32', 'render' => fn ($g) => component('link', ['label' => trim((string) $g->refGarantia) !== '' ? $g->refGarantia : 'Termo #' . (int) $g->idGarantias, 'href' => site_url('garantias/visualizar/' . (int) $g->idGarantias), 'class' => 'font-medium'])],
     ['label' => 'Termo', 'class' => 'min-w-48 [overflow-wrap:anywhere]', 'hide_until' => 'md', 'render' => fn ($g) => osTextoCurto($g->textoGarantia, 80)],
     ['label' => 'Responsável', 'nowrap' => true, 'hide_until' => 'lg', 'render' => fn ($g) => (string) ($g->nome ?? '')],

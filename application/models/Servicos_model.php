@@ -52,7 +52,12 @@ class Servicos_model extends CI_Model
         $this->db->where('servicos.empresa_id', empresa_ativa_id());
 
         if (($filtros['pesquisa'] ?? '') !== '') {
-            $this->db->group_start()->like('nome', $filtros['pesquisa'])->or_like('descricao', $filtros['pesquisa'])->group_end();
+            $this->db->group_start()->like('nome', $filtros['pesquisa'])->or_like('descricao', $filtros['pesquisa']);
+            if (ctype_digit((string) $filtros['pesquisa'])) {
+                $this->db->or_where('codigo', (int) $filtros['pesquisa']);
+                $this->db->or_where('idServicos', (int) $filtros['pesquisa']);
+            }
+            $this->db->group_end();
         }
     }
 
@@ -68,6 +73,16 @@ class Servicos_model extends CI_Model
     /**
      * Gera o próximo ID sequencial de serviço (1, 2, 3...) para evitar saltos de auto-increment do TiDB.
      */
+    public function gerarProximoCodigo(int $empresaId): int
+    {
+        $ultimo = $this->db->select_max('codigo')
+            ->where('empresa_id', $empresaId)
+            ->get('servicos')
+            ->row();
+
+        return ($ultimo && (int) $ultimo->codigo > 0) ? ((int) $ultimo->codigo + 1) : 1;
+    }
+
     public function gerarProximoId(): int
     {
         $ultimo = $this->db->select_max('idServicos')->get('servicos')->row();
@@ -78,7 +93,11 @@ class Servicos_model extends CI_Model
     public function add($table, $data)
     {
         if ($table === 'servicos') {
-            $data['empresa_id'] = $data['empresa_id'] ?? empresa_ativa_id();
+            $empresaId = (int) ($data['empresa_id'] ?? empresa_ativa_id());
+            $data['empresa_id'] = $empresaId;
+            if (empty($data['codigo'])) {
+                $data['codigo'] = $this->gerarProximoCodigo($empresaId);
+            }
             if (empty($data['idServicos'])) {
                 $data['idServicos'] = $this->gerarProximoId();
             }

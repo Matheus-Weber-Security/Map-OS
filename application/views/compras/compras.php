@@ -11,7 +11,7 @@
 $temFiltro = $filtros !== [];
 
 $colunas = [
-    ['key' => 'idCompras', 'label' => 'Nº', 'align' => 'right', 'nowrap' => true],
+    ['label' => 'Nº', 'align' => 'right', 'nowrap' => true, 'render' => fn ($c) => (string) ($c->codigo ?? $c->idCompras)],
     ['label' => 'Fornecedor', 'class' => 'min-w-40', 'render' => fn ($c) => $c->nomeFornecedor !== null
         ? component('link', ['label' => $c->nomeFornecedor, 'href' => site_url('clientes/visualizar/' . (int) $c->fornecedores_id), 'class' => 'font-medium'])
         : 'Fornecedor avulso / removido'],

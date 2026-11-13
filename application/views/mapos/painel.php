@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Painel inicial (#2847), com os componentes da v5.
  *
@@ -228,7 +228,7 @@ if ($pode['os']) {
                         'dense' => true,
                         'rows' => $os_lista,
                         'columns' => [
-                            ['label' => 'Nº', 'align' => 'right', 'nowrap' => true, 'render' => fn ($o) => component('link', ['label' => (string) $o->idOs, 'href' => site_url('os/visualizar/' . (int) $o->idOs)])],
+                            ['label' => 'Nº', 'align' => 'right', 'nowrap' => true, 'render' => fn ($o) => component('link', ['label' => (string) ($o->codigo ?? $o->idOs), 'href' => site_url('os/visualizar/' . (int) $o->idOs)])],
                             ['label' => 'Cliente', 'class' => 'min-w-32 [overflow-wrap:anywhere]', 'render' => fn ($o) => (string) ($o->nomeCliente ?? 'Cliente removido')],
                             ['label' => 'Entrega', 'align' => 'right', 'nowrap' => true, 'render' => fn ($o) => $o->dataFinal !== null && substr((string) $o->dataFinal, 0, 10) < $hoje
                                 ? component('pill-status', ['label' => 'Atrasada · ' . dataBr($o->dataFinal), 'variant' => 'warning'])
@@ -253,7 +253,7 @@ if ($pode['os']) {
                         'dense' => true,
                         'rows' => $vendas_lista,
                         'columns' => [
-                            ['label' => 'Nº', 'align' => 'right', 'nowrap' => true, 'render' => fn ($v) => component('link', ['label' => (string) $v->idVendas, 'href' => site_url('vendas/visualizar/' . (int) $v->idVendas)])],
+                            ['label' => 'Nº', 'align' => 'right', 'nowrap' => true, 'render' => fn ($v) => component('link', ['label' => (string) ($v->codigo ?? $v->idVendas), 'href' => site_url('vendas/visualizar/' . (int) $v->idVendas)])],
                             ['label' => 'Cliente', 'class' => 'min-w-32 [overflow-wrap:anywhere]', 'render' => fn ($v) => (string) ($v->nomeCliente ?? 'Cliente removido')],
                             ['label' => 'Data', 'align' => 'right', 'nowrap' => true, 'render' => fn ($v) => dataBr($v->dataVenda)],
                             ['label' => 'Status', 'nowrap' => true, 'render' => fn ($v) => component('pill-status', osStatusPill($v->status))],

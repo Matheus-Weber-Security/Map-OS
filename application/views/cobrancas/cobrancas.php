@@ -25,7 +25,7 @@ $temFiltro = $filtros !== [];
 $query = listagemQuery($filtros);
 
 $colunas = [
-    ['key' => 'idCobranca', 'label' => 'Nº', 'align' => 'right', 'nowrap' => true],
+    ['label' => 'Nº', 'align' => 'right', 'nowrap' => true, 'render' => fn ($c) => (string) ($c->codigo ?? $c->idCobranca)],
     ['label' => 'Cliente', 'class' => 'min-w-36 [overflow-wrap:anywhere]', 'render' => fn ($c) => (string) ($c->nomeCliente ?? '')],
     ['label' => 'Referência', 'nowrap' => true, 'render' => function ($c) {
         if (! empty($c->os_id)) {

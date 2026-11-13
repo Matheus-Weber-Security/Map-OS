@@ -20,7 +20,7 @@ $grupos = [
         'vazio' => 'Nenhum cliente encontrado.',
         'linhas' => $clientes,
         'colunas' => [
-            ['key' => 'idClientes', 'label' => 'Cód.', 'align' => 'right', 'nowrap' => true],
+            ['label' => 'Cód.', 'align' => 'right', 'nowrap' => true, 'render' => fn ($c) => (string) ($c->codigo ?? $c->idClientes)],
             ['label' => 'Nome', 'class' => 'min-w-32 [overflow-wrap:anywhere]', 'render' => fn ($c) => component('link', ['label' => (string) $c->nomeCliente, 'href' => site_url('clientes/visualizar/' . (int) $c->idClientes), 'class' => 'font-medium'])],
             ['label' => 'Documento', 'nowrap' => true, 'hide_until' => 'md', 'render' => fn ($c) => (string) $c->documento],
             ['label' => 'Tipo', 'nowrap' => true, 'render' => fn ($c) => component('pill-status', $c->fornecedor ? ['label' => 'Fornecedor', 'variant' => 'info'] : ['label' => 'Cliente', 'variant' => 'neutral'])],
@@ -36,7 +36,7 @@ $grupos = [
         'vazio' => 'Nenhuma OS encontrada.',
         'linhas' => $os,
         'colunas' => [
-            ['label' => 'OS', 'nowrap' => true, 'render' => fn ($o) => component('link', ['label' => 'OS #' . (int) $o->idOs, 'href' => site_url('os/visualizar/' . (int) $o->idOs), 'class' => 'font-medium'])],
+            ['label' => 'OS', 'nowrap' => true, 'render' => fn ($o) => component('link', ['label' => 'OS #' . (int) ($o->codigo ?? $o->idOs), 'href' => site_url('os/visualizar/' . (int) $o->idOs), 'class' => 'font-medium'])],
             ['label' => 'Equipamento', 'class' => 'min-w-32 [overflow-wrap:anywhere]', 'render' => fn ($o) => osTextoCurto($o->descricaoProduto, 60) ?: '—'],
             ['label' => 'Entrada', 'align' => 'right', 'nowrap' => true, 'hide_until' => 'md', 'render' => fn ($o) => dataBr($o->dataInicial)],
             ['label' => 'Status', 'nowrap' => true, 'render' => fn ($o) => component('pill-status', osStatusPill($o->status))],
@@ -68,7 +68,7 @@ $grupos = [
         'vazio' => 'Nenhum serviço encontrado.',
         'linhas' => $servicos,
         'colunas' => [
-            ['key' => 'idServicos', 'label' => 'Cód.', 'align' => 'right', 'nowrap' => true],
+            ['label' => 'Cód.', 'align' => 'right', 'nowrap' => true, 'render' => fn ($s) => (string) ($s->codigo ?? $s->idServicos)],
             ['label' => 'Nome', 'class' => 'min-w-32 [overflow-wrap:anywhere]', 'render' => fn ($s) => (string) $s->nome],
             ['label' => 'Preço', 'align' => 'right', 'nowrap' => true, 'render' => fn ($s) => dinheiro($s->preco)],
             ['label' => 'Ações', 'align' => 'right', 'nowrap' => true, 'render' => fn ($s) => $pode['editar_servico'] ? $acao('Editar ' . $s->nome, 'pencil', 'servicos/editar/' . (int) $s->idServicos) : ''],

@@ -17,7 +17,7 @@
 $temFiltro = $filtros !== [];
 
 $colunas = [
-    ['key' => 'idVendas', 'label' => 'Nº', 'align' => 'right', 'nowrap' => true],
+    ['label' => 'Nº', 'align' => 'right', 'nowrap' => true, 'render' => fn ($v) => (string) ($v->codigo ?? $v->idVendas)],
     ['label' => 'Cliente', 'class' => 'min-w-40', 'render' => fn ($v) => $v->nomeCliente !== null
         ? component('link', ['label' => $v->nomeCliente, 'href' => site_url('clientes/visualizar/' . $v->clientes_id), 'class' => 'font-medium'])
         : 'Cliente removido'],
@@ -31,7 +31,7 @@ $colunas = [
     ['label' => 'Status', 'nowrap' => true, 'render' => fn ($v) => component('pill-status', osStatusPill($v->status))],
     ['label' => 'Total', 'align' => 'right', 'nowrap' => true, 'render' => fn ($v) => dinheiro($v->total)],
     ['label' => 'Ações', 'align' => 'right', 'nowrap' => true, 'render' => function ($v) use ($pode, $controle_edicao) {
-        $numero = 'venda ' . $v->idVendas;
+        $numero = 'venda ' . ($v->codigo ?? $v->idVendas);
         // Mesma regra da OS: faturada ou cancelada só edita com a configuração ligada.
         $editavel = osEditavel($v, $pode['editar'], $controle_edicao);
         $itens = [

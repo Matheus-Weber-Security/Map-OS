@@ -17,7 +17,7 @@
 $temFiltro = $filtros !== [];
 
 $colunas = [
-    ['key' => 'idOs', 'label' => 'Nº', 'align' => 'right', 'nowrap' => true],
+    ['label' => 'Nº', 'align' => 'right', 'nowrap' => true, 'render' => fn ($o) => (string) ($o->codigo ?? $o->idOs)],
     ['label' => 'Cliente', 'class' => 'min-w-40', 'render' => fn ($o) => $o->nomeCliente !== null
         ? component('link', ['label' => $o->nomeCliente, 'href' => site_url('clientes/visualizar/' . $o->clientes_id), 'class' => 'font-medium'])
         : 'Cliente removido'],
@@ -29,7 +29,7 @@ $colunas = [
     ['label' => 'Status', 'nowrap' => true, 'render' => fn ($o) => component('pill-status', osStatusPill($o->status))],
     ['label' => 'Total', 'align' => 'right', 'nowrap' => true, 'render' => fn ($o) => dinheiro($o->total)],
     ['label' => 'Ações', 'align' => 'right', 'nowrap' => true, 'render' => function ($o) use ($pode, $controle_editos) {
-        $numero = 'OS ' . $o->idOs;
+        $numero = 'OS ' . ($o->codigo ?? $o->idOs);
         $editavel = osEditavel($o, $pode['editar'], $controle_editos);
         $itens = [
             ['label' => 'Ver OS', 'icon' => 'eye', 'href' => site_url('os/visualizar/' . $o->idOs)],

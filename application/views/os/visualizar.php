@@ -51,7 +51,7 @@ $textos = [
     <header class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div class="min-w-0">
             <div class="flex flex-wrap items-center gap-3">
-                <h1 class="font-display text-heading-xl text-text"><?= e('OS #' . $idOs) ?></h1>
+                <h1 class="font-display text-heading-xl text-text"><?= e('OS #' . ($os->codigo ?? $idOs)) ?></h1>
                 <?= component('pill-status', osStatusPill($os->status)) ?>
             </div>
             <p class="text-caption [overflow-wrap:anywhere] text-muted"><?= e($os->nomeCliente . ' · Técnico: ' . $os->nome) ?></p>

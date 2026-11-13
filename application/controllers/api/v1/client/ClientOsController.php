@@ -67,7 +67,9 @@ class ClientOsController extends REST_Controller
         
         $osId = (int) $id;
 
-        $data['pix_key'] = $this->CI->db->get_where('configuracoes', ['config' => 'pix_key'])->row_object()->valor;
+        $emitente = $this->mapos_model->getEmitente();
+        $pixConfig = $this->CI->db->get_where('configuracoes', ['config' => 'pix_key'])->row();
+        $data['pix_key'] = !empty($emitente->pix_key) ? (string) $emitente->pix_key : (string) ($pixConfig->valor ?? '');
         $data['result'] = $this->os_model->getById($osId);
         if (empty($data['result'])) {
             $this->response([
@@ -148,14 +150,22 @@ class ClientOsController extends REST_Controller
             return;
         }
     
-        $usuario = $this->db->query('SELECT usuarios_id, count(*) as down FROM os GROUP BY usuarios_id ORDER BY down LIMIT 1')->row();
+        $empresaId = (int) ($this->logged_client()->usuario->empresa_id ?? $this->session->userdata('empresa_id') ?: 1);
+
+        $usuario = $this->db->query('SELECT usuarios_id, count(*) as down FROM os WHERE empresa_id = ? GROUP BY usuarios_id ORDER BY down LIMIT 1', [$empresaId])->row();
 
         if ($usuario == null) {
-            $this->db->where('situacao', 1);
+            if ($this->db->table_exists('saas_empresa_usuarios')) {
+                $this->db->join('saas_empresa_usuarios', 'saas_empresa_usuarios.usuario_id = usuarios.idUsuarios');
+                $this->db->where('saas_empresa_usuarios.empresa_id', $empresaId);
+            } elseif ($this->db->field_exists('empresa_id', 'usuarios')) {
+                $this->db->where('usuarios.empresa_id', $empresaId);
+            }
+            $this->db->where('usuarios.situacao', 1);
             $this->db->limit(1);
             $usuario = $this->db->get('usuarios')->row();
-    
-            if ($usuario->idUsuarios == null) {
+
+            if ($usuario == null || ($usuario->idUsuarios ?? null) == null) {
                 $this->response([
                     'status' => false,
                     'message' => 'Ocorreu um erro ao atribuir a ordem de serviço. Por favor, contate o administrador do sistema.',
@@ -170,6 +180,7 @@ class ClientOsController extends REST_Controller
             'dataInicial' => date('Y-m-d'),
             'clientes_id' => $this->logged_client()->usuario->idClientes,
             'usuarios_id' => $usuarioId,
+            'empresa_id' => $empresaId,
             'dataFinal' => date('Y-m-d'),
             'descricaoProduto' => osTextoParaGravar((string) $this->input->post('descricaoProduto')),
             'defeito' => osTextoParaGravar((string) $this->input->post('defeito')),
@@ -186,7 +197,8 @@ class ClientOsController extends REST_Controller
             'tarefa' => 'Cliente ' . $this->logged_client()->usuario->nomeCliente . " Adicionou uma OS Nº ${osId} pelo APP",
             'data' => date('Y-m-d'),
             'hora' => date('H:i:s'),
-            'ip' => $_SERVER['REMOTE_ADDR']
+            'ip' => $_SERVER['REMOTE_ADDR'],
+            'empresa_id' => $empresaId,
         ];
         $this->Audit_model->add($log_data);
             

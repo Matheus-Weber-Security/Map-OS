@@ -579,7 +579,7 @@ class Mapos extends MY_Controller
         }
 
         $post = $this->input->method() === 'post' ? $this->input->post() : null;
-        $campos = ['nome', 'cnpj', 'ie', 'cep', 'rua', 'numero', 'bairro', 'cidade', 'estado', 'telefone', 'email'];
+        $campos = ['nome', 'cnpj', 'ie', 'cep', 'rua', 'numero', 'bairro', 'cidade', 'estado', 'telefone', 'email', 'pix_key'];
         $valores = [];
         foreach ($campos as $campo) {
             $valores[$campo] = $post !== null
@@ -819,8 +819,21 @@ class Mapos extends MY_Controller
         $aba = listagemFiltros(['aba' => array_keys(CONFIG_ABAS)], $this->input->get())['aba'] ?? 'geral';
         $erros = [];
 
+        $empresaId = (int) ($this->session->userdata('empresa_id') ?: 1);
+        $ehMaster = ($empresaId === 1 || (bool) $this->session->userdata('is_superadmin'));
+
+        if (! $ehMaster && in_array($aba, ['email', 'pagamentos', 'api', 'sistema'], true)) {
+            $this->session->set_flashdata('error', 'Esta seção de configurações é restrita ao administrador da plataforma.');
+
+            return redirect(site_url('mapos/configurar?aba=geral'));
+        }
+
         if ($this->input->method() === 'post' && $aba !== 'sistema') {
-            [$config, $env, $erros] = configuracaoDadosDoFormulario($aba, $this->input->post());
+            $postDados = $this->input->post();
+            if (! $ehMaster && $aba === 'financeiro') {
+                unset($postDados['pix_key']);
+            }
+            [$config, $env, $erros] = configuracaoDadosDoFormulario($aba, $postDados);
 
             if ($erros === [] && $env !== [] && !$this->gravarEnv($env)) {
                 $erros['_geral'] = 'Não foi possível gravar o arquivo application/.env. Confira a permissão de escrita.';
@@ -838,11 +851,15 @@ class Mapos extends MY_Controller
 
         $this->data['menuConfiguracoes'] = 'Sistema';
         $this->data['aba'] = $aba;
-        $this->data['campos'] = configuracaoCampos($aba);
+        $camposAba = configuracaoCampos($aba);
+        if (! $ehMaster && $aba === 'financeiro') {
+            unset($camposAba['pix_key']);
+        }
+        $this->data['campos'] = $camposAba;
         $this->data['valores'] = configuracaoValores($aba, $this->input->method() === 'post' ? $this->input->post() : null, $this->data['configuration'], $_ENV);
         $this->data['erros'] = $erros;
         $this->data['pode_backup'] = $this->permite('cBackup');
-        $this->data['is_superadmin'] = (bool) $this->session->userdata('is_superadmin');
+        $this->data['is_superadmin'] = $ehMaster;
         $this->data['tema_pessoal'] = configuracaoTemaPessoal($this->data['configuration']);
         if ($aba === 'geral') {
             $errosTfa = $this->session->flashdata('tfa_erros_geral');
@@ -871,6 +888,14 @@ class Mapos extends MY_Controller
         if (!$this->permission->checkPermission($this->session->userdata('permissao'), 'cSistema')) {
             $this->session->set_flashdata('error', 'Você não tem permissão para configurar o sistema');
             redirect(base_url());
+        }
+
+        $empresaId = (int) ($this->session->userdata('empresa_id') ?: 1);
+        $ehMaster = ($empresaId === 1 || (bool) $this->session->userdata('is_superadmin'));
+        if (! $ehMaster) {
+            $this->session->set_flashdata('error', 'Apenas o administrador da plataforma pode atualizar o banco de dados.');
+
+            return redirect(base_url());
         }
 
         // Só por POST (com o token CSRF): na v4 bastava abrir o link.
@@ -915,6 +940,14 @@ class Mapos extends MY_Controller
             return redirect(base_url());
         }
 
+        $empresaId = (int) ($this->session->userdata('empresa_id') ?: 1);
+        $ehMaster = ($empresaId === 1 || (bool) $this->session->userdata('is_superadmin'));
+        if (! $ehMaster) {
+            $this->session->set_flashdata('error', 'Apenas o administrador da plataforma pode verificar atualizações.');
+
+            return redirect(base_url());
+        }
+
         $this->load->library('github_updater');
 
         $release = null;
@@ -945,6 +978,14 @@ class Mapos extends MY_Controller
     {
         if (! $this->permission->checkPermission($this->session->userdata('permissao'), 'cSistema')) {
             $this->session->set_flashdata('error', 'Você não tem permissão para configurar o sistema');
+
+            return redirect(base_url());
+        }
+
+        $empresaId = (int) ($this->session->userdata('empresa_id') ?: 1);
+        $ehMaster = ($empresaId === 1 || (bool) $this->session->userdata('is_superadmin'));
+        if (! $ehMaster) {
+            $this->session->set_flashdata('error', 'Apenas o administrador da plataforma pode atualizar o sistema.');
 
             return redirect(base_url());
         }

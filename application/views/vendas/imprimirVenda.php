@@ -40,7 +40,7 @@ $totalProdutos = 0;
             </header>
             <section class="w-full py-2.5">
                 <div class="doc-titulo">
-                    VENDA Nº#<?= e(str_pad($result->idVendas, 4, 0, STR_PAD_LEFT)) ?>
+                    VENDA Nº#<?= e(str_pad($result->codigo ?? $result->idVendas, 4, 0, STR_PAD_LEFT)) ?>
                     <span class="absolute right-1 text-[13px]">Emissão: <?= date('d/m/Y') ?></span>
                 </div>
 
@@ -191,7 +191,7 @@ $totalProdutos = 0;
             <footer class="doc-rodape">
                 <div class="flex justify-between">
                     <span>Data da Venda: <b><?= date('d/m/Y', strtotime($result->dataVenda)) ?></b></span>
-                    <span>VENDA <b>#<?= e(str_pad($result->idVendas, 4, 0, STR_PAD_LEFT)) ?></b></span>
+                    <span>VENDA <b>#<?= e(str_pad($result->codigo ?? $result->idVendas, 4, 0, STR_PAD_LEFT)) ?></b></span>
                 </div>
                 <div class="flex justify-around text-center">
                     <span>Vendedor : <b><?php echo e($result->nome); ?> </b></span>

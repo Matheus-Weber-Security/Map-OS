@@ -76,6 +76,7 @@ class Vendas_model extends CI_Model
                 ->like('clientes.nomeCliente', $pesquisa)
                 ->or_like('clientes.documento', $pesquisa);
             if (ctype_digit($pesquisa)) {
+                $this->db->or_where('vendas.codigo', (int) $pesquisa);
                 $this->db->or_where('vendas.idVendas', (int) $pesquisa);
             }
             $this->db->group_end();
@@ -176,6 +177,16 @@ class Vendas_model extends CI_Model
     /**
      * Gera o próximo ID sequencial de venda (1, 2, 3...) para evitar saltos de auto-increment do TiDB.
      */
+    public function gerarProximoCodigo(int $empresaId): int
+    {
+        $ultimo = $this->db->select_max('codigo')
+            ->where('empresa_id', $empresaId)
+            ->get('vendas')
+            ->row();
+
+        return ($ultimo && (int) $ultimo->codigo > 0) ? ((int) $ultimo->codigo + 1) : 1;
+    }
+
     public function gerarProximoId(): int
     {
         $ultimo = $this->db->select_max('idVendas')->get('vendas')->row();
@@ -187,6 +198,13 @@ class Vendas_model extends CI_Model
     {
         if (in_array($table, ['vendas', 'lancamentos'], true)) {
             $data['empresa_id'] = $data['empresa_id'] ?? empresa_ativa_id();
+        }
+        if ($table === 'vendas') {
+            $empresaId = (int) ($data['empresa_id'] ?? empresa_ativa_id());
+            $data['empresa_id'] = $empresaId;
+            if (empty($data['codigo'])) {
+                $data['codigo'] = $this->gerarProximoCodigo($empresaId);
+            }
         }
         if ($table === 'vendas' && empty($data['idVendas'])) {
             $data['idVendas'] = $this->gerarProximoId();
