@@ -46,7 +46,7 @@ $colunas = [
             $itens[] = ['label' => 'Excluir OS', 'icon' => 'trash-2', 'danger' => true, 'attrs' => [
                 'data-modal-abrir' => 'excluir-os',
                 'data-valor-id' => (string) $o->idOs,
-                'data-valor-numero' => (string) $o->idOs,
+                'data-valor-numero' => (string) ($o->codigo ?? $o->idOs),
                 'data-valor-cliente' => (string) ($o->nomeCliente ?? 'cliente removido'),
             ]];
         }

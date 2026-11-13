@@ -171,14 +171,17 @@ class Vendas extends MY_Controller
 
                 if ($idVenda !== null) {
                     if ($venda === null) {
+                        $vendaCriada = $this->vendas_model->getById($idVenda);
+                        $numeroExibicao = (string) ($vendaCriada->codigo ?? $idVenda);
                         log_info('Adicionou uma venda. ID: ' . $idVenda);
-                        $this->session->set_flashdata('success', 'Venda #' . $idVenda . ' criada. Agora adicione os produtos.');
+                        $this->session->set_flashdata('success', 'Venda #' . $numeroExibicao . ' criada. Agora adicione os produtos.');
 
                         return redirect('vendas/visualizar/' . $idVenda . ($this->permite('eVenda') ? '#secao-adicionar-produto' : ''));
                     }
 
+                    $numeroExibicao = (string) ($venda->codigo ?? $idVenda);
                     log_info('Alterou uma venda. ID: ' . $idVenda);
-                    $this->session->set_flashdata('success', 'Alterações da venda #' . $idVenda . ' salvas.');
+                    $this->session->set_flashdata('success', 'Alterações da venda #' . $numeroExibicao . ' salvas.');
 
                     return redirect('vendas/editar/' . $idVenda);
                 }
@@ -853,7 +856,8 @@ class Vendas extends MY_Controller
         }
 
         log_info('Faturou a venda com ID.' . $idVenda);
-        $this->session->set_flashdata('success', 'Venda #' . $idVenda . ' faturada. Lançamento de ' . dinheiro($totais['total']) . ' criado no financeiro.');
+        $numeroExibicao = (string) ($venda->codigo ?? $idVenda);
+        $this->session->set_flashdata('success', 'Venda #' . $numeroExibicao . ' faturada. Lançamento de ' . dinheiro($totais['total']) . ' criado no financeiro.');
 
         $this->responderJson(200, [
             'result' => true,

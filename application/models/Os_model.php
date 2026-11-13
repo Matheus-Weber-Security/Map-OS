@@ -128,7 +128,7 @@ class Os_model extends CI_Model
         $totalServicos = "(SELECT COALESCE(SUM({$valorServico}), 0)"
             . ' FROM servicos_os LEFT JOIN servicos ON servicos.idServicos = servicos_os.servicos_id WHERE servicos_os.os_id = os.idOs)';
 
-        $this->db->select('os.idOs, os.dataInicial, os.dataFinal, os.descricaoProduto, os.observacoes, os.defeito, os.laudoTecnico, os.garantia, os.status, os.faturado, os.desconto, os.valor_desconto, os.clientes_id, os.usuarios_id');
+        $this->db->select('os.idOs, os.codigo, os.dataInicial, os.dataFinal, os.descricaoProduto, os.observacoes, os.defeito, os.laudoTecnico, os.garantia, os.status, os.faturado, os.desconto, os.valor_desconto, os.clientes_id, os.usuarios_id');
         $this->db->select('clientes.nomeCliente, clientes.celular AS celular_cliente, clientes.telefone AS telefone_cliente, usuarios.nome AS responsavel');
         $this->db->select($totalProdutos . ' AS totalProdutos', false);
         $this->db->select($totalServicos . ' AS totalServicos', false);

@@ -31,7 +31,7 @@ class Vendas_model extends CI_Model
     {
         $totalItens = '(SELECT COALESCE(SUM(itens_de_vendas.subTotal), 0) FROM itens_de_vendas WHERE itens_de_vendas.vendas_id = vendas.idVendas)';
 
-        $this->db->select('vendas.idVendas, vendas.dataVenda, vendas.status, vendas.faturado, vendas.garantia, vendas.desconto, vendas.valor_desconto, vendas.clientes_id, vendas.usuarios_id');
+        $this->db->select('vendas.idVendas, vendas.codigo, vendas.dataVenda, vendas.status, vendas.faturado, vendas.garantia, vendas.desconto, vendas.valor_desconto, vendas.clientes_id, vendas.usuarios_id');
         $this->db->select('clientes.nomeCliente, clientes.celular AS celular_cliente, clientes.telefone AS telefone_cliente, usuarios.nome AS vendedor');
         $this->db->select($totalItens . ' AS totalItens', false);
 

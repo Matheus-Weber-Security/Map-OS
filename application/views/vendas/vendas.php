@@ -49,7 +49,7 @@ $colunas = [
             $itens[] = ['label' => 'Excluir venda', 'icon' => 'trash-2', 'danger' => true, 'attrs' => [
                 'data-modal-abrir' => 'excluir-venda',
                 'data-valor-id' => (string) $v->idVendas,
-                'data-valor-numero' => (string) $v->idVendas,
+                'data-valor-numero' => (string) ($v->codigo ?? $v->idVendas),
                 'data-valor-cliente' => (string) ($v->nomeCliente ?? 'cliente removido'),
             ]];
         }

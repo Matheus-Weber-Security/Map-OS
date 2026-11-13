@@ -178,14 +178,17 @@ class Os extends MY_Controller
                     $this->notificarOs($idOs, $os === null ? 'Ordem de Serviço - Criada' : 'Ordem de Serviço - Editada');
 
                     if ($os === null) {
+                        $osCriada = $this->os_model->getById($idOs);
+                        $numeroExibicao = (string) ($osCriada->codigo ?? $idOs);
                         log_info('Adicionou uma OS. ID: ' . $idOs);
-                        $this->session->set_flashdata('success', 'OS #' . $idOs . ' criada. Agora adicione os produtos e serviços.');
+                        $this->session->set_flashdata('success', 'OS #' . $numeroExibicao . ' criada. Agora adicione os produtos e serviços.');
 
                         return redirect('os/visualizar/' . $idOs . ($this->permite('eOs') ? '?aba=produtos' : ''));
                     }
 
+                    $numeroExibicao = (string) ($os->codigo ?? $idOs);
                     log_info('Alterou uma OS. ID: ' . $idOs);
-                    $this->session->set_flashdata('success', 'Alterações da OS #' . $idOs . ' salvas.');
+                    $this->session->set_flashdata('success', 'Alterações da OS #' . $numeroExibicao . ' salvas.');
 
                     return redirect('os/editar/' . $idOs);
                 }
@@ -1365,7 +1368,8 @@ class Os extends MY_Controller
         }
 
         log_info('Faturou uma OS. ID: ' . $idOs);
-        $this->session->set_flashdata('success', 'OS #' . $idOs . ' faturada. Lançamento de ' . dinheiro($totais['total']) . ' criado no financeiro.');
+        $numeroExibicao = (string) ($os->codigo ?? $idOs);
+        $this->session->set_flashdata('success', 'OS #' . $numeroExibicao . ' faturada. Lançamento de ' . dinheiro($totais['total']) . ' criado no financeiro.');
 
         $this->responderJson(200, [
             'result' => true,
