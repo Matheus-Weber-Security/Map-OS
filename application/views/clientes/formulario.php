@@ -109,17 +109,14 @@ $grade = 'mt-4 grid gap-4 sm:grid-cols-2';
             <h2 id="secao-acesso" class="text-heading-sm text-text">Área do cliente</h2>
             <p class="mt-0.5 text-caption text-muted">Acesso do cliente para acompanhar ordens de serviço, compras e cobranças.</p>
             <div class="<?= e($grade) ?>">
-                <div class="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
-                    <?= component('input', [
-                        'name' => 'senha',
-                        'label' => 'Senha',
-                        'type' => 'password',
-                        'autocomplete' => 'new-password',
-                        'error' => $errosDeCampo['senha'] ?? null,
-                        'help' => $editando ? 'Deixe em branco para manter a senha atual.' : 'Sem senha, o acesso usa o CPF ou CNPJ, só os números.',
-                    ]) ?>
-                    <?= component('button', ['label' => 'Mostrar senha', 'icon' => 'eye', 'icon_only' => true, 'variant' => 'ghost', 'class' => 'mt-7', 'attrs' => ['data-mostrar-senha' => 'campo-senha', 'aria-controls' => 'campo-senha', 'aria-pressed' => 'false']]) ?>
-                </div>
+                <?= component('input', [
+                    'name' => 'senha',
+                    'label' => 'Senha',
+                    'type' => 'password',
+                    'autocomplete' => 'new-password',
+                    'error' => $errosDeCampo['senha'] ?? null,
+                    'help' => $editando ? 'Deixe em branco para manter a senha atual.' : 'Sem senha, o acesso usa o CPF ou CNPJ, só os números.',
+                ]) ?>
             </div>
         </section>
 
