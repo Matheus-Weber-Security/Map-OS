@@ -79,7 +79,7 @@ class ProdutosController extends REST_Controller
         }
 
         $precoCompra = $this->post('precoCompra', true);
-        $precoCompra = str_replace(',', '', $precoCompra);
+        $precoCompra = $precoCompra !== null && trim((string) $precoCompra) !== '' ? str_replace(',', '', $precoCompra) : 0;
         $precoVenda = $this->post('precoVenda', true);
         $precoVenda = str_replace(',', '', $precoVenda);
         $data = [
@@ -138,7 +138,7 @@ class ProdutosController extends REST_Controller
         }
 
         $precoCompra = $this->put('precoCompra', true);
-        $precoCompra = str_replace(',', '', $precoCompra);
+        $precoCompra = $precoCompra !== null && trim((string) $precoCompra) !== '' ? str_replace(',', '', $precoCompra) : 0;
         $precoVenda = $this->put('precoVenda', true);
         $precoVenda = str_replace(',', '', $precoVenda);
         $data = [

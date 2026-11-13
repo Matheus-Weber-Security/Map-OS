@@ -96,7 +96,12 @@ class Produtos extends MY_Controller
             $erros = $this->validarFormulario('produtos');
             $precos = [];
             foreach (['precoCompra', 'precoVenda'] as $campo) {
-                $precos[$campo] = valorDecimal($this->input->post($campo));
+                $raw = $this->input->post($campo);
+                if ($campo === 'precoCompra' && trim((string) $raw) === '') {
+                    $precos[$campo] = '0.00';
+                    continue;
+                }
+                $precos[$campo] = valorDecimal($raw);
                 if (! isset($erros[$campo]) && $precos[$campo] === null) {
                     $erros[$campo] = 'Informe o valor em reais, como 150,00 (até 99.999.999,99).';
                 }

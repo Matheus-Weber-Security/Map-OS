@@ -49,7 +49,7 @@ if (! function_exists('produtoDadosDoFormulario')) {
             'codDeBarra' => $texto('codDeBarra'),
             'descricao' => $texto('descricao'),
             'unidade' => $texto('unidade'),
-            'precoCompra' => $precoCompra,
+            'precoCompra' => $precoCompra === '' ? '0.00' : $precoCompra,
             'precoVenda' => $precoVenda,
             'estoque' => $texto('estoque') === '' ? 0 : $inteiro('estoque'),
             'estoqueMinimo' => $texto('estoqueMinimo') === '' ? null : $inteiro('estoqueMinimo'),

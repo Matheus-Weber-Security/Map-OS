@@ -102,7 +102,7 @@ $config = [
         [
             'field' => 'precoCompra',
             'label' => 'Preço de compra',
-            'rules' => 'required|trim',
+            'rules' => 'trim',
         ],
         [
             'field' => 'precoVenda',

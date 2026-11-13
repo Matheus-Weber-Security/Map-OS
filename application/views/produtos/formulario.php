@@ -82,9 +82,9 @@ $caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
             <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <?= component('input', $campo('precoCompra', [
                     'label' => 'Preço de compra (R$)',
-                    'required' => true,
+                    'placeholder' => '0,00',
                     'class' => 'text-right tabular-nums',
-                    'attrs' => ['data-mascara' => 'dinheiro', 'inputmode' => 'decimal', 'maxlength' => 20, 'data-msg-vazio' => 'Informe o preço de compra.'],
+                    'attrs' => ['data-mascara' => 'dinheiro', 'inputmode' => 'decimal', 'maxlength' => 20],
                 ])) ?>
                 <?= component('select', [
                     'name' => 'lucro_tipo',
