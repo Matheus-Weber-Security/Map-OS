@@ -82,7 +82,7 @@ if (! function_exists('configuracaoCampos')) {
                 'control_editos' => ['destino' => 'config', 'tipo' => 'sim_nao', 'rotulo' => 'Permitir editar OS faturada ou cancelada'],
                 'os_status_list' => ['destino' => 'config', 'tipo' => 'status', 'rotulo' => 'Status mostrados na listagem de OS', 'opcoes' => $statusOs, 'ajuda' => 'Sem filtro, a listagem mostra só estes. Os demais aparecem ao filtrar pelo status.'],
                 'control_2vias' => ['destino' => 'config', 'tipo' => 'sim_nao', 'rotulo' => 'Imprimir a OS em 2 vias'],
-                'IMPRIMIR_ANEXOS' => ['destino' => 'env', 'tipo' => 'bool_env', 'rotulo' => 'Imprimir os anexos (imagens) com a OS'],
+                'IMPRIMIR_ANEXOS' => ['destino' => 'env', 'tipo' => 'bool_env', 'rotulo' => 'Imprimir os anexos (imagens) com a OS', 'ajuda' => 'Ao imprimir a OS, inclui uma página extra ao final com as fotos e imagens anexadas.'],
                 'os_notification' => ['destino' => 'config', 'tipo' => 'opcao', 'rotulo' => 'Quem recebe o e-mail da OS', 'grupo' => 'Notificações', 'opcoes' => ['todos' => 'Todos (cliente, técnico e emitente)', 'cliente' => 'Só o cliente', 'tecnico' => 'Só o técnico', 'emitente' => 'Só o emitente', 'nenhum' => 'Ninguém']],
                 'email_automatico' => ['destino' => 'config', 'tipo' => 'sim_nao', 'rotulo' => 'Enviar o e-mail ao criar e editar a OS'],
                 'notifica_whats' => ['destino' => 'config', 'tipo' => 'area', 'rotulo' => 'Mensagem de WhatsApp da OS', 'max' => 2000, 'ajuda' => 'Use os marcadores abaixo; eles são trocados pelos dados da OS.'],
