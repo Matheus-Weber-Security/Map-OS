@@ -27,7 +27,12 @@ $classeAtalho = 'flex min-h-12 items-center gap-3 rounded-md px-3 text-body-md t
             <h1 class="font-display text-heading-xl text-text">Minha conta</h1>
             <p class="text-caption [overflow-wrap:anywhere] text-muted"><?= e($cliente->email) ?></p>
         </div>
-        <?= component('button', ['label' => 'Editar dados', 'icon' => 'pencil', 'href' => site_url('mine/editarDados')]) ?>
+        <div class="flex items-center gap-2">
+            <?php if ((int) ($this->session->userdata('qtd_empresas_cliente') ?? 1) > 1) { ?>
+                <?= component('button', ['label' => 'Trocar oficina', 'icon' => 'refresh-cw', 'variant' => 'outline', 'href' => site_url('mine/escolherEmpresa')]) ?>
+            <?php } ?>
+            <?= component('button', ['label' => 'Editar dados', 'icon' => 'pencil', 'href' => site_url('mine/editarDados')]) ?>
+        </div>
     </header>
 
     <div class="grid gap-4 lg:grid-cols-3">
@@ -47,6 +52,9 @@ $classeAtalho = 'flex min-h-12 items-center gap-3 rounded-md px-3 text-body-md t
     </div>
 
     <nav class="rounded-xl border border-border bg-surface p-2 lg:hidden" aria-label="Atalhos da conta">
+        <?php if ((int) ($this->session->userdata('qtd_empresas_cliente') ?? 1) > 1) { ?>
+            <a href="<?= e(site_url('mine/escolherEmpresa')) ?>" class="<?= e($classeAtalho) ?>"><?= icon('refresh-cw', ['class' => 'size-5 text-primary']) ?><span class="flex-1">Trocar de oficina</span><?= icon('chevron-right', ['class' => 'size-4 text-muted']) ?></a>
+        <?php } ?>
         <a href="<?= e(site_url('mine/cobrancas')) ?>" class="<?= e($classeAtalho) ?>"><?= icon('receipt', ['class' => 'size-5 text-muted']) ?><span class="flex-1">Cobranças</span><?= icon('chevron-right', ['class' => 'size-4 text-muted']) ?></a>
         <a href="<?= e(site_url('mine/sair')) ?>" class="<?= e($classeAtalho) ?>"><?= icon('log-out', ['class' => 'size-5 text-muted']) ?><span class="flex-1">Sair</span></a>
     </nav>

@@ -132,7 +132,12 @@ class Clientes extends MY_Controller
 
         $email = trim((string) $this->input->post('email'));
         if ($email !== '' && $this->clientes_model->emailExists($email, $cliente ? (int) $cliente->idClientes : null)) {
-            return [['email' => 'Este e-mail já está sendo usado por outro cliente.'], null];
+            return [['email' => 'Este e-mail já está sendo usado por outro cliente nesta empresa.'], null];
+        }
+
+        $documento = trim((string) $this->input->post('documento'));
+        if ($documento !== '' && $this->clientes_model->documentoExists($documento, $cliente ? (int) $cliente->idClientes : null)) {
+            return [['documento' => 'Este CPF ou CNPJ já está sendo usado por outro cliente nesta empresa.'], null];
         }
 
         $post = $this->input->post();
@@ -141,6 +146,25 @@ class Clientes extends MY_Controller
         }
         $dados = clienteDadosDoFormulario($post, $cliente === null);
         $dados['empresa_id'] = empresa_ativa_id();
+
+        // Se for um novo cliente e não foi digitada senha manual, verifica se já existe
+        // cadastro em outra empresa com o mesmo e-mail ou documento para manter a mesma senha.
+        if ($cliente === null && empty($post['senha'])) {
+            $clienteExistente = $this->db
+                ->group_start()
+                    ->where('email', $dados['email'])
+                    ->or_where('documento', $dados['documento'])
+                ->group_end()
+                ->where('senha !=', '')
+                ->order_by('idClientes', 'desc')
+                ->limit(1)
+                ->get('clientes')
+                ->row();
+
+            if ($clienteExistente && ! empty($clienteExistente->senha)) {
+                $dados['senha'] = $clienteExistente->senha;
+            }
+        }
 
         if ($cliente === null) {
             $id = $this->clientes_model->add('clientes', $dados + ['dataCadastro' => date('Y-m-d')]);

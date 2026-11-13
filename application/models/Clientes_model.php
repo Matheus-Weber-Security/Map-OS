@@ -287,4 +287,25 @@ class Clientes_model extends CI_Model
 
         return $query->num_rows() > 0;
     }
+
+    /**
+     * Verifica se o CPF/CNPJ já existe na tabela de clientes dentro da mesma empresa ativa
+     *
+     * @param  string   $documento
+     * @param  int|null $id (opcional, para excluir o próprio cliente na edição)
+     * @return bool
+     */
+    public function documentoExists($documento, $id = null)
+    {
+        $this->db->where('documento', $documento);
+        $this->db->where('empresa_id', empresa_ativa_id());
+
+        if ($id !== null) {
+            $this->db->where('idClientes !=', $id);
+        }
+
+        $query = $this->db->get('clientes');
+
+        return $query->num_rows() > 0;
+    }
 }

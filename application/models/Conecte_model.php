@@ -199,6 +199,85 @@ class Conecte_model extends CI_Model
 
         return $pix->getQRCode();
     }
+
+    /**
+     * Retorna todas as empresas/oficinas onde o cliente possui cadastro.
+     *
+     * @param  string      $email
+     * @param  string|null $documento
+     * @return list<object>
+     */
+    public function getEmpresasDoCliente(string $email, ?string $documento = null): array
+    {
+        $this->db->group_start();
+        $this->db->where('email', $email);
+        if ($documento !== null && $documento !== '') {
+            $this->db->or_where('documento', $documento);
+        }
+        $this->db->group_end();
+        $this->db->order_by('idClientes', 'desc');
+
+        $clientes = $this->db->get('clientes')->result();
+
+        $empresas = [];
+        $empresasVistas = [];
+
+        foreach ($clientes as $c) {
+            $empresaId = (int) ($c->empresa_id ?: 1);
+
+            if (isset($empresasVistas[$empresaId])) {
+                continue;
+            }
+            $empresasVistas[$empresaId] = true;
+
+            $emitente = $this->db->where('empresa_id', $empresaId)->get('emitente')->row();
+            if (! $emitente && $empresaId === 1) {
+                $emitente = $this->db->order_by('id', 'ASC')->limit(1)->get('emitente')->row();
+            }
+
+            $saasEmpresa = null;
+            if ($this->db->table_exists('saas_empresas')) {
+                $saasEmpresa = $this->db->where('id', $empresaId)->get('saas_empresas')->row();
+            }
+
+            $nome = $emitente->nome ?? ($saasEmpresa->nome_fantasia ?: ($saasEmpresa->razao_social ?? 'Oficina #' . $empresaId));
+            $doc = $emitente->cnpj ?? ($saasEmpresa->documento ?? '');
+            $tel = $emitente->telefone ?? ($saasEmpresa->telefone ?? '');
+            $cidade = $emitente->cidade ?? '';
+            $uf = $emitente->uf ?? '';
+            $logo = $emitente->url_logo ?? '';
+
+            // Contagem de OS em andamento desta empresa para este cliente
+            $osAndamento = $this->db
+                ->where('clientes_id', $c->idClientes)
+                ->where_not_in('status', ['Finalizado', 'Cancelado', 'Faturado'])
+                ->count_all_results('os');
+
+            $totalOs = $this->db
+                ->where('clientes_id', $c->idClientes)
+                ->count_all_results('os');
+
+            $totalCompras = $this->db
+                ->where('clientes_id', $c->idClientes)
+                ->count_all_results('vendas');
+
+            $empresas[] = (object) [
+                'cliente_id' => (int) $c->idClientes,
+                'empresa_id' => $empresaId,
+                'nome' => $nome,
+                'documento' => $doc,
+                'telefone' => $tel,
+                'cidade' => $cidade,
+                'uf' => $uf,
+                'logo' => $logo,
+                'os_andamento' => $osAndamento,
+                'total_os' => $totalOs,
+                'total_compras' => $totalCompras,
+            ];
+        }
+
+        return $empresas;
+    }
 }
 
 /* End of file conecte_model.php */

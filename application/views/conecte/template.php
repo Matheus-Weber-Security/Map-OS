@@ -75,6 +75,29 @@ $atual = array_values(array_filter($menu, static fn ($item) => $item['atual']))[
                     <?= component('button', $acao + ['class' => 'max-sm:hidden']) ?>
                     <?= component('button', $acao + ['icon_only' => true, 'class' => 'sm:hidden']) ?>
                 <?php } ?>
+                <?php if (! empty($empresa_nome)) { ?>
+                    <span class="hidden items-center gap-1.5 rounded-full border border-hairline-violet bg-on-dark-faint px-2.5 py-1 text-caption font-medium text-on-dark-muted md:inline-flex" title="Oficina atual: <?= e($empresa_nome) ?>">
+                        <?= icon('wrench', ['class' => 'size-3 text-primary']) ?>
+                        <span class="max-w-28 truncate"><?= e($empresa_nome) ?></span>
+                    </span>
+                <?php } ?>
+                <?php if (($qtd_empresas ?? 1) > 1) { ?>
+                    <?= component('button', [
+                        'label' => 'Trocar oficina',
+                        'icon' => 'refresh-cw',
+                        'variant' => 'ghost-on-dark',
+                        'href' => site_url('mine/escolherEmpresa'),
+                        'class' => 'max-sm:hidden',
+                    ]) ?>
+                    <?= component('button', [
+                        'label' => 'Trocar oficina',
+                        'icon' => 'refresh-cw',
+                        'variant' => 'ghost-on-dark',
+                        'href' => site_url('mine/escolherEmpresa'),
+                        'icon_only' => true,
+                        'class' => 'sm:hidden',
+                    ]) ?>
+                <?php } ?>
                 <span class="hidden max-w-48 truncate text-body-md text-on-dark-muted xl:inline" title="<?= e($cliente_nome) ?>"><?= e($cliente_nome) ?></span>
                 <?= component('button', ['label' => 'Sair', 'icon' => 'log-out', 'variant' => 'ghost-on-dark', 'href' => site_url('mine/sair'), 'icon_only' => true]) ?>
             </div>

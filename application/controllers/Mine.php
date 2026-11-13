@@ -48,6 +48,80 @@ class Mine extends CI_Controller
         redirect('mine');
     }
 
+    /**
+     * Tela para o cliente escolher qual oficina deseja acessar,
+     * quando possui cadastro em mais de uma empresa.
+     */
+    public function escolherEmpresa()
+    {
+        $this->clienteLogado();
+        $email = (string) $this->session->userdata('cliente_email') ?: (string) $this->session->userdata('email');
+        $cliente = $this->Conecte_model->getDados();
+        $documento = $cliente ? $cliente->documento : null;
+
+        $empresas = $this->Conecte_model->getEmpresasDoCliente($email, $documento);
+
+        if (count($empresas) <= 1) {
+            return redirect('mine/painel');
+        }
+
+        $this->load->view('conecte/escolher_empresa', [
+            'clienteNome' => (string) $this->session->userdata('nome'),
+            'empresas' => $empresas,
+            'empresaAtivaId' => (int) ($this->session->userdata('empresa_id') ?: 1),
+        ]);
+    }
+
+    /**
+     * Alterna a oficina/empresa ativa do cliente na sessão.
+     *
+     * @param int|string|null $id ID do cliente na tabela clientes
+     */
+    public function selecionarEmpresa($id = null)
+    {
+        $this->clienteLogado();
+        $idClienteAlvo = (int) $id;
+        $email = (string) $this->session->userdata('cliente_email') ?: (string) $this->session->userdata('email');
+
+        if ($idClienteAlvo <= 0) {
+            return redirect('mine/escolherEmpresa');
+        }
+
+        // Validação de segurança: garante que a conta selecionada realmente pertence a este cliente
+        $cliente = $this->db
+            ->where('idClientes', $idClienteAlvo)
+            ->where('email', $email)
+            ->get('clientes')
+            ->row();
+
+        if (! $cliente) {
+            log_info("Tentativa não autorizada de trocar para o cliente {$idClienteAlvo} pelo e-mail {$email}");
+            $this->session->set_flashdata('error', 'Você não tem permissão para acessar esta oficina.');
+
+            return redirect('mine/escolherEmpresa');
+        }
+
+        $empresaId = (int) ($cliente->empresa_id ?: 1);
+        $emitente = $this->db->where('empresa_id', $empresaId)->get('emitente')->row();
+        $saasEmpresa = null;
+        if ($this->db->table_exists('saas_empresas')) {
+            $saasEmpresa = $this->db->where('id', $empresaId)->get('saas_empresas')->row();
+        }
+        $nomeEmpresa = $emitente->nome ?? ($saasEmpresa->nome_fantasia ?: ($saasEmpresa->razao_social ?? 'Oficina #' . $empresaId));
+
+        $this->session->set_userdata([
+            'nome' => $cliente->nomeCliente,
+            'cliente_id' => (int) $cliente->idClientes,
+            'email' => $cliente->email,
+            'empresa_id' => $empresaId,
+            'empresa_nome' => $nomeEmpresa,
+        ]);
+
+        $this->session->set_flashdata('success', "Acessando {$nomeEmpresa}");
+
+        return redirect('mine/painel');
+    }
+
     // --- Recuperação de senha ---------------------------------------------
 
     public function resetarSenha()
@@ -95,6 +169,9 @@ class Mine extends CI_Controller
             || ! $this->resetSenhas_model->edit('resets_de_senha', ['token_utilizado' => true], 'id', $token->id)) {
             return $this->load->view('conecte/nova_senha', ['token' => $tokenEmClaro, 'erros' => ['_geral' => 'Não foi possível salvar a senha. Tente de novo.']]);
         }
+
+        // Sincroniza a nova senha em todas as contas do cliente com o mesmo e-mail
+        $this->db->where('email', $cliente->email)->update('clientes', ['senha' => $senha]);
 
         log_info('Alteração da senha realizada com sucesso.');
         $this->session->set_flashdata('success', 'Senha alterada. Entre com a senha nova.');
@@ -244,42 +321,75 @@ class Mine extends CI_Controller
             return;
         }
 
-        $cliente = $this->check_credentials($email);
+        $contas = $this->db
+            ->where('email', $email)
+            ->order_by('idClientes', 'desc')
+            ->get('clientes')
+            ->result();
 
-        // Mesma mensagem para e-mail inexistente e senha errada: mensagens
-        // distintas revelam quais e-mails possuem cadastro.
-        $senhaConfere = senhaConfere((string) $password, $cliente->senha ?? null);
-        if (! $cliente || ! $senhaConfere) {
+        $clienteAutenticado = null;
+        foreach ($contas as $c) {
+            if (senhaConfere((string) $password, $c->senha ?? null)) {
+                $clienteAutenticado = $c;
+                break;
+            }
+        }
+
+        if (! $clienteAutenticado) {
             $this->limite_login->registrarFalha('cliente', $email, $ip);
             echo json_encode(['result' => false, 'message' => 'Os dados de acesso estão incorretos.', 'MAPOS_TOKEN' => $this->security->get_csrf_hash()]);
 
             return;
         }
 
+        // Sincroniza a senha verificada para as demais contas do mesmo cliente
+        foreach ($contas as $c) {
+            if ($c->idClientes !== $clienteAutenticado->idClientes && ! senhaConfere((string) $password, $c->senha ?? null)) {
+                $this->db->where('idClientes', $c->idClientes)->update('clientes', ['senha' => $clienteAutenticado->senha]);
+            }
+        }
+
         $this->limite_login->registrarSucesso('cliente', $email);
 
-        // Novo ID de sessão a cada autenticação, para que um ID
-        // fixado antes do login não continue válido depois dele.
         $this->session->sess_regenerate(true);
 
+        // Busca todas as empresas vinculadas a este cliente
+        $empresas = $this->Conecte_model->getEmpresasDoCliente($email, $clienteAutenticado->documento);
+        $qtdEmpresas = count($empresas);
+
+        $empresaAtivaId = (int) ($clienteAutenticado->empresa_id ?: 1);
+        $empresaAtivaNome = 'Oficina #' . $empresaAtivaId;
+        foreach ($empresas as $emp) {
+            if ($emp->empresa_id === $empresaAtivaId) {
+                $empresaAtivaNome = $emp->nome;
+                break;
+            }
+        }
+
         $this->session->set_userdata([
-            'nome' => $cliente->nomeCliente,
-            'cliente_id' => $cliente->idClientes,
-            'email' => $cliente->email,
+            'nome' => $clienteAutenticado->nomeCliente,
+            'cliente_id' => (int) $clienteAutenticado->idClientes,
+            'cliente_email' => $email,
+            'email' => $clienteAutenticado->email,
+            'empresa_id' => $empresaAtivaId,
+            'empresa_nome' => $empresaAtivaNome,
             'conectado' => true,
             'isCliente' => true,
+            'qtd_empresas_cliente' => $qtdEmpresas,
         ]);
 
         $this->load->model('Audit_model');
         $this->Audit_model->add([
-            'usuario' => $cliente->nomeCliente,
-            'tarefa' => 'Cliente ' . $cliente->nomeCliente . ' efetuou login',
+            'usuario' => $clienteAutenticado->nomeCliente,
+            'tarefa' => 'Cliente ' . $clienteAutenticado->nomeCliente . ' efetuou login',
             'data' => date('Y-m-d'),
             'hora' => date('H:i:s'),
             'ip' => $ip,
         ]);
 
-        echo json_encode(['result' => true]);
+        $destino = $qtdEmpresas > 1 ? site_url('mine/escolherEmpresa') : site_url('mine/painel');
+
+        echo json_encode(['result' => true, 'destino' => $destino]);
     }
 
     // --- Telas do cliente logado ----------------------------------------------
@@ -334,6 +444,14 @@ class Mine extends CI_Controller
 
             if ($erros === []) {
                 if ($this->Conecte_model->edit('clientes', $dados, 'idClientes', $idCliente)) {
+                    // Sincroniza a nova senha nas demais contas se a senha foi alterada
+                    if (! empty($dados['senha'])) {
+                        $this->db
+                            ->where('email', $cliente->email)
+                            ->where('idClientes !=', $idCliente)
+                            ->update('clientes', ['senha' => $dados['senha']]);
+                    }
+
                     $this->session->set_userdata(['nome' => $dados['nomeCliente'], 'email' => $dados['email']]);
                     $this->session->set_flashdata('success', 'Seus dados foram salvos.');
 
@@ -479,6 +597,7 @@ class Mine extends CI_Controller
                     'status' => 'Aberto',
                     'observacoes' => $texto('observacoes'),
                     'faturado' => 0,
+                    'empresa_id' => (int) ($this->session->userdata('empresa_id') ?: 1),
                 ];
 
                 $idOs = $this->Conecte_model->add('os', $dados, true);
@@ -783,6 +902,8 @@ class Mine extends CI_Controller
             'flash' => $flash,
             'configuration' => $this->configuracoes(),
             'cliente_nome' => (string) $this->session->userdata('nome'),
+            'empresa_nome' => (string) ($this->session->userdata('empresa_nome') ?? ''),
+            'qtd_empresas' => (int) ($this->session->userdata('qtd_empresas_cliente') ?? 1),
         ]);
     }
 
@@ -851,11 +972,15 @@ class Mine extends CI_Controller
      */
     private function tecnicoParaNovaOs(): ?int
     {
-        $usuario = $this->db->query('SELECT usuarios_id, count(*) as down FROM os GROUP BY usuarios_id ORDER BY down LIMIT 1')->row();
+        $empresaId = (int) ($this->session->userdata('empresa_id') ?: 1);
+        $usuario = $this->db->query('SELECT usuarios_id, count(*) as down FROM os WHERE empresa_id = ? GROUP BY usuarios_id ORDER BY down LIMIT 1', [$empresaId])->row();
         if ($usuario !== null && $usuario->usuarios_id) {
             return (int) $usuario->usuarios_id;
         }
 
+        if ($this->db->field_exists('empresa_id', 'usuarios')) {
+            $this->db->where('empresa_id', $empresaId);
+        }
         $usuario = $this->db->where('situacao', 1)->limit(1)->get('usuarios')->row();
 
         return $usuario ? (int) $usuario->idUsuarios : null;
