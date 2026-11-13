@@ -88,7 +88,7 @@ class ProdutosController extends REST_Controller
             'unidade' => $this->post('unidade', true),
             'precoCompra' => $precoCompra,
             'precoVenda' => $precoVenda,
-            'estoque' => $this->post('estoque', true),
+            'estoque' => $this->post('estoque', true) ? $this->post('estoque', true) : 0,
             'estoqueMinimo' => $this->post('estoqueMinimo', true) ? $this->post('estoqueMinimo', true) : 0,
             'saida' => $this->post('saida', true) ? $this->post('saida', true) : 0,
             'entrada' => $this->post('entrada', true) ? $this->post('entrada', true) : 0,

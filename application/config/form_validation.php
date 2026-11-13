@@ -112,7 +112,7 @@ $config = [
         [
             'field' => 'estoque',
             'label' => 'Estoque',
-            'rules' => 'required|trim|integer|greater_than_equal_to[0]|less_than_equal_to[99999999]',
+            'rules' => 'trim|integer|greater_than_equal_to[0]|less_than_equal_to[99999999]',
         ],
         [
             'field' => 'estoqueMinimo',

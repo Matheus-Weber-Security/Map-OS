@@ -115,9 +115,9 @@ $caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
                 <?= component('input', $campo('estoque', [
                     'label' => $editando ? 'Quantidade em estoque' : 'Estoque inicial',
                     'type' => 'number',
-                    'required' => true,
+                    'placeholder' => '0',
                     'help' => $editando ? 'Para entradas e saídas do dia a dia, use "Entrada de estoque" na ficha do produto.' : null,
-                    'attrs' => ['min' => 0, 'max' => 99999999, 'step' => 1, 'inputmode' => 'numeric', 'data-msg-vazio' => 'Informe a quantidade em estoque.'],
+                    'attrs' => ['min' => 0, 'max' => 99999999, 'step' => 1, 'inputmode' => 'numeric'],
                 ])) ?>
                 <?= component('input', $campo('estoqueMinimo', [
                     'label' => 'Estoque mínimo',

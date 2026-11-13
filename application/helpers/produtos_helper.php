@@ -51,7 +51,7 @@ if (! function_exists('produtoDadosDoFormulario')) {
             'unidade' => $texto('unidade'),
             'precoCompra' => $precoCompra,
             'precoVenda' => $precoVenda,
-            'estoque' => $inteiro('estoque'),
+            'estoque' => $texto('estoque') === '' ? 0 : $inteiro('estoque'),
             'estoqueMinimo' => $texto('estoqueMinimo') === '' ? null : $inteiro('estoqueMinimo'),
             'entrada' => empty($post['entrada']) ? 0 : 1,
             'saida' => empty($post['saida']) ? 0 : 1,
