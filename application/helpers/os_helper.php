@@ -771,6 +771,21 @@ if (! function_exists('osTextoWhatsApp')) {
     }
 }
 
+if (! function_exists('osTokenPublico')) {
+    /**
+     * Gera um token seguro para visualização pública e download do PDF da OS pelo cliente.
+     */
+    function osTokenPublico(object $os): string
+    {
+        $id = (int) ($os->idOs ?? 0);
+        $clienteId = (int) ($os->clientes_id ?? 0);
+        $empresaId = (int) ($os->empresa_id ?? 1);
+        $segredo = config_item('encryption_key') ?: 'nexus_ticket_os_token_secret';
+
+        return substr(hash_hmac('sha256', "os:{$id}:{$clienteId}:{$empresaId}", $segredo), 0, 32);
+    }
+}
+
 if (! function_exists('osDadosWhatsApp')) {
     /**
      * Telefone normalizado e mensagem preenchida (notifica_whats) para o link
@@ -786,9 +801,14 @@ if (! function_exists('osDadosWhatsApp')) {
             return null;
         }
 
+        $idOs = (int) ($os->idOs ?? 0);
+        $numeroOs = (string) ($os->codigo ?? $idOs);
+        $token = osTokenPublico($os);
+        $linkOs = site_url("publico/os/{$idOs}/{$token}");
+
         $troca = [
             '{CLIENTE_NOME}' => (string) ($os->nomeCliente ?? ''),
-            '{NUMERO_OS}' => (string) (int) $os->idOs,
+            '{NUMERO_OS}' => $numeroOs,
             '{STATUS_OS}' => (string) ($os->status ?? ''),
             '{VALOR_OS}' => dinheiro($total),
             '{DESCRI_PRODUTOS}' => (string) ($os->descricaoProduto ?? ''),
@@ -800,11 +820,20 @@ if (! function_exists('osDadosWhatsApp')) {
             '{DATA_FINAL}' => dataBr($os->dataFinal ?? null),
             '{DATA_INICIAL}' => dataBr($os->dataInicial ?? null),
             '{DATA_GARANTIA}' => (string) ($os->garantia ?? 0) . ' dias',
+            '{LINK_OS}' => $linkOs,
         ];
+
+        $modelo = $configuracao['notifica_whats'] ?? '';
+        $texto = osTextoWhatsApp($modelo, $troca);
+
+        // Se o modelo configurado não incluiu a tag {LINK_OS}, anexa automaticamente ao final
+        if (! str_contains($texto, $linkOs)) {
+            $texto = rtrim($texto) . "\n\n📄 Visualize ou baixe o PDF da sua OS aqui:\n" . $linkOs;
+        }
 
         return [
             'telefone' => $telefone,
-            'texto' => osTextoWhatsApp($configuracao['notifica_whats'] ?? '', $troca),
+            'texto' => $texto,
         ];
     }
 }

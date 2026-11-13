@@ -43,6 +43,7 @@ if (! defined('BASEPATH')) {
 */
 
 $route['default_controller'] = 'mapos';
+$route['publico/os/(:num)/(:any)'] = 'publico/os/$1/$2';
 $route['404_override'] = '';
 
 // Rotas da API

@@ -37,6 +37,7 @@ if (! defined('CONFIG_MARCADORES_WHATSAPP')) {
         '{DATA_INICIAL}' => 'Data inicial',
         '{DATA_FINAL}' => 'Data final',
         '{DATA_GARANTIA}' => 'Garantia',
+        '{LINK_OS}' => 'Link do PDF da OS',
     ]);
 }
 

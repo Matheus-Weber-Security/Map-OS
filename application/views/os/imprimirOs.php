@@ -11,6 +11,22 @@ $totalProdutos = 0;
     <link rel="stylesheet" href="<?= base_url() ?>assets/dist/imprimir.css?v=<?= file_exists(FCPATH . 'assets/dist/imprimir.css') ? filemtime(FCPATH . 'assets/dist/imprimir.css') : '1.0' ?>">
 </head>
 <body>
+    <?php if (! empty($publico)) : ?>
+        <div class="doc-sem-impressao" style="max-width: 210mm; margin: 15px auto; padding: 12px 18px; background: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div>
+                <span style="font-weight: 600; font-size: 15px; color: #1f2937;">Ordem de Serviço #<?= e(str_pad((string) ($result->codigo ?? $result->idOs), 4, '0', STR_PAD_LEFT)) ?></span>
+                <span style="font-size: 13px; color: #6b7280; margin-left: 8px;">(<?= e($result->status ?? '') ?>)</span>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <a href="<?= e(current_url() . '?pdf=1') ?>" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; font-size: 13px; font-weight: 600; color: #ffffff; background: #2563eb; border-radius: 6px; text-decoration: none;">
+                    📥 Baixar em PDF
+                </a>
+                <button type="button" onclick="window.print()" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; font-size: 13px; font-weight: 600; color: #374151; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer;">
+                    🖨️ Imprimir
+                </button>
+            </div>
+        </div>
+    <?php endif; ?>
     <div class="doc-folha">
         <div>
             <header class="doc-cabecalho flex-nowrap">
