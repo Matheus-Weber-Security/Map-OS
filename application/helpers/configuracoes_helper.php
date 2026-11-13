@@ -350,16 +350,16 @@ if (! function_exists('emitenteDadosDoFormulario')) {
     {
         $campos = [
             'nome' => ['Informe a razão social.', 255],
-            'cnpj' => ['Informe o CNPJ ou CPF.', 45],
+            'cnpj' => [null, 45],
             'ie' => [null, 50],
-            'cep' => ['Informe o CEP.', 20],
-            'rua' => ['Informe a rua.', 70],
-            'numero' => ['Informe o número.', 15],
-            'bairro' => ['Informe o bairro.', 45],
-            'cidade' => ['Informe a cidade.', 45],
-            'estado' => ['Escolha a UF.', 20],
-            'telefone' => ['Informe o telefone.', 20],
-            'email' => ['Informe o e-mail.', 255],
+            'cep' => [null, 20],
+            'rua' => [null, 70],
+            'numero' => [null, 15],
+            'bairro' => [null, 45],
+            'cidade' => [null, 45],
+            'estado' => [null, 20],
+            'telefone' => [null, 20],
+            'email' => [null, 255],
         ];
 
         $dados = [];

@@ -49,10 +49,10 @@ $logo = (string) ($emitente->url_logo ?? '');
                 <div class="sm:col-span-2">
                     <?= component('input', $campo('nome', ['label' => 'Razão social', 'required' => true, 'autocomplete' => 'organization', 'attrs' => ['maxlength' => 255, 'data-msg-vazio' => 'Informe a razão social.']])) ?>
                 </div>
-                <?= component('input', $campo('cnpj', ['label' => 'CNPJ ou CPF', 'required' => true, 'attrs' => ['data-mascara' => 'documento', 'maxlength' => 45, 'data-msg-vazio' => 'Informe o CNPJ ou CPF.']])) ?>
+                <?= component('input', $campo('cnpj', ['label' => 'CNPJ ou CPF', 'attrs' => ['data-mascara' => 'documento', 'maxlength' => 45]])) ?>
                 <?= component('input', $campo('ie', ['label' => 'Inscrição estadual', 'attrs' => ['maxlength' => 50]])) ?>
-                <?= component('input', $campo('telefone', ['label' => 'Telefone', 'type' => 'tel', 'required' => true, 'autocomplete' => 'tel', 'attrs' => ['data-mascara' => 'telefone', 'maxlength' => 20, 'data-msg-vazio' => 'Informe o telefone.']])) ?>
-                <?= component('input', $campo('email', ['label' => 'E-mail', 'type' => 'email', 'required' => true, 'autocomplete' => 'email', 'help' => 'Remetente dos e-mails do sistema.', 'attrs' => ['maxlength' => 255, 'data-msg-vazio' => 'Informe o e-mail.']])) ?>
+                <?= component('input', $campo('telefone', ['label' => 'Telefone', 'type' => 'tel', 'autocomplete' => 'tel', 'attrs' => ['data-mascara' => 'telefone', 'maxlength' => 20]])) ?>
+                <?= component('input', $campo('email', ['label' => 'E-mail', 'type' => 'email', 'autocomplete' => 'email', 'help' => 'Remetente dos e-mails do sistema.', 'attrs' => ['maxlength' => 255]])) ?>
             </div>
         </section>
 
@@ -60,22 +60,20 @@ $logo = (string) ($emitente->url_logo ?? '');
             <h2 id="secao-endereco" class="text-heading-sm text-text">Endereço</h2>
             <p class="mt-0.5 text-caption text-muted">Digite o CEP para preencher o resto.</p>
             <div class="<?= e($grade) ?>">
-                <?= component('input', $campo('cep', ['label' => 'CEP', 'required' => true, 'autocomplete' => 'postal-code', 'attrs' => ['data-mascara' => 'cep', 'inputmode' => 'numeric', 'maxlength' => 9, 'data-msg-vazio' => 'Informe o CEP.']])) ?>
+                <?= component('input', $campo('cep', ['label' => 'CEP', 'autocomplete' => 'postal-code', 'attrs' => ['data-mascara' => 'cep', 'inputmode' => 'numeric', 'maxlength' => 9]])) ?>
                 <div class="hidden sm:block" aria-hidden="true"></div>
-                <?= component('input', $campo('rua', ['label' => 'Rua', 'required' => true, 'autocomplete' => 'address-line1', 'attrs' => ['maxlength' => 70, 'data-msg-vazio' => 'Informe a rua.']])) ?>
-                <?= component('input', $campo('numero', ['label' => 'Número', 'required' => true, 'attrs' => ['maxlength' => 15, 'data-msg-vazio' => 'Informe o número.']])) ?>
-                <?= component('input', $campo('bairro', ['label' => 'Bairro', 'required' => true, 'attrs' => ['maxlength' => 45, 'data-msg-vazio' => 'Informe o bairro.']])) ?>
+                <?= component('input', $campo('rua', ['label' => 'Rua', 'autocomplete' => 'address-line1', 'attrs' => ['maxlength' => 70]])) ?>
+                <?= component('input', $campo('numero', ['label' => 'Número', 'attrs' => ['maxlength' => 15]])) ?>
+                <?= component('input', $campo('bairro', ['label' => 'Bairro', 'attrs' => ['maxlength' => 45]])) ?>
                 <div class="grid grid-cols-[minmax(0,1fr)_7rem] gap-4">
-                    <?= component('input', $campo('cidade', ['label' => 'Cidade', 'required' => true, 'autocomplete' => 'address-level2', 'attrs' => ['maxlength' => 45, 'data-msg-vazio' => 'Informe a cidade.']])) ?>
+                    <?= component('input', $campo('cidade', ['label' => 'Cidade', 'autocomplete' => 'address-level2', 'attrs' => ['maxlength' => 45]])) ?>
                     <?= component('select', [
                         'name' => 'estado',
                         'label' => 'UF',
-                        'required' => true,
                         'placeholder' => '—',
                         'options' => array_combine(array_keys(ufsDoBrasil()), array_keys(ufsDoBrasil())),
                         'selected' => $valores['estado'] !== '' ? strtoupper($valores['estado']) : null,
                         'error' => $errosDeCampo['estado'] ?? null,
-                        'attrs' => ['data-msg-vazio' => 'Escolha a UF.'],
                     ]) ?>
                 </div>
             </div>
