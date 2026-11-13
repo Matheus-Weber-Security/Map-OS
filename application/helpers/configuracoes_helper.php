@@ -105,7 +105,7 @@ if (! function_exists('configuracaoCampos')) {
                 'EMAIL_SMTP_CRYPTO' => ['destino' => 'env', 'tipo' => 'opcao', 'rotulo' => 'Criptografia', 'opcoes' => ['tls' => 'TLS', 'ssl' => 'SSL']],
                 'EMAIL_SMTP_USER' => ['destino' => 'env', 'tipo' => 'texto', 'rotulo' => 'Usuário', 'max' => 255, 'ajuda' => 'Usuário de autenticação do servidor de e-mail (geralmente o seu endereço de e-mail completo, e não o usuário do sistema).'],
                 'EMAIL_SMTP_PASS' => ['destino' => 'env', 'tipo' => 'segredo', 'rotulo' => 'Senha', 'max' => 255],
-                'EMAIL_FROM' => ['destino' => 'env', 'tipo' => 'texto', 'rotulo' => 'Remetente padrão (From)', 'max' => 255, 'ajuda' => 'E-mail exibido como remetente nos envios (padrão: nao-responder@nexustkt.com.br).'],
+                'EMAIL_FROM' => ['destino' => 'env', 'tipo' => 'texto', 'rotulo' => 'Remetente padrão (From)', 'max' => 255, 'ajuda' => 'E-mail que seu cliente verá como remetente ao receber notificações, orçamentos e OS. Deixe em branco para usar automaticamente o mesmo e-mail do campo Usuário (recomendado). Preencha apenas se seu servidor de e-mail autorizar o envio por outro endereço ou alias (ex: contato@suaempresa.com.br).'],
             ],
             'pagamentos' => [
                 'PAYMENT_GATEWAYS_EFI_PRODUCTION' => ['destino' => 'env', 'tipo' => 'bool_env', 'rotulo' => 'Ambiente de produção', 'grupo' => 'Efí (antiga Gerencianet)'],

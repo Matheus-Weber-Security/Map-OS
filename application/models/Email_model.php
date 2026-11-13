@@ -288,7 +288,9 @@ class Email_model extends CI_Model
 
         $remetenteSistema = trim((string) ($emailConfig['from_address'] ?? ''));
         if ($remetenteSistema === '' || ! filter_var($remetenteSistema, FILTER_VALIDATE_EMAIL)) {
-            $remetenteSistema = filter_var($smtpUser, FILTER_VALIDATE_EMAIL) ? $smtpUser : 'nao-responder@nexustkt.com.br';
+            $remetenteSistema = filter_var($smtpUser, FILTER_VALIDATE_EMAIL)
+                ? $smtpUser
+                : (filter_var($fromEmailOriginal, FILTER_VALIDATE_EMAIL) ? $fromEmailOriginal : 'nao-responder@' . (parse_url(base_url(), PHP_URL_HOST) ?: 'localhost'));
         }
 
         $nomeSistema = trim((string) ($emailConfig['from_name'] ?? 'Nexus Ticket')) ?: 'Nexus Ticket';
