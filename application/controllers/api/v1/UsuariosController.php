@@ -542,10 +542,19 @@ class UsuariosController extends REST_Controller
         $this->load->library('Refresh_token');
         $familia ??= $refreshToken !== null ? $this->refresh_token->familiaDoToken($refreshToken) : null;
 
+        $empresaId = 1;
+        if ($this->db->table_exists('saas_empresa_usuarios')) {
+            $vinculo = $this->db->select('empresa_id')->where('usuario_id', (int) $usuario->idUsuarios)->get('saas_empresa_usuarios')->row();
+            if ($vinculo) {
+                $empresaId = (int) $vinculo->empresa_id;
+            }
+        }
+
         $dados = [
             'uid' => $usuario->idUsuarios,
             'email' => $usuario->email,
             'permissao' => $usuario->permissoes_id,
+            'empresa_id' => $empresaId,
             'type' => REST_Controller::TOKEN_TYPE_USER,
             'tv' => $this->authorization_token->versaoAtual('usuarios', 'idUsuarios', (int) $usuario->idUsuarios),
         ];

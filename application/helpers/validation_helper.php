@@ -143,7 +143,7 @@ if (! function_exists('unique')) {
         // Se a tabela possui empresa_id e estamos em contexto multitenant com empresa ativa,
         // restringe a validação à empresa ativa para permitir que outras empresas cadastrem o mesmo cliente.
         if ($CI->db->field_exists('empresa_id', $table) && function_exists('empresa_ativa_id')) {
-            $CI->db->where('empresa_id', empresa_ativa_id());
+            $CI->db->where($table . '.empresa_id', empresa_ativa_id());
         }
 
         $query = $CI->db->limit(1)->get();

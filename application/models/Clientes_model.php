@@ -164,28 +164,51 @@ class Clientes_model extends CI_Model
     /** OS do cliente, das mais recentes para as mais antigas. */
     public function osDoCliente(int $id, int $limite, int $offset = 0): array
     {
-        return $this->db->where('clientes_id', $id)->order_by('idOs', 'desc')->limit($limite, $offset)->get('os')->result();
+        $qb = $this->db->where('clientes_id', $id);
+        if ($this->db->field_exists('empresa_id', 'os')) {
+            $qb->where('empresa_id', empresa_ativa_id());
+        }
+
+        return $qb->order_by('idOs', 'desc')->limit($limite, $offset)->get('os')->result();
     }
 
     /** Vendas do cliente, das mais recentes para as mais antigas. */
     public function vendasDoCliente(int $id, int $limite, int $offset = 0): array
     {
-        return $this->db->where('clientes_id', $id)->order_by('idVendas', 'desc')->limit($limite, $offset)->get('vendas')->result();
+        $qb = $this->db->where('clientes_id', $id);
+        if ($this->db->field_exists('empresa_id', 'vendas')) {
+            $qb->where('empresa_id', empresa_ativa_id());
+        }
+
+        return $qb->order_by('idVendas', 'desc')->limit($limite, $offset)->get('vendas')->result();
     }
 
     public function contarOsDoCliente(int $id): int
     {
-        return (int) $this->db->where('clientes_id', $id)->count_all_results('os');
+        $qb = $this->db->where('clientes_id', $id);
+        if ($this->db->field_exists('empresa_id', 'os')) {
+            $qb->where('empresa_id', empresa_ativa_id());
+        }
+
+        return (int) $qb->count_all_results('os');
     }
 
     public function contarVendasDoCliente(int $id): int
     {
-        return (int) $this->db->where('clientes_id', $id)->count_all_results('vendas');
+        $qb = $this->db->where('clientes_id', $id);
+        if ($this->db->field_exists('empresa_id', 'vendas')) {
+            $qb->where('empresa_id', empresa_ativa_id());
+        }
+
+        return (int) $qb->count_all_results('vendas');
     }
 
     public function getOsByCliente($id)
     {
         $this->db->where('clientes_id', $id);
+        if ($this->db->field_exists('empresa_id', 'os')) {
+            $this->db->where('empresa_id', empresa_ativa_id());
+        }
         $this->db->order_by('idOs', 'desc');
         $this->db->limit(10);
 
@@ -201,6 +224,9 @@ class Clientes_model extends CI_Model
     public function getAllOsByClient($id)
     {
         $this->db->where('clientes_id', $id);
+        if ($this->db->field_exists('empresa_id', 'os')) {
+            $this->db->where('empresa_id', empresa_ativa_id());
+        }
 
         return $this->db->get('os')->result();
     }
@@ -214,6 +240,7 @@ class Clientes_model extends CI_Model
     public function removeClientOs($os)
     {
         try {
+            $empresaId = empresa_ativa_id();
             foreach ($os as $o) {
                 $this->db->where('os_id', $o->idOs);
                 $this->db->delete('servicos_os');
@@ -222,6 +249,9 @@ class Clientes_model extends CI_Model
                 $this->db->delete('produtos_os');
 
                 $this->db->where('idOs', $o->idOs);
+                if ($this->db->field_exists('empresa_id', 'os')) {
+                    $this->db->where('empresa_id', $empresaId);
+                }
                 $this->db->delete('os');
             }
         } catch (Exception $e) {
@@ -240,6 +270,9 @@ class Clientes_model extends CI_Model
     public function getAllVendasByClient($id)
     {
         $this->db->where('clientes_id', $id);
+        if ($this->db->field_exists('empresa_id', 'vendas')) {
+            $this->db->where('empresa_id', empresa_ativa_id());
+        }
 
         return $this->db->get('vendas')->result();
     }
@@ -253,11 +286,15 @@ class Clientes_model extends CI_Model
     public function removeClientVendas($vendas)
     {
         try {
+            $empresaId = empresa_ativa_id();
             foreach ($vendas as $v) {
                 $this->db->where('vendas_id', $v->idVendas);
                 $this->db->delete('itens_de_vendas');
 
                 $this->db->where('idVendas', $v->idVendas);
+                if ($this->db->field_exists('empresa_id', 'vendas')) {
+                    $this->db->where('empresa_id', $empresaId);
+                }
                 $this->db->delete('vendas');
             }
         } catch (Exception $e) {

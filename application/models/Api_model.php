@@ -30,12 +30,17 @@ class Api_model extends CI_Model
 
     public function searchUsuario($search)
     {
-        $this->db->select('*');
+        $this->db->select('usuarios.*');
+        if ($this->db->table_exists('saas_empresa_usuarios')) {
+            $this->db->join('saas_empresa_usuarios', 'saas_empresa_usuarios.usuario_id = usuarios.idUsuarios');
+            $this->db->where('saas_empresa_usuarios.empresa_id', empresa_ativa_id());
+        }
         $this->db->limit(5);
-        $this->db->like('nome', $search);
-        $this->db->where('situacao', 1);
+        $this->db->like('usuarios.nome', $search);
+        $this->db->where('usuarios.situacao', 1);
         $query = $this->db->get('usuarios');
         if ($query->num_rows() > 0) {
+            $usuarios = [];
             foreach ($query->result() as $row) {
                 $usuarios[$row->idUsuarios]['label'] = $row->nome . ' | Telefone: ' . $row->telefone;
                 $usuarios[$row->idUsuarios]['idUsuarios'] = $row->idUsuarios;
@@ -43,5 +48,7 @@ class Api_model extends CI_Model
 
             return (object) $usuarios;
         }
+
+        return (object) [];
     }
 }

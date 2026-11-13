@@ -115,27 +115,47 @@ class Mapos_model extends CI_Model
     public function pesquisar($termo)
     {
         $data = [];
+        $empresaId = function_exists('empresa_ativa_id') ? empresa_ativa_id() : 1;
+
         // buscando clientes
+        if ($this->db->field_exists('empresa_id', 'clientes')) {
+            $this->db->where('clientes.empresa_id', $empresaId);
+        }
+        $this->db->group_start();
         $this->db->like('nomeCliente', $termo);
         $this->db->or_like('telefone', $termo);
         $this->db->or_like('celular', $termo);
         $this->db->or_like('documento', $termo);
+        $this->db->group_end();
         $this->db->limit(15);
         $data['clientes'] = $this->db->get('clientes')->result();
 
         // buscando os
+        if ($this->db->field_exists('empresa_id', 'os')) {
+            $this->db->where('os.empresa_id', $empresaId);
+        }
+        $this->db->group_start();
         $this->db->like('idOs', $termo);
         $this->db->or_like('descricaoProduto', $termo);
+        $this->db->group_end();
         $this->db->limit(15);
         $data['os'] = $this->db->get('os')->result();
 
         // buscando produtos
+        if ($this->db->field_exists('empresa_id', 'produtos')) {
+            $this->db->where('produtos.empresa_id', $empresaId);
+        }
+        $this->db->group_start();
         $this->db->like('codDeBarra', $termo);
         $this->db->or_like('descricao', $termo);
+        $this->db->group_end();
         $this->db->limit(50);
         $data['produtos'] = $this->db->get('produtos')->result();
 
         //buscando serviços
+        if ($this->db->field_exists('empresa_id', 'servicos')) {
+            $this->db->where('servicos.empresa_id', $empresaId);
+        }
         $this->db->like('nome', $termo);
         $this->db->limit(15);
         $data['servicos'] = $this->db->get('servicos')->result();
@@ -152,21 +172,38 @@ class Mapos_model extends CI_Model
     public function buscaRapida(string $termo, int $limite = 5): array
     {
         $dados = [];
+        $empresaId = function_exists('empresa_ativa_id') ? empresa_ativa_id() : 1;
 
-        $dados['clientes'] = $this->db->select('idClientes, nomeCliente, documento, telefone, celular')
+        $qbClientes = $this->db->select('idClientes, nomeCliente, documento, telefone, celular');
+        if ($this->db->field_exists('empresa_id', 'clientes')) {
+            $qbClientes->where('clientes.empresa_id', $empresaId);
+        }
+        $dados['clientes'] = $qbClientes
             ->group_start()->like('nomeCliente', $termo)->or_like('documento', $termo)->or_like('telefone', $termo)->or_like('celular', $termo)->group_end()
             ->order_by('nomeCliente')->limit($limite)->get('clientes')->result();
 
-        $dados['os'] = $this->db->select('os.idOs, os.status, clientes.nomeCliente')
-            ->join('clientes', 'clientes.idClientes = os.clientes_id', 'left')
+        $qbOs = $this->db->select('os.idOs, os.status, clientes.nomeCliente')
+            ->join('clientes', 'clientes.idClientes = os.clientes_id', 'left');
+        if ($this->db->field_exists('empresa_id', 'os')) {
+            $qbOs->where('os.empresa_id', $empresaId);
+        }
+        $dados['os'] = $qbOs
             ->group_start()->like('os.idOs', $termo)->or_like('clientes.nomeCliente', $termo)->or_like('os.descricaoProduto', $termo)->group_end()
             ->order_by('os.idOs', 'DESC')->limit($limite)->get('os')->result();
 
-        $dados['produtos'] = $this->db->select('idProdutos, descricao, precoVenda, estoque')
+        $qbProdutos = $this->db->select('idProdutos, descricao, precoVenda, estoque');
+        if ($this->db->field_exists('empresa_id', 'produtos')) {
+            $qbProdutos->where('produtos.empresa_id', $empresaId);
+        }
+        $dados['produtos'] = $qbProdutos
             ->group_start()->like('descricao', $termo)->or_like('codDeBarra', $termo)->group_end()
             ->order_by('descricao')->limit($limite)->get('produtos')->result();
 
-        $dados['servicos'] = $this->db->select('idServicos, nome, preco')
+        $qbServicos = $this->db->select('idServicos, nome, preco');
+        if ($this->db->field_exists('empresa_id', 'servicos')) {
+            $qbServicos->where('servicos.empresa_id', $empresaId);
+        }
+        $dados['servicos'] = $qbServicos
             ->like('nome', $termo)
             ->order_by('nome')->limit($limite)->get('servicos')->result();
 

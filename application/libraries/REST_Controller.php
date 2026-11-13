@@ -2311,6 +2311,23 @@ abstract class REST_Controller extends CI_Controller
             ], self::HTTP_FORBIDDEN);
         }
 
+        // Resolve a empresa do usuário e inicializa no contexto da sessão para isolamento multi-tenant
+        $empresaId = null;
+        if (! empty($decodedToken->data->empresa_id)) {
+            $empresaId = (int) $decodedToken->data->empresa_id;
+        } elseif ($this->CI->db->table_exists('saas_empresa_usuarios')) {
+            $vinculo = $this->CI->db->select('empresa_id')
+                ->where('usuario_id', (int) $decodedToken->data->uid)
+                ->get('saas_empresa_usuarios')
+                ->row();
+            if ($vinculo) {
+                $empresaId = (int) $vinculo->empresa_id;
+            }
+        }
+        if ($empresaId > 0 && isset($this->CI->session)) {
+            $this->CI->session->set_userdata('empresa_id', $empresaId);
+        }
+
         $this->load->model('Usuarios_model');
         $this->user = $decodedToken;
         $this->user->usuario = $this->Usuarios_model->getById($decodedToken->data->uid);
@@ -2380,6 +2397,23 @@ abstract class REST_Controller extends CI_Controller
                 'status' => false,
                 'message' => 'Faça o login novamente!',
             ], self::HTTP_FORBIDDEN);
+        }
+
+        // Resolve a empresa do cliente e inicializa no contexto da sessão para isolamento multi-tenant
+        $empresaId = null;
+        if (! empty($decodedToken->data->empresa_id)) {
+            $empresaId = (int) $decodedToken->data->empresa_id;
+        } elseif ($this->CI->db->table_exists('clientes') && $this->CI->db->field_exists('empresa_id', 'clientes')) {
+            $cli = $this->CI->db->select('empresa_id')
+                ->where('idClientes', (int) $decodedToken->data->uid)
+                ->get('clientes')
+                ->row();
+            if ($cli) {
+                $empresaId = (int) $cli->empresa_id;
+            }
+        }
+        if ($empresaId > 0 && isset($this->CI->session)) {
+            $this->CI->session->set_userdata('empresa_id', $empresaId);
         }
 
         $this->load->model('Clientes_model');

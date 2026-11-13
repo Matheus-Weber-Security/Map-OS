@@ -399,7 +399,11 @@ class Financeiro_model extends CI_Model
      */
     public function sugerirClientes(string $termo): array
     {
+        $empresaId = function_exists('empresa_ativa_id') ? empresa_ativa_id() : 1;
         $this->db->select('idClientes, nomeCliente, documento, celular');
+        if ($this->db->field_exists('empresa_id', 'clientes')) {
+            $this->db->where('clientes.empresa_id', $empresaId);
+        }
         $this->db->group_start()->like('nomeCliente', $termo)->or_like('documento', $termo)->group_end();
         $this->db->order_by('nomeCliente', 'asc')->limit(8);
 
@@ -425,7 +429,12 @@ class Financeiro_model extends CI_Model
      */
     public function sugerirNomesUsados(string $termo): array
     {
-        $linhas = $this->db->distinct()->select('cliente_fornecedor')
+        $empresaId = function_exists('empresa_ativa_id') ? empresa_ativa_id() : 1;
+        $this->db->distinct()->select('cliente_fornecedor');
+        if ($this->db->field_exists('empresa_id', 'lancamentos')) {
+            $this->db->where('empresa_id', $empresaId);
+        }
+        $linhas = $this->db
             ->like('cliente_fornecedor', $termo)
             ->where('cliente_fornecedor IS NOT NULL', null, false)
             ->order_by('cliente_fornecedor', 'asc')
