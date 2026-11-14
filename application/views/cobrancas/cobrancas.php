@@ -44,44 +44,84 @@ $colunas = [
         'attrs' => ['title' => cobrancaDescricaoDoStatus($gateways, $c->payment_gateway, $c->status)],
     ])],
     ['label' => 'Valor', 'align' => 'right', 'nowrap' => true, 'render' => fn ($c) => dinheiro((float) $c->total / 100)],
-    ['label' => 'Ações', 'align' => 'right', 'class' => 'max-w-44 sm:min-w-44', 'render' => function ($c) use ($pode, $query) {
-        $nome = 'cobrança ' . $c->idCobranca;
-        $acoes = [
-            component('button', ['label' => 'Ver ' . $nome, 'icon' => 'eye', 'icon_only' => true, 'variant' => 'ghost', 'size' => 'sm', 'href' => site_url('cobrancas/visualizar/' . $c->idCobranca)]),
+    ['label' => 'Ações', 'align' => 'right', 'nowrap' => true, 'render' => function ($c) use ($pode, $query) {
+        $numero = '#' . ($c->codigo ?? $c->idCobranca);
+        $itens = [
+            [
+                'label' => 'Ver cobrança',
+                'icon' => 'eye',
+                'href' => site_url('cobrancas/visualizar/' . $c->idCobranca),
+            ],
         ];
+
         $link = cobrancaUrlSegura($c->link);
         if ($link !== null && $c->barcode !== null && $c->barcode !== '') {
-            $acoes[] = component('button', ['label' => 'Abrir boleto da ' . $nome, 'icon' => 'barcode', 'icon_only' => true, 'variant' => 'ghost', 'size' => 'sm', 'href' => $link, 'attrs' => ['target' => '_blank', 'rel' => 'noopener']]);
-        }
-        if ($pode['editar']) {
-            $acoes[] = component('button', ['label' => 'Enviar ' . $nome . ' por e-mail', 'icon' => 'mail', 'icon_only' => true, 'variant' => 'ghost', 'size' => 'sm', 'type' => 'submit', 'attrs' => [
-                'form' => 'form-acao-cobranca',
-                'formaction' => site_url('cobrancas/enviarEmail/' . $c->idCobranca) . $query,
-            ]]);
-            $acoes[] = component('button', ['label' => 'Atualizar status da ' . $nome, 'icon' => 'history', 'icon_only' => true, 'variant' => 'ghost', 'size' => 'sm', 'type' => 'submit', 'attrs' => [
-                'form' => 'form-acao-cobranca',
-                'formaction' => site_url('cobrancas/atualizar/' . $c->idCobranca) . $query,
-            ]]);
-            $acoes[] = component('button', ['label' => 'Confirmar pagamento da ' . $nome, 'icon' => 'circle-check', 'icon_only' => true, 'variant' => 'ghost', 'size' => 'sm', 'attrs' => [
-                'data-modal-abrir' => 'confirmar-pagamento',
-                'data-valor-id' => (string) $c->idCobranca,
-                'data-valor-nome' => '#' . $c->idCobranca,
-            ]]);
-            $acoes[] = component('button', ['label' => 'Cancelar ' . $nome, 'icon' => 'x', 'icon_only' => true, 'variant' => 'ghost', 'size' => 'sm', 'class' => 'hover:text-danger-ink', 'attrs' => [
-                'data-modal-abrir' => 'cancelar-cobranca',
-                'data-valor-id' => (string) $c->idCobranca,
-                'data-valor-nome' => '#' . $c->idCobranca,
-            ]]);
-        }
-        if ($pode['excluir']) {
-            $acoes[] = component('button', ['label' => 'Excluir ' . $nome, 'icon' => 'trash-2', 'icon_only' => true, 'variant' => 'ghost', 'size' => 'sm', 'class' => 'hover:text-danger-ink', 'attrs' => [
-                'data-modal-abrir' => 'excluir-cobranca',
-                'data-valor-id' => (string) $c->idCobranca,
-                'data-valor-nome' => '#' . $c->idCobranca,
-            ]]);
+            $itens[] = [
+                'label' => 'Abrir boleto',
+                'icon' => 'barcode',
+                'href' => $link,
+                'attrs' => ['target' => '_blank', 'rel' => 'noopener'],
+            ];
         }
 
-        return $acoes;
+        if ($pode['editar']) {
+            $itens[] = [
+                'label' => 'Enviar por e-mail',
+                'icon' => 'mail',
+                'attrs' => [
+                    'type' => 'submit',
+                    'form' => 'form-acao-cobranca',
+                    'formaction' => site_url('cobrancas/enviarEmail/' . $c->idCobranca) . $query,
+                ],
+            ];
+            $itens[] = [
+                'label' => 'Atualizar status',
+                'icon' => 'history',
+                'attrs' => [
+                    'type' => 'submit',
+                    'form' => 'form-acao-cobranca',
+                    'formaction' => site_url('cobrancas/atualizar/' . $c->idCobranca) . $query,
+                ],
+            ];
+            $itens[] = [
+                'label' => 'Confirmar pagamento',
+                'icon' => 'circle-check',
+                'attrs' => [
+                    'data-modal-abrir' => 'confirmar-pagamento',
+                    'data-valor-id' => (string) $c->idCobranca,
+                    'data-valor-nome' => '#' . ($c->codigo ?? $c->idCobranca),
+                ],
+            ];
+            $itens[] = [
+                'label' => 'Cancelar cobrança',
+                'icon' => 'x',
+                'danger' => true,
+                'attrs' => [
+                    'data-modal-abrir' => 'cancelar-cobranca',
+                    'data-valor-id' => (string) $c->idCobranca,
+                    'data-valor-nome' => '#' . ($c->codigo ?? $c->idCobranca),
+                ],
+            ];
+        }
+
+        if ($pode['excluir']) {
+            $itens[] = ['separador' => true];
+            $itens[] = [
+                'label' => 'Excluir cobrança',
+                'icon' => 'trash-2',
+                'danger' => true,
+                'attrs' => [
+                    'data-modal-abrir' => 'excluir-cobranca',
+                    'data-valor-id' => (string) $c->idCobranca,
+                    'data-valor-nome' => '#' . ($c->codigo ?? $c->idCobranca),
+                ],
+            ];
+        }
+
+        return component('menu-acoes', [
+            'label' => 'Ações da cobrança ' . $numero,
+            'items' => $itens,
+        ]);
     }],
 ];
 
