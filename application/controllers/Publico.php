@@ -11,7 +11,7 @@ class Publico extends CI_Controller
         parent::__construct();
         $this->load->model('Os_model');
         $this->load->model('Mapos_model');
-        $this->load->helper(['os', 'escape', 'data', 'financeiro', 'emitente', 'url']);
+        $this->load->helper(['os', 'financeiro']);
     }
 
     /**
@@ -29,7 +29,7 @@ class Publico extends CI_Controller
             show_404();
         }
 
-        $os = $this->Os_model->getById($id);
+        $os = $this->Os_model->getByIdPublico($id);
         if (! $os) {
             show_404();
         }
@@ -69,7 +69,11 @@ class Publico extends CI_Controller
         $this->data['configuration'] = $configuration;
         $this->data['publico'] = true;
 
+        $this->data['qrCode'] = '';
+        $this->data['chaveFormatada'] = '';
+
         $pixKey = $emitente->pix_key ?? ($configuration['pix_key'] ?? '');
+        $configuration['pix_key'] = $pixKey;
         if (! empty($pixKey)) {
             $this->data['qrCode'] = $this->Os_model->getQrCode($id, $pixKey, $emitente);
             $this->data['chaveFormatada'] = $this->formatarChavePix($pixKey);
