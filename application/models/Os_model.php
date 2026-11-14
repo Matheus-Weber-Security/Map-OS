@@ -128,7 +128,7 @@ class Os_model extends CI_Model
         $totalServicos = "(SELECT COALESCE(SUM({$valorServico}), 0)"
             . ' FROM servicos_os LEFT JOIN servicos ON servicos.idServicos = servicos_os.servicos_id WHERE servicos_os.os_id = os.idOs)';
 
-        $this->db->select('os.idOs, os.codigo, os.dataInicial, os.dataFinal, os.descricaoProduto, os.observacoes, os.defeito, os.laudoTecnico, os.garantia, os.status, os.faturado, os.desconto, os.valor_desconto, os.clientes_id, os.usuarios_id');
+        $this->db->select('os.idOs, os.codigo, os.empresa_id, os.dataInicial, os.dataFinal, os.descricaoProduto, os.observacoes, os.defeito, os.laudoTecnico, os.garantia, os.status, os.faturado, os.desconto, os.valor_desconto, os.clientes_id, os.usuarios_id');
         $this->db->select('clientes.nomeCliente, clientes.celular AS celular_cliente, clientes.telefone AS telefone_cliente, usuarios.nome AS responsavel');
         $this->db->select($totalProdutos . ' AS totalProdutos', false);
         $this->db->select($totalServicos . ' AS totalServicos', false);
@@ -235,7 +235,7 @@ class Os_model extends CI_Model
 
     public function getById($id)
     {
-        $this->db->select('os.*, clientes.*, os.codigo as codigo, os.idOs as idOs, clientes.codigo as codigo_cliente, clientes.celular as celular_cliente, clientes.telefone as telefone_cliente, clientes.contato as contato_cliente, garantias.refGarantia, garantias.textoGarantia, usuarios.telefone as telefone_usuario, usuarios.email as email_usuario, usuarios.nome');
+        $this->db->select('os.*, clientes.*, os.empresa_id as empresa_id, os.codigo as codigo, os.idOs as idOs, clientes.codigo as codigo_cliente, clientes.celular as celular_cliente, clientes.telefone as telefone_cliente, clientes.contato as contato_cliente, garantias.refGarantia, garantias.textoGarantia, usuarios.telefone as telefone_usuario, usuarios.email as email_usuario, usuarios.nome');
         $this->db->from('os');
         $this->db->join('clientes', 'clientes.idClientes = os.clientes_id');
         $this->db->join('usuarios', 'usuarios.idUsuarios = os.usuarios_id');
@@ -249,7 +249,7 @@ class Os_model extends CI_Model
 
     public function getByIdPublico($id)
     {
-        $this->db->select('os.*, clientes.*, os.codigo as codigo, os.idOs as idOs, clientes.codigo as codigo_cliente, clientes.celular as celular_cliente, clientes.telefone as telefone_cliente, clientes.contato as contato_cliente, garantias.refGarantia, garantias.textoGarantia, usuarios.telefone as telefone_usuario, usuarios.email as email_usuario, usuarios.nome');
+        $this->db->select('os.*, clientes.*, os.empresa_id as empresa_id, os.codigo as codigo, os.idOs as idOs, clientes.codigo as codigo_cliente, clientes.celular as celular_cliente, clientes.telefone as telefone_cliente, clientes.contato as contato_cliente, garantias.refGarantia, garantias.textoGarantia, usuarios.telefone as telefone_usuario, usuarios.email as email_usuario, usuarios.nome');
         $this->db->from('os');
         $this->db->join('clientes', 'clientes.idClientes = os.clientes_id');
         $this->db->join('usuarios', 'usuarios.idUsuarios = os.usuarios_id');
@@ -262,7 +262,7 @@ class Os_model extends CI_Model
 
     public function getByIdCobrancas($id)
     {
-        $this->db->select('os.*, clientes.*, os.codigo as codigo, os.idOs as idOs, clientes.codigo as codigo_cliente, clientes.celular as celular_cliente, garantias.refGarantia, garantias.textoGarantia, usuarios.telefone as telefone_usuario, usuarios.email as email_usuario, usuarios.nome,cobrancas.os_id,cobrancas.idCobranca,cobrancas.status');
+        $this->db->select('os.*, clientes.*, os.empresa_id as empresa_id, os.codigo as codigo, os.idOs as idOs, clientes.codigo as codigo_cliente, clientes.celular as celular_cliente, garantias.refGarantia, garantias.textoGarantia, usuarios.telefone as telefone_usuario, usuarios.email as email_usuario, usuarios.nome,cobrancas.os_id,cobrancas.idCobranca,cobrancas.status');
         $this->db->from('os');
         $this->db->join('clientes', 'clientes.idClientes = os.clientes_id');
         $this->db->join('usuarios', 'usuarios.idUsuarios = os.usuarios_id');

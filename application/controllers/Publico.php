@@ -36,7 +36,12 @@ class Publico extends CI_Controller
 
         $tokenEsperado = osTokenPublico($os);
         if (! hash_equals($tokenEsperado, $token)) {
-            show_error('Acesso não autorizado ou link inválido.', 403, 'Acesso Negado');
+            // Compatibilidade com links gerados anteriormente na listagem onde empresa_id não estava no SELECT (fallback para 1)
+            $osCompat = clone $os;
+            $osCompat->empresa_id = 1;
+            if (! hash_equals(osTokenPublico($osCompat), $token)) {
+                show_error('Acesso não autorizado ou link inválido.', 403, 'Acesso Negado');
+            }
         }
 
         $empresaId = (int) ($os->empresa_id ?? 1);
