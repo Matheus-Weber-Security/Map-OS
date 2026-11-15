@@ -97,17 +97,37 @@ $sugerir = static fn (string $campo) => produtoSugerirMapeamento($campo, $cabeca
                 ]) ?>
             </div>
 
-            <div class="mt-6 border-t border-border pt-4">
-                <h3 class="text-label-md font-medium text-text mb-2">Regra para produtos já existentes</h3>
-                <?= component('select', [
-                    'name' => 'estrategia_duplicados',
-                    'label' => 'Quando encontrar produto já cadastrado (mesmo código de barras)',
-                    'options' => [
-                        'atualizar' => 'Atualizar os dados e somar a quantidade ao estoque existente',
-                        'pular' => 'Ignorar e manter o produto já existente sem alterações',
-                    ],
-                    'selected' => 'atualizar',
-                ]) ?>
+            <div class="mt-6 border-t border-border pt-4 flex flex-col gap-4">
+                <div>
+                    <h3 class="text-heading-xs font-medium text-text">Regras para produtos já existentes (duplicados)</h3>
+                    <p class="text-caption text-muted">Defina como o sistema deve identificar se o produto já existe no seu estoque e qual ação executar.</p>
+                </div>
+
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <?= component('select', [
+                        'name' => 'criterio_duplicados',
+                        'label' => 'Como identificar se o produto já existe',
+                        'options' => [
+                            'codigo_ou_nome' => 'Código de barras OU Descrição/Nome (Recomendado)',
+                            'apenas_nome' => 'Apenas pela Descrição/Nome',
+                            'apenas_codigo' => 'Apenas pelo Código de barras',
+                        ],
+                        'selected' => 'codigo_ou_nome',
+                        'help' => 'Produtos que coincidirem serão tratados conforme a ação escolhida ao lado.',
+                    ]) ?>
+
+                    <?= component('select', [
+                        'name' => 'estrategia_duplicados',
+                        'label' => 'Ação para produtos repetidos',
+                        'options' => [
+                            'mesclar' => 'Mesclar dados e SOMAR a quantidade ao estoque existente',
+                            'substituir' => 'Substituir dados mantendo o ID (define o estoque da planilha)',
+                            'pular' => 'Não importar (ignorar e manter o produto sem alterações)',
+                        ],
+                        'selected' => 'mesclar',
+                        'help' => 'Substituir mantém o histórico de OS e Vendas vinculado ao produto.',
+                    ]) ?>
+                </div>
             </div>
         </section>
 

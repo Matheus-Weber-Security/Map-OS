@@ -401,25 +401,44 @@ class Produtos extends MY_Controller
         $colunaEstoqueMinimo = (string) $this->input->post('coluna_estoqueMinimo');
         $colunaCodDeBarra = (string) $this->input->post('coluna_codDeBarra');
         $colunaUnidade = (string) $this->input->post('coluna_unidade');
-        $estrategia = $this->input->post('estrategia_duplicados') === 'atualizar' ? 'atualizar' : 'pular';
+
+        $criterioDuplicados = (string) $this->input->post('criterio_duplicados');
+        if (! in_array($criterioDuplicados, ['codigo_ou_nome', 'apenas_codigo', 'apenas_nome'], true)) {
+            $criterioDuplicados = 'codigo_ou_nome';
+        }
+
+        $estrategia = (string) $this->input->post('estrategia_duplicados');
+        if (! in_array($estrategia, ['mesclar', 'substituir', 'pular'], true)) {
+            $estrategia = $estrategia === 'atualizar' ? 'mesclar' : 'pular';
+        }
 
         $empresaId = empresa_ativa_id();
         $linhas = (array) $dadosJson['linhas'];
 
-        $produtosExistentes = [];
-        $queryExistentes = $this->db->select('idProdutos, codDeBarra, estoque')
+        $produtosPorCodigo = [];
+        $produtosPorNome = [];
+
+        $queryExistentes = $this->db->select('idProdutos, codDeBarra, descricao, estoque')
             ->where('empresa_id', $empresaId)
-            ->where('codDeBarra IS NOT NULL')
-            ->where('codDeBarra !=', '')
             ->get('produtos')
             ->result();
+
         foreach ($queryExistentes as $pEx) {
-            $produtosExistentes[(string) $pEx->codDeBarra] = $pEx;
+            $cod = trim((string) $pEx->codDeBarra);
+            if ($cod !== '') {
+                $produtosPorCodigo[$cod] = $pEx;
+            }
+            $nomeNorm = mb_strtolower(trim((string) $pEx->descricao));
+            if ($nomeNorm !== '') {
+                $produtosPorNome[$nomeNorm] = $pEx;
+            }
         }
 
         $proximoCodigo = $this->produtos_model->gerarProximoCodigo($empresaId);
+        $proximoId = $this->produtos_model->gerarProximoId();
         $importados = 0;
         $atualizados = 0;
+        $substituidos = 0;
         $ignorados = 0;
 
         foreach ($linhas as $linha) {
@@ -464,10 +483,33 @@ class Produtos extends MY_Controller
                 }
             }
 
-            $existente = ($codDeBarra !== '' && isset($produtosExistentes[$codDeBarra])) ? $produtosExistentes[$codDeBarra] : null;
+            $existente = null;
+            $nomeNorm = mb_strtolower($descricao);
+
+            if ($criterioDuplicados === 'apenas_codigo') {
+                if ($codDeBarra !== '' && isset($produtosPorCodigo[$codDeBarra])) {
+                    $existente = $produtosPorCodigo[$codDeBarra];
+                }
+            } elseif ($criterioDuplicados === 'apenas_nome') {
+                if ($nomeNorm !== '' && isset($produtosPorNome[$nomeNorm])) {
+                    $existente = $produtosPorNome[$nomeNorm];
+                }
+            } else {
+                // 'codigo_ou_nome': tenta primeiro por código de barras; se não houver ou não achar, tenta por nome
+                if ($codDeBarra !== '' && isset($produtosPorCodigo[$codDeBarra])) {
+                    $existente = $produtosPorCodigo[$codDeBarra];
+                } elseif ($nomeNorm !== '' && isset($produtosPorNome[$nomeNorm])) {
+                    $existente = $produtosPorNome[$nomeNorm];
+                }
+            }
 
             if ($existente !== null) {
-                if ($estrategia === 'atualizar') {
+                if ($estrategia === 'pular') {
+                    $ignorados++;
+                    continue;
+                }
+
+                if ($estrategia === 'mesclar') {
                     $dadosUpdate = [
                         'descricao' => $descricao,
                         'precoVenda' => $precoVenda,
@@ -476,19 +518,59 @@ class Produtos extends MY_Controller
                     if ((float) $precoCompra > 0) {
                         $dadosUpdate['precoCompra'] = $precoCompra;
                     }
+                    if ($codDeBarra !== '') {
+                        $dadosUpdate['codDeBarra'] = $codDeBarra;
+                    }
+                    $novoEstoque = (int) $existente->estoque;
                     if ($estoque > 0) {
-                        $dadosUpdate['estoque'] = (int) $existente->estoque + $estoque;
+                        $novoEstoque += $estoque;
+                        $dadosUpdate['estoque'] = $novoEstoque;
                     }
                     if ($estoqueMinimo !== null) {
                         $dadosUpdate['estoqueMinimo'] = $estoqueMinimo;
                     }
                     $this->produtos_model->edit('produtos', $dadosUpdate, 'idProdutos', (int) $existente->idProdutos);
+
+                    $existente->estoque = $novoEstoque;
+                    $existente->descricao = $descricao;
+                    if ($codDeBarra !== '') {
+                        $existente->codDeBarra = $codDeBarra;
+                        $produtosPorCodigo[$codDeBarra] = $existente;
+                    }
+                    $produtosPorNome[$nomeNorm] = $existente;
+
                     $atualizados++;
-                } else {
-                    $ignorados++;
+                } elseif ($estrategia === 'substituir') {
+                    // Substitui dados mantendo o mesmo idProdutos (preserva chaves em OS e Vendas)
+                    $dadosUpdate = [
+                        'descricao' => $descricao,
+                        'precoVenda' => $precoVenda,
+                        'precoCompra' => $precoCompra,
+                        'unidade' => $unidade,
+                        'estoque' => $estoque,
+                    ];
+                    if ($codDeBarra !== '') {
+                        $dadosUpdate['codDeBarra'] = $codDeBarra;
+                    }
+                    if ($estoqueMinimo !== null) {
+                        $dadosUpdate['estoqueMinimo'] = $estoqueMinimo;
+                    }
+                    $this->produtos_model->edit('produtos', $dadosUpdate, 'idProdutos', (int) $existente->idProdutos);
+
+                    $existente->estoque = $estoque;
+                    $existente->descricao = $descricao;
+                    if ($codDeBarra !== '') {
+                        $existente->codDeBarra = $codDeBarra;
+                        $produtosPorCodigo[$codDeBarra] = $existente;
+                    }
+                    $produtosPorNome[$nomeNorm] = $existente;
+
+                    $substituidos++;
                 }
             } else {
+                $idParaInserir = $proximoId++;
                 $dadosInsert = [
+                    'idProdutos' => $idParaInserir,
                     'empresa_id' => $empresaId,
                     'codigo' => $proximoCodigo++,
                     'descricao' => $descricao,
@@ -502,21 +584,34 @@ class Produtos extends MY_Controller
                     'saida' => 1,
                 ];
                 $this->produtos_model->add('produtos', $dadosInsert);
+
+                $novoObj = (object) [
+                    'idProdutos' => $idParaInserir,
+                    'codDeBarra' => $codDeBarra,
+                    'descricao' => $descricao,
+                    'estoque' => $estoque,
+                ];
                 if ($codDeBarra !== '') {
-                    $produtosExistentes[$codDeBarra] = (object) ['estoque' => $estoque];
+                    $produtosPorCodigo[$codDeBarra] = $novoObj;
+                }
+                if ($nomeNorm !== '') {
+                    $produtosPorNome[$nomeNorm] = $novoObj;
                 }
                 $importados++;
             }
         }
 
-        log_info("Importação de produtos via CSV finalizada. Cadastrados: {$importados}, Atualizados: {$atualizados}, Ignorados: {$ignorados}.");
+        log_info("Importação de produtos via CSV finalizada. Cadastrados: {$importados}, Mesclados: {$atualizados}, Substituídos: {$substituidos}, Ignorados: {$ignorados}.");
 
-        $mensagem = "{$importados} produto(s) cadastrado(s) com sucesso!";
+        $mensagem = "{$importados} produto(s) cadastrado(s) com sucesso.";
         if ($atualizados > 0) {
-            $mensagem .= " {$atualizados} produto(s) existente(s) atualizado(s).";
+            $mensagem .= " {$atualizados} produto(s) existente(s) atualizado(s) e estoque somado.";
+        }
+        if ($substituidos > 0) {
+            $mensagem .= " {$substituidos} produto(s) existente(s) substituído(s).";
         }
         if ($ignorados > 0) {
-            $mensagem .= " {$ignorados} linha(s) ignorada(s).";
+            $mensagem .= " {$ignorados} produto(s) repetido(s) ignorado(s).";
         }
 
         $this->session->set_flashdata('success', $mensagem);
