@@ -229,7 +229,11 @@ class Cobrancas extends MY_Controller
         }
 
         try {
-            $this->cobrancas_model->cancelarPagamento($id);
+            try {
+                $this->cobrancas_model->cancelarPagamento($id);
+            } catch (Exception $e) {
+                log_info('Tentativa de cancelar cobrança no gateway antes de excluir falhou: ' . $e->getMessage());
+            }
 
             if ($this->cobrancas_model->delete('cobrancas', 'idCobranca', $id) == true) {
                 log_info('Removeu uma cobrança. ID' . $id);

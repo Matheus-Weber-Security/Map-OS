@@ -35,14 +35,54 @@ class MercadoPago extends BasePaymentGateway
             throw new \Exception('Cobrança não existe!');
         }
 
+        $statusAtual = strtolower(trim((string) $cobranca->status));
+        // Se a cobrança já estiver rejeitada, cancelada ou estornada no gateway,
+        // apenas sincroniza o status local como cancelada sem chamar a API (que recusaria cancelamento em estado final)
+        if (in_array($statusAtual, ['rejected', 'cancelled', 'canceled', 'refunded'], true)) {
+            $this->ci->cobrancas_model->edit(
+                'cobrancas',
+                ['status' => 'cancelled'],
+                'idCobranca',
+                $id
+            );
+
+            log_info('Cobrança Mercado Pago já em estado final (' . $statusAtual . '). Sincronizada localmente como cancelada. ID: ' . $id);
+            return true;
+        }
+
         try {
             $client = new PaymentClient();
-            $payment = $client->cancel($cobranca->charge_id);
+            $payment = $client->cancel((int) $cobranca->charge_id);
+
+            return $this->atualizarDados($id);
+        } catch (MPApiException $e) {
+            $content = $e->getApiResponse()->getContent();
+            $errorMsg = is_array($content) ? ($content['message'] ?? '') : '';
+            $statusApi = is_array($content) ? ($content['status'] ?? 0) : 0;
+
+            // Se o Mercado Pago recusar porque o pagamento já está fechado/rejeitado/cancelado
+            if (
+                str_contains(strtolower($errorMsg), "can't be cancelled") ||
+                str_contains(strtolower($errorMsg), "cannot be cancelled") ||
+                str_contains(strtolower($errorMsg), "invalid status") ||
+                $statusApi === 400 ||
+                $statusApi === 409
+            ) {
+                $this->ci->cobrancas_model->edit(
+                    'cobrancas',
+                    ['status' => 'cancelled'],
+                    'idCobranca',
+                    $id
+                );
+
+                log_info('Cancelamento Mercado Pago: API indicou status não cancelável (' . $errorMsg . '). Marcada como cancelada. ID: ' . $id);
+                return true;
+            }
+
+            throw new \Exception($this->mpErrorMessage($e));
         } catch (\Exception $e) {
             throw new \Exception($e->getMessage());
         }
-
-        return $this->atualizarDados($id);
     }
 
     public function enviarPorEmail($id)
