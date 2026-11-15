@@ -498,9 +498,11 @@ class Mine extends CI_Controller
         $pixKey = $this->configuracao('pix_key');
         $totais = $this->os_model->totais($os);
         $pixPayload = $this->os_model->getPixPayload($idOs, $pixKey, $emitente);
+        $cobrancas = $this->os_model->getCobrancas($idOs);
 
         return $this->tela('conecte/visualizar_os', 'os', [
             'os' => $os,
+            'cobranca' => $cobrancas[0] ?? null,
             'totais' => $totais,
             'produtos' => $this->os_model->getProdutos($idOs),
             'servicos' => $this->os_model->getServicos($idOs),

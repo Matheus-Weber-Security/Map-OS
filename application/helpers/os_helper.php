@@ -243,10 +243,16 @@ if (! function_exists('osDadosDoFormulario')) {
             $erros['garantia'] = 'Informe a garantia em dias, de 0 a 9999.';
         }
 
+        $formaPagamento = strtolower($texto('forma_pagamento'));
+        if (! array_key_exists($formaPagamento, OS_FORMAS_PAGAMENTO_OPCOES)) {
+            $formaPagamento = 'pix';
+        }
+
         $dados = [
             'clientes_id' => $clienteId,
             'usuarios_id' => $tecnicoId,
             'status' => $status,
+            'forma_pagamento' => $formaPagamento,
             'dataInicial' => $dataInicial,
             'dataFinal' => $dataFinal,
             'garantia' => $garantia === '' ? '' : (string) (int) $garantia,
@@ -271,7 +277,7 @@ if (! function_exists('osValoresDoFormulario')) {
      */
     function osValoresDoFormulario(?array $post, ?object $os, array $padrao = []): array
     {
-        $campos = ['cliente', 'clientes_id', 'tecnico', 'usuarios_id', 'status', 'dataInicial', 'dataFinal', 'garantia', 'termoGarantia', 'garantias_id', ...OS_CAMPOS_TEXTO];
+        $campos = ['cliente', 'clientes_id', 'tecnico', 'usuarios_id', 'status', 'forma_pagamento', 'dataInicial', 'dataFinal', 'garantia', 'termoGarantia', 'garantias_id', ...OS_CAMPOS_TEXTO];
 
         if ($post !== null) {
             $valores = [];
@@ -289,6 +295,7 @@ if (! function_exists('osValoresDoFormulario')) {
                 'tecnico' => (string) ($os->nome ?? ''),
                 'usuarios_id' => (string) ($os->usuarios_id ?? ''),
                 'status' => (string) ($os->status ?? ''),
+                'forma_pagamento' => (string) ($os->forma_pagamento ?? 'pix'),
                 'dataInicial' => osDataParaCampo($os->dataInicial ?? null),
                 'dataFinal' => osDataParaCampo($os->dataFinal ?? null),
                 'garantia' => (string) ($os->garantia ?? ''),
@@ -309,6 +316,46 @@ if (! function_exists('osValoresDoFormulario')) {
 /*
  * Tela da OS (#2842): itens, desconto, faturamento e histórico.
  */
+
+if (! defined('OS_FORMAS_PAGAMENTO_OPCOES')) {
+    define('OS_FORMAS_PAGAMENTO_OPCOES', [
+        'pix' => [
+            'label' => 'PIX (Instantâneo)',
+            'titulo' => 'Pagamento Instantâneo via PIX',
+            'icone' => 'qr-code',
+            'descricao' => 'Leia o QR Code no app do seu banco ou use o código Copia e Cola.',
+            'detalhe' => 'Confirmação imediata para liberação mais rápida do serviço.',
+        ],
+        'boleto' => [
+            'label' => 'Boleto Bancário',
+            'titulo' => 'Boleto Bancário',
+            'icone' => 'barcode',
+            'descricao' => 'Após a aprovação do orçamento, o boleto bancário será gerado e enviado diretamente para o seu e-mail cadastrado.',
+            'detalhe' => 'Prazo de compensação bancária de até 2 a 3 dias úteis.',
+        ],
+        'cartao_credito' => [
+            'label' => 'Cartão de Crédito',
+            'titulo' => 'Cartão de Crédito (Presencial)',
+            'icone' => 'circle-dollar-sign',
+            'descricao' => 'Pagamento realizado diretamente no balcão da oficina no momento da retirada do equipamento.',
+            'detalhe' => 'Consulte opções de parcelamento no local.',
+        ],
+        'cartao_debito' => [
+            'label' => 'Cartão de Débito',
+            'titulo' => 'Cartão de Débito (Presencial)',
+            'icone' => 'receipt',
+            'descricao' => 'Pagamento realizado via máquina de cartão no balcão no ato da retirada do equipamento.',
+            'detalhe' => 'Pagamento à vista no cartão de débito.',
+        ],
+        'dinheiro' => [
+            'label' => 'Dinheiro (Espécie)',
+            'titulo' => 'Dinheiro (Espécie)',
+            'icone' => 'banknote',
+            'descricao' => 'Pagamento presencial no ato da entrega/retirada do equipamento na oficina.',
+            'detalhe' => 'Se precisar de troco, por favor nos avise com antecedência.',
+        ],
+    ]);
+}
 
 if (! defined('OS_FORMAS_PAGAMENTO')) {
     // Formas de pagamento do faturamento, as mesmas do formulário da v4.

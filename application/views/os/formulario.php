@@ -131,7 +131,17 @@ $statusOpcoes = array_combine(array_keys(OS_STATUS_VARIANTES), array_keys(OS_STA
                     'error' => $errosDeCampo['status'] ?? null,
                     'help' => $editando ? 'Cancelar a OS devolve os produtos ao estoque.' : null,
                 ]) ?>
-                <div class="hidden sm:block" aria-hidden="true"></div>
+                <?= component('select', [
+                    'name' => 'forma_pagamento',
+                    'label' => 'Forma de pagamento',
+                    'options' => array_combine(
+                        array_keys(OS_FORMAS_PAGAMENTO_OPCOES),
+                        array_column(OS_FORMAS_PAGAMENTO_OPCOES, 'label')
+                    ),
+                    'selected' => $valores['forma_pagamento'] !== '' ? $valores['forma_pagamento'] : 'pix',
+                    'error' => $errosDeCampo['forma_pagamento'] ?? null,
+                    'help' => 'Exibida no resumo e nas instruções ao cliente.',
+                ]) ?>
                 <?= component('input', [
                     'name' => 'dataInicial',
                     'label' => 'Data inicial',

@@ -244,15 +244,28 @@ if (!empty($result->cidade) || !empty($result->estado) || !empty($result->cep)) 
                         </td>
                     </tr>
                     <?php if ($result->status == 'Finalizado' || $result->status == 'Orçamento') { ?>
-                        <?php if ($qrCode) : ?>
+                        <?php
+                        $formaPagto = strtolower(trim((string) ($result->forma_pagamento ?? 'pix')));
+                        $infoForma = defined('OS_FORMAS_PAGAMENTO_OPCOES') ? (OS_FORMAS_PAGAMENTO_OPCOES[$formaPagto] ?? null) : null;
+                        if ($formaPagto === 'pix') :
+                        ?>
+                            <?php if ($qrCode) : ?>
+                                <tr>
+                                    <td colspan="5" class="text-center">
+                                        <img class="mx-auto mt-3 w-16" src="<?php echo base_url(); ?>assets/img/logo_pix.png" alt="QR Code de Pagamento"><br>
+                                        <img class="mx-auto mt-1 w-[94px]" src="<?= e($qrCode) ?>" alt="QR Code de Pagamento"><br>
+                                        <?php echo '<span class="text-[80%]">Chave PIX: ' . e($chaveFormatada) . '</span>' ;?>
+                                    </td>
+                                </tr>
+                            <?php endif ?>
+                        <?php elseif ($infoForma !== null) : ?>
                             <tr>
-                                <td colspan="5" class="text-center">
-                                    <img class="mx-auto mt-3 w-16" src="<?php echo base_url(); ?>assets/img/logo_pix.png" alt="QR Code de Pagamento"><br>
-                                    <img class="mx-auto mt-1 w-[94px]" src="<?= e($qrCode) ?>" alt="QR Code de Pagamento"><br>
-                                    <?php echo '<span class="text-[80%]">Chave PIX: ' . e($chaveFormatada) . '</span>' ;?>
+                                <td colspan="5" class="text-center py-2">
+                                    <span class="font-bold text-[90%]">Forma de Pagamento: <?= e($infoForma['label']) ?></span><br>
+                                    <span class="text-[80%]"><?= e($infoForma['descricao']) ?></span>
                                 </td>
                             </tr>
-                        <?php endif ?>
+                        <?php endif; ?>
                     <?php } ?>
                 </tbody>
             </table>
@@ -436,15 +449,28 @@ if (!empty($result->cidade) || !empty($result->estado) || !empty($result->cep)) 
                         </td>
                     </tr>
                     <?php if ($result->status == 'Finalizado' || $result->status == 'Orçamento') { ?>
-                        <?php if ($qrCode) : ?>
+                        <?php
+                        $formaPagto = strtolower(trim((string) ($result->forma_pagamento ?? 'pix')));
+                        $infoForma = defined('OS_FORMAS_PAGAMENTO_OPCOES') ? (OS_FORMAS_PAGAMENTO_OPCOES[$formaPagto] ?? null) : null;
+                        if ($formaPagto === 'pix') :
+                        ?>
+                            <?php if ($qrCode) : ?>
+                                <tr>
+                                    <td colspan="5" class="text-center">
+                                        <img class="mx-auto mt-3 w-16" src="<?php echo base_url(); ?>assets/img/logo_pix.png" alt="QR Code de Pagamento"><br>
+                                        <img class="mx-auto mt-1 w-[94px]" src="<?= e($qrCode) ?>" alt="QR Code de Pagamento"><br>
+                                        <?php echo '<span class="text-[80%]">Chave PIX: ' . e($chaveFormatada) . '</span>' ;?>
+                                    </td>
+                                </tr>
+                            <?php endif ?>
+                        <?php elseif ($infoForma !== null) : ?>
                             <tr>
-                                <td colspan="5" class="text-center">
-                                    <img class="mx-auto mt-3 w-16" src="<?php echo base_url(); ?>assets/img/logo_pix.png" alt="QR Code de Pagamento"><br>
-                                    <img class="mx-auto mt-1 w-[94px]" src="<?= e($qrCode) ?>" alt="QR Code de Pagamento"><br>
-                                    <?php echo '<span class="text-[80%]">Chave PIX: ' . e($chaveFormatada) . '</span>' ;?>
+                                <td colspan="5" class="text-center py-2">
+                                    <span class="font-bold text-[90%]">Forma de Pagamento: <?= e($infoForma['label']) ?></span><br>
+                                    <span class="text-[80%]"><?= e($infoForma['descricao']) ?></span>
                                 </td>
                             </tr>
-                        <?php endif ?>
+                        <?php endif; ?>
                     <?php } ?>
                 </tbody>
             </table>

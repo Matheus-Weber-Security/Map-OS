@@ -172,6 +172,7 @@ $config['permissions_map'] = [
         'anexar' => 'eOs',
         'excluirAnexo' => 'eOs',
         'adicionarDesconto' => 'eOs',
+        'alterarFormaPagamento' => 'eOs',
         'faturar' => 'eOs',
         'adicionarAnotacao' => 'eOs',
         'excluirAnotacao' => 'eOs',

@@ -197,13 +197,27 @@ $totalProdutos = 0;
                 <?php if ($totalProdutos != 0 || $totalServico != 0) : ?>
                     <div class="flex items-center justify-between">
                         <div class="flex justify-between">
-                            <?php if ($chaveFormatada) : ?>
-                                <div><img class="w-[130px]" src="<?= e($qrCode) ?>" alt="QR Code de Pagamento" /></div>
-                                <div class="flex flex-wrap content-center">
-                                    <div class="w-full text-center"><span class="flex justify-center text-muted"><?= icon('camera', ['class' => 'size-5']) ?></span>Escaneie o QRCode ao lado para pagar por Pix</div>
-                                    <div class="mt-2 w-full break-words text-center">Chave Pix: <b><?= e($chaveFormatada) ?></b></div>
+                            <?php
+                            $formaPagto = strtolower(trim((string) ($result->forma_pagamento ?? 'pix')));
+                            $infoForma = defined('OS_FORMAS_PAGAMENTO_OPCOES') ? (OS_FORMAS_PAGAMENTO_OPCOES[$formaPagto] ?? null) : null;
+                            if ($formaPagto === 'pix') :
+                            ?>
+                                <?php if ($chaveFormatada) : ?>
+                                    <div><img class="w-[130px]" src="<?= e($qrCode) ?>" alt="QR Code de Pagamento" /></div>
+                                    <div class="flex flex-wrap content-center">
+                                        <div class="w-full text-center"><span class="flex justify-center text-muted"><?= icon('camera', ['class' => 'size-5']) ?></span>Escaneie o QRCode ao lado para pagar por Pix</div>
+                                        <div class="mt-2 w-full break-words text-center">Chave Pix: <b><?= e($chaveFormatada) ?></b></div>
+                                    </div>
+                                <?php else: ?>
+                                    <div></div>
+                                    <div></div>
+                                <?php endif; ?>
+                            <?php elseif ($infoForma !== null) : ?>
+                                <div class="flex flex-col justify-center p-2">
+                                    <div class="font-bold text-text">Forma de Pagamento: <?= e($infoForma['label']) ?></div>
+                                    <div class="text-caption text-muted mt-1 max-w-[280px]"><?= e($infoForma['descricao']) ?></div>
                                 </div>
-                            <?php else: ?>
+                            <?php else : ?>
                                 <div></div>
                                 <div></div>
                             <?php endif; ?>

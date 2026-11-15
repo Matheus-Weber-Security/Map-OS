@@ -1055,6 +1055,7 @@ class Os extends MY_Controller
             'anexo' => ['abas', 'anexos'],
             'anotacao' => ['abas', 'anotacoes'],
             'desconto' => ['totais', 'desconto', 'pix'],
+            'pagamento' => ['pix'],
             default => throw new InvalidArgumentException("Tipo de trecho desconhecido: {$tipo}"),
         };
 
@@ -1301,6 +1302,37 @@ class Os extends MY_Controller
 
         log_info(($dados['valor_desconto'] > 0 ? 'Adicionou um desconto' : 'Removeu o desconto') . ' na OS. ID: ' . $idOs);
         $this->responderTrechos($idOs, 'desconto', $dados['valor_desconto'] > 0 ? 'Desconto aplicado. Total da OS: ' . dinheiro($dados['valor_desconto']) . '.' : 'Desconto removido.');
+    }
+
+    public function alterarFormaPagamento()
+    {
+        if (! $this->permission->checkPermission($this->session->userdata('permissao'), 'eOs')) {
+            $this->responderJson(403, ['result' => false, 'message' => 'Você não tem permissão para editar O.S.']);
+
+            return;
+        }
+
+        $os = $this->osParaAlterar();
+        if (! $os) {
+            return;
+        }
+
+        $idOs = (int) $os->idOs;
+        $forma = strtolower(trim((string) $this->input->post('forma_pagamento')));
+        if (! array_key_exists($forma, OS_FORMAS_PAGAMENTO_OPCOES)) {
+            $this->responderJson(422, ['result' => false, 'message' => 'Forma de pagamento inválida.', 'erros' => ['forma_pagamento' => 'Forma de pagamento inválida.']]);
+
+            return;
+        }
+
+        if (! $this->os_model->edit('os', ['forma_pagamento' => $forma], 'idOs', $idOs)) {
+            $this->responderJson(500, ['result' => false, 'message' => 'Não foi possível alterar a forma de pagamento. Tente de novo.']);
+
+            return;
+        }
+
+        log_info('Alterou forma de pagamento da OS #' . $idOs . ' para ' . $forma);
+        $this->responderTrechos($idOs, 'pagamento', 'Forma de pagamento atualizada para ' . OS_FORMAS_PAGAMENTO_OPCOES[$forma]['label'] . '.');
     }
 
     /**
