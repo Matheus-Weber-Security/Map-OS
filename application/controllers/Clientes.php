@@ -322,4 +322,466 @@ class Clientes extends MY_Controller
         // Volta para a listagem com os mesmos filtros (só os permitidos).
         redirect(site_url('clientes') . listagemQuery(listagemFiltros(self::FILTROS, $this->input->get())));
     }
+
+    /**
+     * Tela de upload para importação de clientes e fornecedores via CSV (Etapa 1).
+     */
+    public function importar()
+    {
+        if (! $this->permission->checkPermission($this->session->userdata('permissao'), 'aCliente')) {
+            $this->session->set_flashdata('error', 'Você não tem permissão para adicionar clientes.');
+            redirect(site_url('clientes'));
+        }
+
+        $this->data['view'] = 'clientes/importar';
+
+        return $this->layout();
+    }
+
+    /**
+     * Gera e baixa um modelo CSV de exemplo para preenchimento de clientes e fornecedores.
+     */
+    public function modeloCsv()
+    {
+        if (! $this->permission->checkPermission($this->session->userdata('permissao'), 'aCliente')) {
+            $this->session->set_flashdata('error', 'Você não tem permissão para adicionar clientes.');
+            redirect(site_url('clientes'));
+        }
+
+        $linhas = [
+            ['tipo', 'nome', 'documento', 'telefone', 'celular', 'email', 'cep', 'rua', 'numero', 'complemento', 'bairro', 'cidade', 'estado', 'contato'],
+            ['Cliente', 'João da Silva', '123.456.789-00', '(11) 3333-4444', '(11) 98888-7777', 'joao@email.com', '01001-000', 'Praça da Sé', '100', 'Apto 101', 'Centro', 'São Paulo', 'SP', ''],
+            ['Fornecedor', 'Tech Distribuidora Ltda', '12.345.678/0001-90', '(11) 3222-1111', '(11) 97777-6666', 'contato@techdistribuidora.com.br', '04571-010', 'Av. das Nações Unidas', '12901', 'Conj 801', 'Brooklin', 'São Paulo', 'SP', 'Carlos Vendas'],
+            ['Cliente', 'Maria Oliveira', '987.654.321-99', '', '(21) 99999-8888', 'maria@email.com', '20040-002', 'Rua da Assembleia', '10', 'Sala 201', 'Centro', 'Rio de Janeiro', 'RJ', ''],
+        ];
+
+        $fp = fopen('php://memory', 'r+');
+        foreach ($linhas as $linha) {
+            fputcsv($fp, $linha, ';');
+        }
+        rewind($fp);
+        $csv = stream_get_contents($fp);
+        fclose($fp);
+
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="modelo_importacao_clientes.csv"');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+        echo "\xEF\xBB\xBF";
+        echo $csv;
+        exit;
+    }
+
+    /**
+     * Processa o upload do CSV e abre a tela de mapeamento e prévia (Etapa 2).
+     */
+    public function processarCsv()
+    {
+        if (! $this->permission->checkPermission($this->session->userdata('permissao'), 'aCliente')) {
+            $this->session->set_flashdata('error', 'Você não tem permissão para adicionar clientes.');
+            redirect(site_url('clientes'));
+        }
+
+        if (empty($_FILES['arquivo_csv']['tmp_name']) || ! is_uploaded_file($_FILES['arquivo_csv']['tmp_name'])) {
+            $this->session->set_flashdata('error', 'Por favor, selecione um arquivo CSV para enviar.');
+            redirect(site_url('clientes/importar'));
+        }
+
+        $tamanho = (int) ($_FILES['arquivo_csv']['size'] ?? 0);
+        if ($tamanho <= 0 || $tamanho > 50 * 1024 * 1024) {
+            $this->session->set_flashdata('error', 'O arquivo enviado é inválido ou excede o limite de 50 MB.');
+            redirect(site_url('clientes/importar'));
+        }
+
+        $conteudo = (string) file_get_contents($_FILES['arquivo_csv']['tmp_name']);
+        [$cabecalhos, $linhas] = clienteLerLinhasCsv($conteudo);
+
+        if ($cabecalhos === [] || $linhas === []) {
+            $this->session->set_flashdata('error', 'Não foi possível ler os dados do arquivo CSV. Verifique se o arquivo possui cabeçalho e linhas de dados.');
+            redirect(site_url('clientes/importar'));
+        }
+
+        // Limpa arquivos temporários antigos (> 2 horas)
+        $cacheDir = APPPATH . 'cache' . DIRECTORY_SEPARATOR;
+        foreach ((array) glob($cacheDir . 'import_cli_*.json') as $arqAntigo) {
+            if (is_file($arqAntigo) && (time() - filemtime($arqAntigo)) > 7200) {
+                @unlink($arqAntigo);
+            }
+        }
+
+        $token = bin2hex(random_bytes(16));
+        $arquivoTemp = $cacheDir . 'import_cli_' . $token . '.json';
+        file_put_contents($arquivoTemp, json_encode([
+            'token' => $token,
+            'empresa_id' => empresa_ativa_id(),
+            'cabecalhos' => $cabecalhos,
+            'linhas' => $linhas,
+            'criado_em' => time(),
+        ], JSON_UNESCAPED_UNICODE));
+
+        $this->data['token'] = $token;
+        $this->data['cabecalhos'] = $cabecalhos;
+        $this->data['totalLinhas'] = count($linhas);
+        $this->data['previas'] = array_slice($linhas, 0, 10);
+        $this->data['view'] = 'clientes/mapear_csv';
+
+        return $this->layout();
+    }
+
+    /**
+     * Executa a gravação dos clientes e fornecedores a partir do mapeamento de colunas.
+     */
+    public function concluirImportacao()
+    {
+        if (! $this->permission->checkPermission($this->session->userdata('permissao'), 'aCliente')) {
+            $this->session->set_flashdata('error', 'Você não tem permissão para adicionar clientes.');
+            redirect(site_url('clientes'));
+        }
+
+        $token = (string) $this->input->post('token');
+        if (! preg_match('/^[a-f0-9]{32}$/', $token)) {
+            $this->session->set_flashdata('error', 'Sessão de importação inválida.');
+            redirect(site_url('clientes/importar'));
+        }
+
+        $arquivoTemp = APPPATH . 'cache' . DIRECTORY_SEPARATOR . 'import_cli_' . $token . '.json';
+        if (! is_file($arquivoTemp)) {
+            $this->session->set_flashdata('error', 'A sessão desta importação expirou. Por favor, envie o arquivo novamente.');
+            redirect(site_url('clientes/importar'));
+        }
+
+        $dadosJson = json_decode((string) file_get_contents($arquivoTemp), true);
+        @unlink($arquivoTemp);
+
+        if (! is_array($dadosJson) || empty($dadosJson['linhas'])) {
+            $this->session->set_flashdata('error', 'Dados da importação corrompidos ou vazios.');
+            redirect(site_url('clientes/importar'));
+        }
+
+        $colunaNomeCliente = (string) $this->input->post('coluna_nomeCliente');
+        if ($colunaNomeCliente === '') {
+            $this->session->set_flashdata('error', 'A coluna do Nome / Razão Social é obrigatória.');
+            redirect(site_url('clientes/importar'));
+        }
+
+        $colunaDocumento = (string) $this->input->post('coluna_documento');
+        $colunaTipo = (string) $this->input->post('coluna_tipo');
+        $colunaTelefone = (string) $this->input->post('coluna_telefone');
+        $colunaCelular = (string) $this->input->post('coluna_celular');
+        $colunaEmail = (string) $this->input->post('coluna_email');
+        $colunaCep = (string) $this->input->post('coluna_cep');
+        $colunaRua = (string) $this->input->post('coluna_rua');
+        $colunaNumero = (string) $this->input->post('coluna_numero');
+        $colunaComplemento = (string) $this->input->post('coluna_complemento');
+        $colunaBairro = (string) $this->input->post('coluna_bairro');
+        $colunaCidade = (string) $this->input->post('coluna_cidade');
+        $colunaEstado = (string) $this->input->post('coluna_estado');
+        $colunaContato = (string) $this->input->post('coluna_contato');
+
+        $modoTipo = (string) $this->input->post('modo_tipo');
+        if (! in_array($modoTipo, ['coluna', 'todos_clientes', 'todos_fornecedores'], true)) {
+            $modoTipo = 'coluna';
+        }
+
+        $filtroTipo = (string) $this->input->post('filtro_tipo');
+        if (! in_array($filtroTipo, ['todos', 'apenas_clientes', 'apenas_fornecedores'], true)) {
+            $filtroTipo = 'todos';
+        }
+
+        $criterioDuplicados = (string) $this->input->post('criterio_duplicados');
+        if (! in_array($criterioDuplicados, ['cpf_cnpj_ou_nome_ou_email', 'apenas_documento', 'apenas_nome', 'apenas_email'], true)) {
+            $criterioDuplicados = 'cpf_cnpj_ou_nome_ou_email';
+        }
+
+        $estrategia = (string) $this->input->post('estrategia_duplicados');
+        if (! in_array($estrategia, ['mesclar', 'substituir', 'pular'], true)) {
+            $estrategia = 'mesclar';
+        }
+
+        $empresaId = empresa_ativa_id();
+        $linhas = (array) $dadosJson['linhas'];
+
+        $clientesPorDocumento = [];
+        $clientesPorNome = [];
+        $clientesPorEmail = [];
+
+        $queryExistentes = $this->db->select('idClientes, codigo, nomeCliente, documento, email, telefone, celular, cep, rua, numero, complemento, bairro, cidade, estado, contato, fornecedor, senha')
+            ->where('empresa_id', $empresaId)
+            ->get('clientes')
+            ->result();
+
+        foreach ($queryExistentes as $cEx) {
+            $docLimpo = preg_replace('/[^A-Za-z0-9]/', '', (string) $cEx->documento);
+            if ($docLimpo !== '') {
+                $clientesPorDocumento[$docLimpo] = $cEx;
+            }
+            $nomeNorm = mb_strtolower(trim((string) $cEx->nomeCliente));
+            if ($nomeNorm !== '') {
+                $clientesPorNome[$nomeNorm] = $cEx;
+            }
+            $emailNorm = mb_strtolower(trim((string) $cEx->email));
+            if ($emailNorm !== '') {
+                $clientesPorEmail[$emailNorm] = $cEx;
+            }
+        }
+
+        $importados = 0;
+        $atualizados = 0;
+        $substituidos = 0;
+        $ignorados = 0;
+
+        foreach ($linhas as $linha) {
+            $nome = trim((string) ($linha[$colunaNomeCliente] ?? ''));
+            if ($nome === '') {
+                $ignorados++;
+                continue;
+            }
+
+            // Determina o tipo (0 = cliente, 1 = fornecedor)
+            $tipo = 0;
+            if ($modoTipo === 'todos_fornecedores') {
+                $tipo = 1;
+            } elseif ($modoTipo === 'todos_clientes') {
+                $tipo = 0;
+            } elseif ($colunaTipo !== '' && isset($linha[$colunaTipo])) {
+                $tipo = clienteNormalizarTipo($linha[$colunaTipo]);
+            }
+
+            // Aplica filtro de tipo se configurado
+            if ($filtroTipo === 'apenas_clientes' && $tipo === 1) {
+                $ignorados++;
+                continue;
+            }
+            if ($filtroTipo === 'apenas_fornecedores' && $tipo === 0) {
+                $ignorados++;
+                continue;
+            }
+
+            $documento = $colunaDocumento !== '' && isset($linha[$colunaDocumento]) ? trim((string) $linha[$colunaDocumento]) : '';
+            $docLimpo = (string) preg_replace('/[^A-Za-z0-9]/', '', $documento);
+            $pessoaFisica = strlen($docLimpo) === 11 ? 1 : 0;
+
+            $telefone = $colunaTelefone !== '' && isset($linha[$colunaTelefone]) ? trim((string) $linha[$colunaTelefone]) : '';
+            $celular = $colunaCelular !== '' && isset($linha[$colunaCelular]) ? trim((string) $linha[$colunaCelular]) : '';
+            $email = $colunaEmail !== '' && isset($linha[$colunaEmail]) ? trim((string) $linha[$colunaEmail]) : '';
+            $emailNorm = mb_strtolower($email);
+            $cep = $colunaCep !== '' && isset($linha[$colunaCep]) ? trim((string) $linha[$colunaCep]) : '';
+            $rua = $colunaRua !== '' && isset($linha[$colunaRua]) ? trim((string) $linha[$colunaRua]) : '';
+            $numero = $colunaNumero !== '' && isset($linha[$colunaNumero]) ? trim((string) $linha[$colunaNumero]) : '';
+            $complemento = $colunaComplemento !== '' && isset($linha[$colunaComplemento]) ? trim((string) $linha[$colunaComplemento]) : '';
+            $bairro = $colunaBairro !== '' && isset($linha[$colunaBairro]) ? trim((string) $linha[$colunaBairro]) : '';
+            $cidade = $colunaCidade !== '' && isset($linha[$colunaCidade]) ? trim((string) $linha[$colunaCidade]) : '';
+            $estadoRaw = $colunaEstado !== '' && isset($linha[$colunaEstado]) ? strtoupper(trim((string) $linha[$colunaEstado])) : '';
+            $estado = array_key_exists($estadoRaw, ufsDoBrasil()) ? $estadoRaw : '';
+            $contato = $colunaContato !== '' && isset($linha[$colunaContato]) ? trim((string) $linha[$colunaContato]) : '';
+
+            $nomeNorm = mb_strtolower($nome);
+
+            $existente = null;
+            if ($criterioDuplicados === 'apenas_documento') {
+                if ($docLimpo !== '' && isset($clientesPorDocumento[$docLimpo])) {
+                    $existente = $clientesPorDocumento[$docLimpo];
+                }
+            } elseif ($criterioDuplicados === 'apenas_nome') {
+                if ($nomeNorm !== '' && isset($clientesPorNome[$nomeNorm])) {
+                    $existente = $clientesPorNome[$nomeNorm];
+                }
+            } elseif ($criterioDuplicados === 'apenas_email') {
+                if ($emailNorm !== '' && isset($clientesPorEmail[$emailNorm])) {
+                    $existente = $clientesPorEmail[$emailNorm];
+                }
+            } else {
+                // 'cpf_cnpj_ou_nome_ou_email': busca por documento, depois e-mail, depois nome
+                if ($docLimpo !== '' && isset($clientesPorDocumento[$docLimpo])) {
+                    $existente = $clientesPorDocumento[$docLimpo];
+                } elseif ($emailNorm !== '' && isset($clientesPorEmail[$emailNorm])) {
+                    $existente = $clientesPorEmail[$emailNorm];
+                } elseif ($nomeNorm !== '' && isset($clientesPorNome[$nomeNorm])) {
+                    $existente = $clientesPorNome[$nomeNorm];
+                }
+            }
+
+            if ($existente !== null) {
+                if ($estrategia === 'pular') {
+                    $ignorados++;
+                    continue;
+                }
+
+                if ($estrategia === 'mesclar') {
+                    $dadosUpdate = [
+                        'nomeCliente' => $nome,
+                    ];
+                    if ($documento !== '') {
+                        $dadosUpdate['documento'] = $documento;
+                        $dadosUpdate['pessoa_fisica'] = $pessoaFisica;
+                    }
+                    if ($telefone !== '') {
+                        $dadosUpdate['telefone'] = $telefone;
+                    }
+                    if ($celular !== '') {
+                        $dadosUpdate['celular'] = $celular;
+                    }
+                    if ($email !== '') {
+                        $dadosUpdate['email'] = $email;
+                    }
+                    if ($cep !== '') {
+                        $dadosUpdate['cep'] = $cep;
+                    }
+                    if ($rua !== '') {
+                        $dadosUpdate['rua'] = $rua;
+                    }
+                    if ($numero !== '') {
+                        $dadosUpdate['numero'] = $numero;
+                    }
+                    if ($complemento !== '') {
+                        $dadosUpdate['complemento'] = $complemento;
+                    }
+                    if ($bairro !== '') {
+                        $dadosUpdate['bairro'] = $bairro;
+                    }
+                    if ($cidade !== '') {
+                        $dadosUpdate['cidade'] = $cidade;
+                    }
+                    if ($estado !== '') {
+                        $dadosUpdate['estado'] = $estado;
+                    }
+                    if ($contato !== '') {
+                        $dadosUpdate['contato'] = $contato;
+                    }
+                    if ($modoTipo !== 'coluna' || $colunaTipo !== '') {
+                        $dadosUpdate['fornecedor'] = $tipo;
+                    }
+
+                    $this->clientes_model->edit('clientes', $dadosUpdate, 'idClientes', (int) $existente->idClientes);
+
+                    foreach ($dadosUpdate as $k => $v) {
+                        $existente->{$k} = $v;
+                    }
+                    if ($docLimpo !== '') {
+                        $clientesPorDocumento[$docLimpo] = $existente;
+                    }
+                    if ($emailNorm !== '') {
+                        $clientesPorEmail[$emailNorm] = $existente;
+                    }
+                    $clientesPorNome[$nomeNorm] = $existente;
+
+                    $atualizados++;
+                } elseif ($estrategia === 'substituir') {
+                    $dadosUpdate = [
+                        'nomeCliente' => $nome,
+                        'contato' => $contato,
+                        'documento' => $documento,
+                        'telefone' => $telefone,
+                        'celular' => $celular,
+                        'email' => $email,
+                        'cep' => $cep,
+                        'rua' => $rua,
+                        'numero' => $numero,
+                        'complemento' => $complemento,
+                        'bairro' => $bairro,
+                        'cidade' => $cidade,
+                        'estado' => $estado,
+                        'pessoa_fisica' => $pessoaFisica,
+                        'fornecedor' => $tipo,
+                    ];
+
+                    $this->clientes_model->edit('clientes', $dadosUpdate, 'idClientes', (int) $existente->idClientes);
+
+                    foreach ($dadosUpdate as $k => $v) {
+                        $existente->{$k} = $v;
+                    }
+                    if ($docLimpo !== '') {
+                        $clientesPorDocumento[$docLimpo] = $existente;
+                    }
+                    if ($emailNorm !== '') {
+                        $clientesPorEmail[$emailNorm] = $existente;
+                    }
+                    $clientesPorNome[$nomeNorm] = $existente;
+
+                    $substituidos++;
+                }
+            } else {
+                $senhaHash = '';
+                if ($email !== '' || $documento !== '') {
+                    $this->db->group_start();
+                    if ($email !== '') {
+                        $this->db->where('email', $email);
+                    }
+                    if ($documento !== '') {
+                        if ($email !== '') {
+                            $this->db->or_where('documento', $documento);
+                        } else {
+                            $this->db->where('documento', $documento);
+                        }
+                    }
+                    $clienteOutraEmpresa = $this->db->group_end()
+                        ->where('senha !=', '')
+                        ->order_by('idClientes', 'desc')
+                        ->limit(1)
+                        ->get('clientes')
+                        ->row();
+
+                    if ($clienteOutraEmpresa && ! empty($clienteOutraEmpresa->senha)) {
+                        $senhaHash = $clienteOutraEmpresa->senha;
+                    }
+                }
+
+                if ($senhaHash === '') {
+                    $senhaPadrao = $docLimpo !== '' ? $docLimpo : bin2hex(random_bytes(16));
+                    $senhaHash = password_hash($senhaPadrao, PASSWORD_DEFAULT);
+                }
+
+                $dadosInsert = [
+                    'empresa_id' => $empresaId,
+                    'nomeCliente' => $nome,
+                    'contato' => $contato,
+                    'documento' => $documento,
+                    'telefone' => $telefone,
+                    'celular' => $celular,
+                    'email' => $email,
+                    'cep' => $cep,
+                    'rua' => $rua,
+                    'numero' => $numero,
+                    'complemento' => $complemento,
+                    'bairro' => $bairro,
+                    'cidade' => $cidade,
+                    'estado' => $estado,
+                    'pessoa_fisica' => $pessoaFisica,
+                    'fornecedor' => $tipo,
+                    'senha' => $senhaHash,
+                    'dataCadastro' => date('Y-m-d'),
+                ];
+
+                $novoId = $this->clientes_model->add('clientes', $dadosInsert);
+
+                $novoObj = (object) ($dadosInsert + ['idClientes' => $novoId]);
+                if ($docLimpo !== '') {
+                    $clientesPorDocumento[$docLimpo] = $novoObj;
+                }
+                if ($emailNorm !== '') {
+                    $clientesPorEmail[$emailNorm] = $novoObj;
+                }
+                $clientesPorNome[$nomeNorm] = $novoObj;
+
+                $importados++;
+            }
+        }
+
+        log_info("Importação de clientes via CSV finalizada. Cadastrados: {$importados}, Mesclados: {$atualizados}, Substituídos: {$substituidos}, Ignorados: {$ignorados}.");
+
+        $mensagem = "{$importados} cadastro(s) realizado(s) com sucesso.";
+        if ($atualizados > 0) {
+            $mensagem .= " {$atualizados} registro(s) existente(s) atualizado(s).";
+        }
+        if ($substituidos > 0) {
+            $mensagem .= " {$substituidos} registro(s) existente(s) substituído(s).";
+        }
+        if ($ignorados > 0) {
+            $mensagem .= " {$ignorados} registro(s) ignorado(s) ou repetido(s).";
+        }
+
+        $this->session->set_flashdata('success', $mensagem);
+        redirect(site_url('clientes'));
+    }
+
 }

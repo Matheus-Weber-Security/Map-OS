@@ -74,3 +74,152 @@ if (! function_exists('clienteValoresDoFormulario')) {
         return $valores;
     }
 }
+
+
+if (! function_exists('clienteDetectarDelimitadorCsv')) {
+    /**
+     * Detecta o delimitador mais provável de um arquivo CSV (; , ou \t).
+     */
+    function clienteDetectarDelimitadorCsv(string $primeiraLinha): string
+    {
+        $contadores = [
+            ';' => substr_count($primeiraLinha, ';'),
+            ',' => substr_count($primeiraLinha, ','),
+            "\t" => substr_count($primeiraLinha, "\t"),
+        ];
+
+        arsort($contadores);
+        $melhor = key($contadores);
+
+        return $contadores[$melhor] > 0 ? $melhor : ';';
+    }
+}
+
+if (! function_exists('clienteLerLinhasCsv')) {
+    /**
+     * Lê e normaliza o conteúdo de um arquivo CSV em UTF-8, retornando cabeçalhos e linhas.
+     *
+     * @return array{0: list<string>, 1: list<array<string, string>>} [cabecalhos, linhas]
+     */
+    function clienteLerLinhasCsv(string $conteudo): array
+    {
+        if (! mb_check_encoding($conteudo, 'UTF-8')) {
+            $conteudo = (string) mb_convert_encoding($conteudo, 'UTF-8', 'ISO-8859-1, Windows-1252, ASCII');
+        }
+
+        if (str_starts_with($conteudo, "\xEF\xBB\xBF")) {
+            $conteudo = substr($conteudo, 3);
+        }
+
+        $linhasBrutas = preg_split("/\r\n|\n|\r/", trim($conteudo));
+        if ($linhasBrutas === false || $linhasBrutas === [] || trim($linhasBrutas[0]) === '') {
+            return [[], []];
+        }
+
+        $delimitador = clienteDetectarDelimitadorCsv($linhasBrutas[0]);
+
+        $cabecalhos = [];
+        $linhas = [];
+
+        foreach ($linhasBrutas as $idx => $linhaStr) {
+            $linhaStr = trim($linhaStr);
+            if ($linhaStr === '') {
+                continue;
+            }
+
+            $colunas = str_getcsv($linhaStr, $delimitador);
+            if ($idx === 0) {
+                $cabecalhos = array_values(array_map('trim', $colunas));
+                continue;
+            }
+
+            if ($cabecalhos === []) {
+                continue;
+            }
+
+            $registro = [];
+            foreach ($cabecalhos as $colIdx => $colNome) {
+                if ($colNome === '') {
+                    continue;
+                }
+                $registro[$colNome] = isset($colunas[$colIdx]) ? trim((string) $colunas[$colIdx]) : '';
+            }
+
+            if ($registro !== []) {
+                $linhas[] = $registro;
+            }
+        }
+
+        return [$cabecalhos, $linhas];
+    }
+}
+
+if (! function_exists('clienteSugerirMapeamento')) {
+    /**
+     * Tenta identificar automaticamente qual coluna do CSV corresponde ao campo do cliente/fornecedor.
+     *
+     * @param  string        $campo       nomeCliente, documento, tipo, telefone, celular, email, cep, rua, numero, complemento, bairro, cidade, estado, contato
+     * @param  list<string>  $colunasCsv  Cabeçalhos detectados no CSV
+     * @return string|null   Nome da coluna sugerida ou null
+     */
+    function clienteSugerirMapeamento(string $campo, array $colunasCsv): ?string
+    {
+        $termosPorCampo = [
+            'nomeCliente' => ['nome', 'nome_cliente', 'nomecliente', 'razao_social', 'razaosocial', 'cliente', 'fornecedor', 'nome_fornecedor', 'name', 'company'],
+            'documento' => ['documento', 'cpf_cnpj', 'cpfcnpj', 'cpf', 'cnpj', 'doc', 'identificacao', 'cnpj_cpf', 'cpf/cnpj', 'cnpj/cpf'],
+            'tipo' => ['tipo', 'categoria', 'tipo_cadastro', 'tipo_pessoa', 'classificacao', 'classificação', 'fornecedor', 'perfil', 'type'],
+            'telefone' => ['telefone', 'tel', 'fone', 'fixo', 'telefone_fixo', 'phone'],
+            'celular' => ['celular', 'cel', 'whatsapp', 'zap', 'mobile'],
+            'email' => ['email', 'e-mail', 'mail', 'correio'],
+            'cep' => ['cep', 'codigo_postal', 'zip', 'zipcode'],
+            'rua' => ['rua', 'logradouro', 'endereco', 'endereço', 'address', 'street'],
+            'numero' => ['numero', 'número', 'num', 'nro', 'number'],
+            'complemento' => ['complemento', 'comp', 'compl'],
+            'bairro' => ['bairro', 'distrito', 'neighborhood'],
+            'cidade' => ['cidade', 'municipio', 'município', 'city'],
+            'estado' => ['estado', 'uf', 'state'],
+            'contato' => ['contato', 'responsavel', 'responsável', 'vendedor', 'contact'],
+        ];
+
+        $candidatos = $termosPorCampo[$campo] ?? [];
+        if ($candidatos === [] || $colunasCsv === []) {
+            return null;
+        }
+
+        $normalizar = static fn (string $str) => strtolower(preg_replace('/[^a-zA-Z0-9]/', '', (string) iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $str) ?: $str));
+
+        foreach ($colunasCsv as $coluna) {
+            $colunaNorm = $normalizar($coluna);
+            foreach ($candidatos as $termo) {
+                if ($colunaNorm === $normalizar($termo)) {
+                    return $coluna;
+                }
+            }
+        }
+
+        foreach ($colunasCsv as $coluna) {
+            $colunaNorm = $normalizar($coluna);
+            foreach ($candidatos as $termo) {
+                $termoNorm = $normalizar($termo);
+                if (str_contains($colunaNorm, $termoNorm) || str_contains($termoNorm, $colunaNorm)) {
+                    return $coluna;
+                }
+            }
+        }
+
+        return null;
+    }
+}
+
+if (! function_exists('clienteNormalizarTipo')) {
+    /**
+     * Normaliza uma string de tipo para 1 (fornecedor) ou 0 (cliente).
+     */
+    function clienteNormalizarTipo(string $valor): int
+    {
+        $val = mb_strtolower(trim($valor));
+        $indicadoresFornecedor = ['fornecedor', 'fornec', 'f', 'sim', 's', '1', 'true', 'pj', 'juridica', 'jurídica'];
+
+        return in_array($val, $indicadoresFornecedor, true) ? 1 : 0;
+    }
+}

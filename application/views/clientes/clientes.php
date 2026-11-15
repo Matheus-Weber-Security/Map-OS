@@ -101,11 +101,18 @@ $vazio = $temFiltro
     ]);
 ?>
 <div class="flex flex-col gap-4 pt-2 pb-8">
-    <header>
-        <h1 class="font-display text-heading-xl text-text">Clientes e fornecedores</h1>
-        <p class="text-caption text-muted" aria-live="polite">
-            <?= e(($total === 1 ? '1 cadastro' : number_format($total, 0, ',', '.') . ' cadastros') . ($temFiltro ? ($total === 1 ? ' encontrado' : ' encontrados') . ' com os filtros' : '')) ?>
-        </p>
+    <header class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+            <h1 class="font-display text-heading-xl text-text">Clientes e fornecedores</h1>
+            <p class="text-caption text-muted" aria-live="polite">
+                <?= e(($total === 1 ? '1 cadastro' : number_format($total, 0, ',', '.') . ' cadastros') . ($temFiltro ? ($total === 1 ? ' encontrado' : ' encontrados') . ' com os filtros' : '')) ?>
+            </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+            <?php if ($pode['adicionar']) { ?>
+                <?= component('button', ['label' => 'Importar CSV', 'icon' => 'upload', 'variant' => 'outline', 'href' => site_url('clientes/importar')]) ?>
+            <?php } ?>
+        </div>
     </header>
 
     <form method="get" action="<?= e(site_url('clientes')) ?>" role="search" aria-label="Filtrar clientes" class="grid items-end gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-[minmax(0,1fr)_12rem_auto]">

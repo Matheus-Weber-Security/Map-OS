@@ -79,6 +79,10 @@ $config['permissions_map'] = [
         'editar' => 'eCliente',
         'visualizar' => 'vCliente',
         'excluir' => 'dCliente',
+        'importar' => 'aCliente',
+        'processarCsv' => 'aCliente',
+        'concluirImportacao' => 'aCliente',
+        'modeloCsv' => 'aCliente',
     ],
 
     // Catálogo da biblioteca de componentes. O construtor responde 404 fora
