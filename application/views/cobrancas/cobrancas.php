@@ -54,8 +54,8 @@ $colunas = [
             ],
         ];
 
-        $link = cobrancaUrlSegura($c->link);
-        if ($link !== null && $c->barcode !== null && $c->barcode !== '') {
+        $link = cobrancaUrlSegura($c->link) ?? cobrancaUrlSegura($c->pdf);
+        if ($link !== null) {
             $itens[] = [
                 'label' => 'Abrir boleto',
                 'icon' => 'barcode',

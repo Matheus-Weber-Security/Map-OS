@@ -26,7 +26,7 @@ if (! empty($result->os_id)) {
         : 'Venda #' . (int) $result->vendas_id;
 }
 
-$link = cobrancaUrlSegura($result->link);
+$link = cobrancaUrlSegura($result->link) ?? cobrancaUrlSegura($result->pdf);
 $pdf = cobrancaUrlSegura($result->pdf);
 $pagamento = cobrancaUrlSegura($result->payment_url);
 
@@ -50,7 +50,7 @@ $dados = $campos([
     'Código de barras' => $result->barcode,
     'Link de pagamento' => $pagamento !== null ? component('link', ['label' => 'Abrir link', 'href' => $pagamento, 'attrs' => ['target' => '_blank', 'rel' => 'noopener']]) : null,
     'Boleto' => $link !== null ? component('link', ['label' => 'Abrir em nova aba', 'href' => $link, 'attrs' => ['target' => '_blank', 'rel' => 'noopener']]) : null,
-    'PDF' => $pdf !== null ? component('link', ['label' => 'Abrir em nova aba', 'href' => $pdf, 'attrs' => ['target' => '_blank', 'rel' => 'noopener']]) : null,
+    'PDF' => ($pdf !== null && $pdf !== $link) ? component('link', ['label' => 'Abrir em nova aba', 'href' => $pdf, 'attrs' => ['target' => '_blank', 'rel' => 'noopener']]) : null,
     'Mensagem' => $result->message,
 ]);
 ?>

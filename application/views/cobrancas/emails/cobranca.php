@@ -146,26 +146,37 @@
                 </td>
             </tr>
 
-            <?php if ($cobranca->pdf) : ?>
-                <tr>
-                    <td colspan="2">
-                        PDF
-                    </td>
-                    <td colspan="3">
-                        <a href="<?= e(componenteUrl($cobranca->pdf)) ?>" target="_blank">Abrir em outra aba</a>
-                    </td>
-                </tr>
-            <?php endif ?>
-
-            <?php if ($cobranca->link) : ?>
+            <?php if (! empty($cobranca->pdf) && ! empty($cobranca->link) && $cobranca->pdf === $cobranca->link) : ?>
                 <tr>
                     <td colspan="1">
-                        Link
+                        Boleto
                     </td>
                     <td colspan="3">
-                        <a href="<?= e(componenteUrl($cobranca->link)) ?>" target="_blank">Abrir em outra aba</a>
+                        <a href="<?= e(componenteUrl($cobranca->link)) ?>" target="_blank">Visualizar / Imprimir</a>
                     </td>
                 </tr>
+            <?php else : ?>
+                <?php if (! empty($cobranca->pdf)) : ?>
+                    <tr>
+                        <td colspan="2">
+                            PDF
+                        </td>
+                        <td colspan="3">
+                            <a href="<?= e(componenteUrl($cobranca->pdf)) ?>" target="_blank">Abrir em outra aba</a>
+                        </td>
+                    </tr>
+                <?php endif ?>
+
+                <?php if (! empty($cobranca->link)) : ?>
+                    <tr>
+                        <td colspan="1">
+                            Link
+                        </td>
+                        <td colspan="3">
+                            <a href="<?= e(componenteUrl($cobranca->link)) ?>" target="_blank">Abrir em outra aba</a>
+                        </td>
+                    </tr>
+                <?php endif ?>
             <?php endif ?>
 
             <?php if ($cobranca->barcode) : ?>

@@ -107,9 +107,23 @@ class MercadoPago extends BasePaymentGateway
             throw new \Exception($this->mpErrorMessage($e));
         }
 
+        $dadosAtualizacao = ['status' => $payment->status];
+
+        // Se a cobrança estiver sem link ou código de barras, tenta atualizar com os dados da API
+        if (empty($cobranca->link) || empty($cobranca->barcode)) {
+            $dadosBoleto = $this->extrairDadosBoleto($payment);
+            if (! empty($dadosBoleto['link']) && empty($cobranca->link)) {
+                $dadosAtualizacao['link'] = $dadosBoleto['link'];
+                $dadosAtualizacao['pdf'] = $dadosBoleto['pdf'];
+            }
+            if (! empty($dadosBoleto['barcode']) && empty($cobranca->barcode)) {
+                $dadosAtualizacao['barcode'] = $dadosBoleto['barcode'];
+            }
+        }
+
         $this->ci->cobrancas_model->edit(
             'cobrancas',
-            ['status' => $payment->status],
+            $dadosAtualizacao,
             'idCobranca',
             $id
         );
@@ -191,6 +205,69 @@ class MercadoPago extends BasePaymentGateway
         }
     }
 
+    /**
+     * Extrai link/PDF e código de barras / linha digitável do retorno da API
+     * verificando tanto o payload JSON bruto (getResponse()->getContent())
+     * quanto as propriedades dos objetos mapeados pelo SDK.
+     */
+    private function extrairDadosBoleto($payment): array
+    {
+        $raw = [];
+        if (is_object($payment) && method_exists($payment, 'getResponse') && $payment->getResponse()) {
+            $raw = $payment->getResponse()->getContent() ?? [];
+            if (! is_array($raw)) {
+                $raw = [];
+            }
+        }
+
+        // Link / PDF do boleto
+        $linkBoleto = '';
+        if (! empty($raw['transaction_details']['external_resource_url'])) {
+            $linkBoleto = (string) $raw['transaction_details']['external_resource_url'];
+        } elseif (! empty($raw['point_of_interaction']['transaction_data']['ticket_url'])) {
+            $linkBoleto = (string) $raw['point_of_interaction']['transaction_data']['ticket_url'];
+        } elseif (! empty($raw['external_resource_url'])) {
+            $linkBoleto = (string) $raw['external_resource_url'];
+        } elseif (is_object($payment)) {
+            if (! empty($payment->transaction_details->external_resource_url)) {
+                $linkBoleto = (string) $payment->transaction_details->external_resource_url;
+            } elseif (! empty($payment->point_of_interaction->transaction_data->ticket_url)) {
+                $linkBoleto = (string) $payment->point_of_interaction->transaction_data->ticket_url;
+            } elseif (! empty($payment->external_resource_url)) {
+                $linkBoleto = (string) $payment->external_resource_url;
+            }
+        }
+
+        // Código de barras / linha digitável (prioriza linha digitável para facilitar cópia no app do banco)
+        $barcode = '';
+        if (! empty($raw['digitable_line'])) {
+            $barcode = (string) $raw['digitable_line'];
+        } elseif (! empty($raw['barcode'])) {
+            $barcode = is_array($raw['barcode']) ? (string) ($raw['barcode']['content'] ?? '') : (string) $raw['barcode'];
+        } elseif (! empty($raw['transaction_details']['digitable_line'])) {
+            $barcode = (string) $raw['transaction_details']['digitable_line'];
+        } elseif (! empty($raw['transaction_details']['barcode'])) {
+            $barcode = is_array($raw['transaction_details']['barcode']) ? (string) ($raw['transaction_details']['barcode']['content'] ?? '') : (string) $raw['transaction_details']['barcode'];
+        } elseif (! empty($raw['point_of_interaction']['transaction_data']['barcode_content'])) {
+            $barcode = (string) $raw['point_of_interaction']['transaction_data']['barcode_content'];
+        } elseif (is_object($payment)) {
+            if (! empty($payment->digitable_line)) {
+                $barcode = (string) $payment->digitable_line;
+            } elseif (! empty($payment->barcode)) {
+                $barcode = is_string($payment->barcode) ? $payment->barcode : (string) ($payment->barcode->content ?? '');
+            } elseif (! empty($payment->transaction_details->digitable_line)) {
+                $barcode = (string) $payment->transaction_details->digitable_line;
+            } elseif (! empty($payment->transaction_details->barcode)) {
+                $barcode = is_string($payment->transaction_details->barcode) ? $payment->transaction_details->barcode : (string) ($payment->transaction_details->barcode->content ?? '');
+            }
+        }
+
+        return [
+            'link' => trim($linkBoleto),
+            'pdf' => trim($linkBoleto),
+            'barcode' => trim($barcode),
+        ];
+    }
 
     protected function gerarCobrancaBoleto($id, $tipo)
     {
@@ -222,7 +299,7 @@ class MercadoPago extends BasePaymentGateway
             $client = new PaymentClient();
             $payment = $client->create([
                 "transaction_amount" => $valor,
-                "description" => PaymentGateway::PAYMENT_TYPE_OS ? "OS #$id" : "Venda #$id",
+                "description" => $tipo === PaymentGateway::PAYMENT_TYPE_OS ? "OS #$id" : "Venda #$id",
                 "payment_method_id" => "bolbradesco",
                 "notification_url" => "https://seusite.com.br/mercadopago/retorno",
                 "date_of_expiration" => $expirationDate,
@@ -250,10 +327,26 @@ class MercadoPago extends BasePaymentGateway
             throw new \Exception($e->getMessage());
         }
 
+        if (empty($payment) || empty($payment->id)) {
+            throw new \Exception('Mercado Pago não retornou identificador para a cobrança gerada.');
+        }
+
+        if ($payment->status === 'rejected') {
+            $detalhe = $payment->status_detail ?? '';
+            $mensagem = 'Mercado Pago recusou a emissão do boleto';
+            if ($detalhe !== '') {
+                $mensagem .= ' (' . $detalhe . ')';
+            }
+            $mensagem .= '. Verifique os dados cadastrais do cliente ou a conta do Mercado Pago.';
+            throw new \Exception($mensagem);
+        }
+
+        $dadosBoleto = $this->extrairDadosBoleto($payment);
+
         $data = [
-            'barcode' => $payment->barcode->content ?? '',
-            'link' => $payment->transaction_details->external_resource_url ?? '',
-            'pdf' => $payment->transaction_details->external_resource_url ?? '',
+            'barcode' => $dadosBoleto['barcode'],
+            'link' => $dadosBoleto['link'],
+            'pdf' => $dadosBoleto['pdf'],
             'expire_at' => $payment->date_of_expiration ?? $expirationDate,
             'charge_id' => $payment->id,
             'status' => $payment->status,
