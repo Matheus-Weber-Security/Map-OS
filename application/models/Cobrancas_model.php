@@ -20,7 +20,7 @@ class Cobrancas_model extends CI_Model
      */
     public function listar(array $filtros, int $limite, int $offset): array
     {
-        $this->db->select('cobrancas.*, clientes.nomeCliente');
+        $this->db->select('cobrancas.*, clientes.nomeCliente, clientes.celular, clientes.telefone');
         $this->aplicarFiltros($filtros);
 
         return $this->db

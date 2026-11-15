@@ -29,6 +29,7 @@ if (! empty($result->os_id)) {
 $link = cobrancaUrlSegura($result->link) ?? cobrancaUrlSegura($result->pdf);
 $pdf = cobrancaUrlSegura($result->pdf);
 $pagamento = cobrancaUrlSegura($result->payment_url);
+$whatsapp = cobrancaDadosWhatsApp($result);
 
 $cliente = $campos([
     'Nome' => $pode['ver_cliente'] && $result->clientes_id
@@ -65,6 +66,15 @@ $dados = $campos([
         </div>
         <div class="flex flex-wrap gap-2">
             <?= component('button', ['label' => 'Voltar', 'icon' => 'chevron-left', 'variant' => 'ghost', 'href' => site_url('cobrancas/cobrancas')]) ?>
+            <?php if ($whatsapp !== null) { ?>
+                <?= component('button', [
+                    'label' => 'WhatsApp',
+                    'icon' => 'message-circle',
+                    'variant' => 'outline',
+                    'href' => 'https://wa.me/' . $whatsapp['telefone'] . '?text=' . rawurlencode($whatsapp['texto']),
+                    'attrs' => ['target' => '_blank', 'rel' => 'noopener'],
+                ]) ?>
+            <?php } ?>
             <?php if ($pode['editar']) { ?>
                 <?= component('button', ['label' => 'E-mail', 'icon' => 'mail', 'variant' => 'outline', 'type' => 'submit', 'attrs' => ['form' => 'form-acao-cobranca', 'formaction' => site_url('cobrancas/enviarEmail/' . $id)]]) ?>
                 <?= component('button', ['label' => 'Atualizar status', 'icon' => 'history', 'variant' => 'outline', 'type' => 'submit', 'attrs' => ['form' => 'form-acao-cobranca', 'formaction' => site_url('cobrancas/atualizar/' . $id)]]) ?>

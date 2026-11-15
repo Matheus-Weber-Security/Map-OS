@@ -572,3 +572,62 @@ if (! function_exists('cobrancaGatewayValido')) {
         return false;
     }
 }
+if (! function_exists('cobrancaTelefoneWhatsApp')) {
+    /**
+     * Número para o link do WhatsApp (wa.me): só dígitos, com o DDI 55 quando
+     * vier só DDD + número. Sem número válido, null.
+     */
+    function cobrancaTelefoneWhatsApp(?string $telefone): ?string
+    {
+        $digitos = (string) preg_replace('/\D/', '', (string) $telefone);
+        if (strlen($digitos) === 10 || strlen($digitos) === 11) {
+            return '55' . $digitos;
+        }
+
+        return strlen($digitos) === 12 || strlen($digitos) === 13 ? $digitos : null;
+    }
+}
+
+if (! function_exists('cobrancaDadosWhatsApp')) {
+    /**
+     * Telefone normalizado e mensagem da cobrança para o link de WhatsApp (wa.me).
+     * Retorna null quando o cliente não tem telefone válido.
+     *
+     * @return array{telefone: string, texto: string}|null
+     */
+    function cobrancaDadosWhatsApp(object $cobranca): ?array
+    {
+        $telefone = cobrancaTelefoneWhatsApp(($cobranca->celular ?? null) ?: ($cobranca->telefone ?? null));
+        if ($telefone === null) {
+            return null;
+        }
+
+        $cliente = trim((string) ($cobranca->nomeCliente ?? 'Cliente'));
+        $numero = (string) ($cobranca->codigo ?? $cobranca->idCobranca);
+        $valor = dinheiro((float) $cobranca->total / 100);
+        $vencimento = dataBr($cobranca->expire_at);
+        $link = cobrancaUrlSegura($cobranca->link ?? null) ?? cobrancaUrlSegura($cobranca->pdf ?? null) ?? cobrancaUrlSegura($cobranca->payment_url ?? null);
+
+        $ref = '';
+        if (! empty($cobranca->os_id)) {
+            $ref = ' referente à Ordem de Serviço #' . (int) $cobranca->os_id;
+        } elseif (! empty($cobranca->vendas_id)) {
+            $ref = ' referente à Venda #' . (int) $cobranca->vendas_id;
+        }
+
+        $texto = "Olá, {$cliente}! Segue a sua cobrança #{$numero}{$ref} no valor de {$valor}, com vencimento em {$vencimento}.";
+
+        if ($link !== null) {
+            $texto .= "\n\n📄 Acesse o seu boleto/pagamento pelo link:\n" . $link;
+        }
+
+        if (! empty($cobranca->barcode)) {
+            $texto .= "\n\n🔢 Linha digitável (código de barras):\n" . $cobranca->barcode;
+        }
+
+        return [
+            'telefone' => $telefone,
+            'texto' => $texto,
+        ];
+    }
+}

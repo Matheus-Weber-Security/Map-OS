@@ -64,6 +64,16 @@ $colunas = [
             ];
         }
 
+        $whatsapp = cobrancaDadosWhatsApp($c);
+        if ($whatsapp !== null) {
+            $itens[] = [
+                'label' => 'Enviar pelo WhatsApp',
+                'icon' => 'message-circle',
+                'href' => 'https://wa.me/' . $whatsapp['telefone'] . '?text=' . rawurlencode($whatsapp['texto']),
+                'attrs' => ['target' => '_blank', 'rel' => 'noopener'],
+            ];
+        }
+
         if ($pode['editar']) {
             $itens[] = [
                 'label' => 'Enviar por e-mail',
