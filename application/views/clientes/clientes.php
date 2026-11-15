@@ -37,24 +37,50 @@ $colunas = [
     ]) : ''],
     ['label' => 'Tipo', 'nowrap' => true, 'render' => fn ($c) => component('pill-status', $c->fornecedor ? ['label' => 'Fornecedor', 'variant' => 'info'] : ['label' => 'Cliente', 'variant' => 'neutral'])],
     ['label' => 'Ações', 'align' => 'right', 'nowrap' => true, 'render' => function ($c) use ($pode) {
-        $acoes = [
-            component('button', ['label' => 'Ver ' . $c->nomeCliente, 'icon' => 'eye', 'icon_only' => true, 'variant' => 'ghost', 'size' => 'sm', 'href' => site_url('clientes/visualizar/' . $c->idClientes)]),
+        $tipo = $c->fornecedor ? 'fornecedor' : 'cliente';
+        $itens = [
+            [
+                'label' => 'Ver ' . $tipo,
+                'icon' => 'eye',
+                'href' => site_url('clientes/visualizar/' . $c->idClientes),
+            ],
         ];
+
         if ($c->email) {
-            $acoes[] = component('button', ['label' => 'Área do cliente de ' . $c->nomeCliente, 'icon' => 'key-round', 'icon_only' => true, 'variant' => 'ghost', 'size' => 'sm', 'href' => site_url('mine') . '?' . http_build_query(['e' => $c->email]), 'attrs' => ['target' => '_blank', 'rel' => 'noopener']]);
-        }
-        if ($pode['editar']) {
-            $acoes[] = component('button', ['label' => 'Editar ' . $c->nomeCliente, 'icon' => 'pencil', 'icon_only' => true, 'variant' => 'ghost', 'size' => 'sm', 'href' => site_url('clientes/editar/' . $c->idClientes)]);
-        }
-        if ($pode['excluir']) {
-            $acoes[] = component('button', ['label' => 'Excluir ' . $c->nomeCliente, 'icon' => 'trash-2', 'icon_only' => true, 'variant' => 'ghost', 'size' => 'sm', 'class' => 'hover:text-danger-ink', 'attrs' => [
-                'data-modal-abrir' => 'excluir-cliente',
-                'data-valor-id' => (string) $c->idClientes,
-                'data-valor-nome' => $c->nomeCliente,
-            ]]);
+            $itens[] = [
+                'label' => 'Área do cliente',
+                'icon' => 'key-round',
+                'href' => site_url('mine') . '?' . http_build_query(['e' => $c->email]),
+                'attrs' => ['target' => '_blank', 'rel' => 'noopener'],
+            ];
         }
 
-        return $acoes;
+        if ($pode['editar']) {
+            $itens[] = [
+                'label' => 'Editar ' . $tipo,
+                'icon' => 'pencil',
+                'href' => site_url('clientes/editar/' . $c->idClientes),
+            ];
+        }
+
+        if ($pode['excluir']) {
+            $itens[] = ['separador' => true];
+            $itens[] = [
+                'label' => 'Excluir ' . $tipo,
+                'icon' => 'trash-2',
+                'danger' => true,
+                'attrs' => [
+                    'data-modal-abrir' => 'excluir-cliente',
+                    'data-valor-id' => (string) $c->idClientes,
+                    'data-valor-nome' => $c->nomeCliente,
+                ],
+            ];
+        }
+
+        return component('menu-acoes', [
+            'label' => 'Ações de ' . $c->nomeCliente,
+            'items' => $itens,
+        ]);
     }],
 ];
 
