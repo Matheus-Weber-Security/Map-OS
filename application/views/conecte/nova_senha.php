@@ -26,18 +26,15 @@ include APPPATH . 'views/entrada/inicio.php';
             <form method="post" action="<?= e(site_url('mine/senhaSalvar')) ?>" novalidate class="mt-6 flex flex-col gap-4" <?= js_module('formulario/padrao') ?>>
                 <input type="hidden" name="<?= e($this->security->get_csrf_token_name()) ?>" value="<?= e($this->security->get_csrf_hash()) ?>">
                 <input type="hidden" name="token" value="<?= e($token) ?>">
-                <div class="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
-                    <?= component('input', [
-                        'name' => 'senha',
-                        'label' => 'Senha nova',
-                        'type' => 'password',
-                        'required' => true,
-                        'autocomplete' => 'new-password',
-                        'error' => $erros['senha'] ?? null,
-                        'attrs' => ['autofocus' => true, 'minlength' => 8, 'maxlength' => 72, 'data-msg-vazio' => 'Crie uma senha.', 'data-msg-invalido' => 'A senha precisa de pelo menos 8 caracteres.'],
-                    ]) ?>
-                    <?= component('button', ['label' => 'Mostrar senha', 'icon' => 'eye', 'icon_only' => true, 'variant' => 'ghost', 'class' => 'mt-7', 'attrs' => ['data-mostrar-senha' => 'campo-senha', 'aria-controls' => 'campo-senha', 'aria-pressed' => 'false']]) ?>
-                </div>
+                <?= component('input', [
+                    'name' => 'senha',
+                    'label' => 'Senha nova',
+                    'type' => 'password',
+                    'required' => true,
+                    'autocomplete' => 'new-password',
+                    'error' => $erros['senha'] ?? null,
+                    'attrs' => ['autofocus' => true, 'minlength' => 8, 'maxlength' => 72, 'data-msg-vazio' => 'Crie uma senha.', 'data-msg-invalido' => 'A senha precisa de pelo menos 8 caracteres.'],
+                ]) ?>
                 <?= component('input', [
                     'name' => 'senha_confirmacao',
                     'label' => 'Repita a senha',

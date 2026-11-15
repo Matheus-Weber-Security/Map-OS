@@ -96,18 +96,15 @@ $grade = 'mt-4 grid gap-4 sm:grid-cols-2';
     <h2 id="secao-senha" class="text-heading-sm text-text"><?= e($novo ? 'Senha' : 'Trocar a senha') ?></h2>
     <p class="mt-0.5 text-caption text-muted"><?= e($novo ? 'Pelo menos 8 caracteres.' : 'Deixe em branco para manter a senha atual.') ?></p>
     <div class="<?= e($grade) ?>">
-        <div class="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
-            <?= component('input', [
-                'name' => 'senha',
-                'label' => $novo ? 'Senha' : 'Nova senha',
-                'type' => 'password',
-                'required' => $novo,
-                'autocomplete' => 'new-password',
-                'error' => $erros['senha'] ?? null,
-                'attrs' => ['minlength' => 8, 'maxlength' => 72, 'data-msg-vazio' => 'Crie uma senha.', 'data-msg-invalido' => 'A senha precisa de pelo menos 8 caracteres.'],
-            ]) ?>
-            <?= component('button', ['label' => 'Mostrar senha', 'icon' => 'eye', 'icon_only' => true, 'variant' => 'ghost', 'class' => 'mt-7', 'attrs' => ['data-mostrar-senha' => 'campo-senha', 'aria-controls' => 'campo-senha', 'aria-pressed' => 'false']]) ?>
-        </div>
+        <?= component('input', [
+            'name' => 'senha',
+            'label' => $novo ? 'Senha' : 'Nova senha',
+            'type' => 'password',
+            'required' => $novo,
+            'autocomplete' => 'new-password',
+            'error' => $erros['senha'] ?? null,
+            'attrs' => ['minlength' => 8, 'maxlength' => 72, 'data-msg-vazio' => 'Crie uma senha.', 'data-msg-invalido' => 'A senha precisa de pelo menos 8 caracteres.'],
+        ]) ?>
         <?= component('input', [
             'name' => 'senha_confirmacao',
             'label' => 'Repita a senha',
