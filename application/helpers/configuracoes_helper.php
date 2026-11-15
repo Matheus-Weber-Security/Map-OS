@@ -303,8 +303,8 @@ if (! function_exists('configuracaoEnvAtualizado')) {
 if (! function_exists('configuracaoValores')) {
     /**
      * Valores para a tela de uma aba: o POST quando volta com erro, senão a
-     * configuração e o .env atuais. Segredos nunca voltam (só se estão
-     * definidos, para a ajuda do campo).
+     * configuração e o .env atuais. Segredos voltam com valor preenchido
+     * para permitir que o usuário veja/revele os tokens e credenciais.
      *
      * @return array<string, mixed>
      */
@@ -315,15 +315,22 @@ if (! function_exists('configuracaoValores')) {
             if (isset($configuracao[$nome]) && $configuracao[$nome] !== '') {
                 $atual = $configuracao[$nome];
             } elseif ($empresaId === 1 && $campo['destino'] === 'env') {
-                $atual = $env[$nome] ?? '';
+                $atual = $env[$nome] ?? (getenv($nome) ?: ($_SERVER[$nome] ?? ''));
             } elseif ($campo['destino'] === 'config') {
                 $atual = $configuracao[$nome] ?? '';
             } else {
                 $atual = '';
             }
 
+            $segredoValor = $post !== null
+                ? (is_scalar($post[$nome] ?? null) && (string) $post[$nome] !== '' ? (string) $post[$nome] : (string) $atual)
+                : (string) $atual;
+
             $valores[$nome] = match ($campo['tipo']) {
-                'segredo' => ['definido' => (string) $atual !== ''],
+                'segredo' => [
+                    'definido' => (string) $atual !== '' || ($post !== null && is_scalar($post[$nome] ?? null) && (string) $post[$nome] !== ''),
+                    'valor' => $segredoValor,
+                ],
                 'gerar_jwt' => false,
                 'status' => $post !== null
                     ? array_values(array_intersect(array_keys($campo['opcoes']), is_array($post[$nome] ?? null) ? $post[$nome] : []))
