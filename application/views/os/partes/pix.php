@@ -31,7 +31,8 @@ $podeEditar = ($pode['editar'] ?? false) && ((int) ($os->faturado ?? 0) === 0) &
                 <div class="w-48 sm:w-52">
                     <?= component('select', [
                         'name' => 'forma_pagamento',
-                        'size' => 'sm',
+                        'label' => 'Forma de pagamento',
+                        'hide_label' => true,
                         'options' => array_combine(
                             array_keys(OS_FORMAS_PAGAMENTO_OPCOES),
                             array_column(OS_FORMAS_PAGAMENTO_OPCOES, 'label')
