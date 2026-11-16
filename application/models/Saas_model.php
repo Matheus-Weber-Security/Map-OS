@@ -105,10 +105,21 @@ class Saas_model extends CI_Model
         ]);
     }
 
-    public function atualizarDesconto(int $empresaId, int $descontoPercentual): bool
+    public function atualizarDesconto(int $empresaId, int $descontoPercentual, ?string $descontoValidoAte = null): bool
     {
+        $desconto = max(0, min(100, $descontoPercentual));
+        $validade = null;
+
+        if ($desconto > 0 && ! empty($descontoValidoAte)) {
+            $timestamp = strtotime(str_replace('/', '-', $descontoValidoAte));
+            if ($timestamp !== false) {
+                $validade = date('Y-m-d', $timestamp);
+            }
+        }
+
         return $this->db->where('id', $empresaId)->update('saas_empresas', [
-            'desconto_percentual' => max(0, min(100, $descontoPercentual)),
+            'desconto_percentual' => $desconto,
+            'desconto_valido_ate' => $validade,
         ]);
     }
 
@@ -266,7 +277,7 @@ class Saas_model extends CI_Model
 
         // 3. Receita Mensal (MRR): soma dos valores dos planos das empresas ativas (com desconto aplicado)
         $empresasAtivas = $this->db
-            ->select('e.desconto_percentual, p.valor as plano_valor')
+            ->select('e.desconto_percentual, e.desconto_valido_ate, p.valor as plano_valor')
             ->from('saas_empresas e')
             ->join('saas_planos p', 'p.id = e.plano_id')
             ->where('e.id >', 1)
@@ -276,8 +287,12 @@ class Saas_model extends CI_Model
             ->result();
 
         $mrr = 0.00;
+        $hoje = date('Y-m-d');
         foreach ($empresasAtivas as $emp) {
             $desc = (float) ($emp->desconto_percentual ?? 0);
+            if ($desc > 0 && ! empty($emp->desconto_valido_ate) && $emp->desconto_valido_ate < $hoje) {
+                $desc = 0.0;
+            }
             $val = (float) ($emp->plano_valor ?? 0);
             $mrr += $val * (1 - ($desc / 100));
         }

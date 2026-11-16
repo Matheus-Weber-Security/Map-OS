@@ -85,13 +85,25 @@ $primeiraForma = $formasAtivas[0];
                     <?php if (! empty($ehMaster)) { ?>
                         <span class="text-success-ink font-bold text-heading-xs">Isento (Master)</span>
                     <?php } elseif ($descontoPercentual > 0) { ?>
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 flex-wrap">
                             <span class="line-through text-muted text-caption">R$ <?= number_format($valorOriginal, 2, ',', '.') ?></span>
                             <?= component('pill-status', ['label' => $descontoPercentual . '% OFF', 'variant' => 'warning']) ?>
                         </div>
                         <span class="text-success-ink font-bold text-heading-xs">R$ <?= number_format($valorFinal, 2, ',', '.') ?>/mês</span>
+                        <?php if (! empty($descontoValidoAte)) { ?>
+                            <span class="text-xs text-muted inline-flex items-center gap-1 mt-0.5">
+                                <?= icon('info', ['class' => 'size-3.5 text-warning-ink']) ?>
+                                Desconto válido até <strong><?= e(date('d/m/Y', strtotime($descontoValidoAte))) ?></strong>
+                            </span>
+                        <?php } ?>
                     <?php } else { ?>
                         <span class="text-success-ink font-bold text-heading-xs">R$ <?= number_format($valorFinal, 2, ',', '.') ?>/mês</span>
+                        <?php if (! empty($descontoExpirado) && ! empty($descontoValidoAte)) { ?>
+                            <span class="text-xs text-danger-ink inline-flex items-center gap-1 mt-0.5">
+                                <?= icon('circle-alert', ['class' => 'size-3.5 text-danger-ink']) ?>
+                                Desconto promocional expirado em <?= e(date('d/m/Y', strtotime($descontoValidoAte))) ?>
+                            </span>
+                        <?php } ?>
                     <?php } ?>
                 </div>
             </div>

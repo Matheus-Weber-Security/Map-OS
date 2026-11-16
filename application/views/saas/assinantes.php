@@ -97,6 +97,10 @@ $colunas = [
         'render' => function ($e) {
             $valor = (float) ($e->plano_valor ?? 37.90);
             $desc = (int) ($e->desconto_percentual ?? 0);
+            $validade = ! empty($e->desconto_valido_ate) ? $e->desconto_valido_ate : null;
+            if ($desc > 0 && $validade !== null && $validade < date('Y-m-d')) {
+                $desc = 0;
+            }
             $final = $valor * (1 - ($desc / 100));
 
             return html_purificado('<span class="font-semibold text-text">R$ ' . number_format($final, 2, ',', '.') . '</span>' .
@@ -109,10 +113,26 @@ $colunas = [
         'nowrap' => true,
         'render' => function ($e) {
             $desc = (int) ($e->desconto_percentual ?? 0);
+            if ($desc <= 0) {
+                return component('pill-status', ['label' => 'Sem desconto', 'variant' => 'neutral']);
+            }
 
-            return $desc > 0
-                ? component('pill-status', ['label' => $desc . '% OFF', 'variant' => 'warning'])
-                : component('pill-status', ['label' => 'Sem desconto', 'variant' => 'neutral']);
+            $validade = ! empty($e->desconto_valido_ate) ? $e->desconto_valido_ate : null;
+            $expirado = $validade !== null && $validade < date('Y-m-d');
+
+            if ($expirado) {
+                return html_purificado(
+                    (string) component('pill-status', ['label' => $desc . '% OFF', 'variant' => 'neutral']) .
+                    '<div class="text-[11px] text-danger-ink mt-0.5">Expirado em ' . e(date('d/m/Y', strtotime($validade))) . '</div>'
+                );
+            }
+
+            $pill = (string) component('pill-status', ['label' => $desc . '% OFF', 'variant' => 'warning']);
+            if ($validade !== null) {
+                $pill .= '<div class="text-[11px] text-muted mt-0.5">Válido até ' . e(date('d/m/Y', strtotime($validade))) . '</div>';
+            }
+
+            return html_purificado($pill);
         },
     ],
 ];
@@ -156,6 +176,7 @@ if ($temAcoes) {
                         'data-valor-id' => (string) $e->id,
                         'data-valor-nome' => $nome,
                         'data-valor-desconto' => (string) ($e->desconto_percentual ?? 0),
+                        'data-valor-validade' => (string) ($e->desconto_valido_ate ?? ''),
                         'title' => 'Ajustar desconto comercial (%)',
                     ],
                 ]);
@@ -330,6 +351,15 @@ $vazio = component('empty-state', [
             'help' => 'Porcentagem de desconto aplicada nas faturas mensais (de 0 a 100%).',
             'attrs' => ['step' => 1, 'min' => 0, 'max' => 100, 'inputmode' => 'numeric', 'data-modal-valor' => 'desconto', 'data-msg-vazio' => 'Informe o desconto.'],
         ]),
+        new HtmlSeguro('<div class="mt-4">'),
+        component('input', [
+            'name' => 'desconto_valido_ate',
+            'label' => 'Validade do Desconto (opcional)',
+            'type' => 'date',
+            'help' => 'Deixe em branco para desconto vitalício/permanente.',
+            'attrs' => ['min' => date('Y-m-d'), 'data-modal-valor' => 'validade'],
+        ]),
+        new HtmlSeguro('</div>'),
         new HtmlSeguro('</form>'),
     ],
     'footer' => [

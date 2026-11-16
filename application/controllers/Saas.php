@@ -180,9 +180,24 @@ class Saas extends MY_Controller
 
         $empresaId = (int) $this->input->post('empresa_id');
         $desconto = (int) $this->input->post('desconto_percentual');
+        $validade = trim((string) $this->input->post('desconto_valido_ate'));
 
         if ($empresaId > 0) {
-            $this->saas_model->atualizarDesconto($empresaId, $desconto);
+            if ($desconto > 0 && ! empty($validade)) {
+                $timestamp = strtotime(str_replace('/', '-', $validade));
+                if ($timestamp === false) {
+                    $this->session->set_flashdata('error', 'Data de validade do desconto inválida.');
+
+                    return redirect('saas/assinantes');
+                }
+                if (date('Y-m-d', $timestamp) < date('Y-m-d')) {
+                    $this->session->set_flashdata('error', 'A data de validade do desconto não pode ser no passado.');
+
+                    return redirect('saas/assinantes');
+                }
+            }
+
+            $this->saas_model->atualizarDesconto($empresaId, $desconto, $validade ?: null);
             $this->session->set_flashdata('success', 'Desconto do assinante atualizado com sucesso!');
         }
 

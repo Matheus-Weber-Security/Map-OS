@@ -39,10 +39,13 @@ class Assinatura extends MY_Controller
             $plano = ! empty($planos) ? $planos[0] : null;
         }
 
-        // Aplica desconto da empresa se houver
-        $descontoPercentual = (int) ($empresa->desconto_percentual ?? 0);
-        $valorOriginal = (float) ($plano->valor ?? 37.90);
-        $valorFinal = $valorOriginal * (1 - ($descontoPercentual / 100));
+        // Aplica desconto da empresa se houver e estiver válido
+        $calculo = $this->calcularValoresPlano($empresa, $plano);
+        $valorOriginal = $calculo['valorOriginal'];
+        $valorFinal = $calculo['valorFinal'];
+        $descontoPercentual = $calculo['descontoPercentual'];
+        $descontoValidoAte = $calculo['descontoValidoAte'];
+        $descontoExpirado = $calculo['descontoExpirado'];
 
         $this->data['empresa'] = $empresa;
         $this->data['ehMaster'] = $ehMaster;
@@ -53,6 +56,8 @@ class Assinatura extends MY_Controller
         $situacaoAssinatura = $this->obterSituacaoAssinaturaEmpresa();
         $this->data['situacaoAssinatura'] = $situacaoAssinatura;
         $this->data['descontoPercentual'] = $descontoPercentual;
+        $this->data['descontoValidoAte'] = $descontoValidoAte;
+        $this->data['descontoExpirado'] = $descontoExpirado;
         $this->data['formasPagamento'] = $this->saas_model->getFormasPagamento(true);
         $this->data['view'] = 'assinatura/index';
 
@@ -88,9 +93,8 @@ class Assinatura extends MY_Controller
             $plano = ! empty($planos) ? $planos[0] : (object) ['id' => 2, 'valor' => 37.90];
         }
 
-        $descontoPercentual = (int) ($empresa->desconto_percentual ?? 0);
-        $valorOriginal = (float) $plano->valor;
-        $valorFinal = $valorOriginal * (1 - ($descontoPercentual / 100));
+        $calculo = $this->calcularValoresPlano($empresa, $plano);
+        $valorFinal = $calculo['valorFinal'];
 
         $assinaturaId = $this->saas_model->criarAssinatura($empresaId, (int) $plano->id, $valorFinal, 'PIX');
         $assinatura = $this->saas_model->getAssinaturaById($assinaturaId);
@@ -181,9 +185,8 @@ class Assinatura extends MY_Controller
             $plano = ! empty($planos) ? $planos[0] : (object) ['id' => 2, 'valor' => 37.90];
         }
 
-        $descontoPercentual = (int) ($empresa->desconto_percentual ?? 0);
-        $valorOriginal = (float) $plano->valor;
-        $valorFinal = $valorOriginal * (1 - ($descontoPercentual / 100));
+        $calculo = $this->calcularValoresPlano($empresa, $plano);
+        $valorFinal = $calculo['valorFinal'];
 
         // Obtém configuração do boleto
         $formaBoleto = $this->saas_model->getFormaPagamentoByCodigo('boleto');
@@ -237,9 +240,8 @@ class Assinatura extends MY_Controller
             $plano = ! empty($planos) ? $planos[0] : (object) ['id' => 2, 'valor' => 37.90];
         }
 
-        $descontoPercentual = (int) ($empresa->desconto_percentual ?? 0);
-        $valorOriginal = (float) $plano->valor;
-        $valorFinal = $valorOriginal * (1 - ($descontoPercentual / 100));
+        $calculo = $this->calcularValoresPlano($empresa, $plano);
+        $valorFinal = $calculo['valorFinal'];
 
         $tipo = $this->input->post('tipo') === 'debito' ? 'CARTAO_DEBITO' : 'CARTAO_CREDITO';
         $assinaturaId = $this->saas_model->criarAssinatura($empresaId, (int) $plano->id, $valorFinal, $tipo);
@@ -255,5 +257,35 @@ class Assinatura extends MY_Controller
                 'message' => 'Pagamento no cartão aprovado com sucesso! Mais 30 dias foram adicionados ao seu plano.',
                 'valor' => number_format($valorFinal, 2, ',', '.'),
             ]));
+    }
+
+    /**
+     * Calcula os valores do plano aplicando desconto apenas se ativo e dentro da validade.
+     *
+     * @return array{valorOriginal: float, valorFinal: float, descontoPercentual: int, descontoValidoAte: ?string, descontoExpirado: bool}
+     */
+    protected function calcularValoresPlano(object $empresa, ?object $plano): array
+    {
+        $valorOriginal = (float) ($plano->valor ?? 37.90);
+        $descontoPercentual = (int) ($empresa->desconto_percentual ?? 0);
+        $descontoValidoAte = ! empty($empresa->desconto_valido_ate) ? (string) $empresa->desconto_valido_ate : null;
+        $descontoExpirado = false;
+
+        if ($descontoPercentual > 0 && $descontoValidoAte !== null) {
+            if ($descontoValidoAte < date('Y-m-d')) {
+                $descontoExpirado = true;
+                $descontoPercentual = 0;
+            }
+        }
+
+        $valorFinal = $valorOriginal * (1 - ($descontoPercentual / 100));
+
+        return [
+            'valorOriginal' => $valorOriginal,
+            'valorFinal' => $valorFinal,
+            'descontoPercentual' => $descontoPercentual,
+            'descontoValidoAte' => $descontoValidoAte,
+            'descontoExpirado' => $descontoExpirado,
+        ];
     }
 }
