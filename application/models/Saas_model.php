@@ -44,13 +44,25 @@ class Saas_model extends CI_Model
 
     public function getEmpresaById(int $id): ?object
     {
-        return $this->db
+        $emp = $this->db
             ->select('e.*, p.nome as plano_nome, p.valor as plano_valor')
             ->from('saas_empresas e')
             ->join('saas_planos p', 'p.id = e.plano_id', 'left')
             ->where('e.id', $id)
             ->get()
             ->row();
+
+        if ($emp && ! empty($emp->data_vencimento)) {
+            $hoje = strtotime('today');
+            $venc = strtotime($emp->data_vencimento);
+            $dias = max(0, (int) ceil(($venc - $hoje) / 86400));
+            if ((int) $emp->dias_restantes !== $dias) {
+                $this->db->where('id', $id)->update('saas_empresas', ['dias_restantes' => $dias]);
+            }
+            $emp->dias_restantes = $dias;
+        }
+
+        return $emp ?: null;
     }
 
     public function getEmpresas(array $filtros = []): array
@@ -60,13 +72,26 @@ class Saas_model extends CI_Model
             ->from('saas_empresas e')
             ->join('saas_planos p', 'p.id = e.plano_id', 'left');
 
+        $hojeDate = date('Y-m-d');
+
         if (! empty($filtros['status']) && $filtros['status'] !== 'todos') {
             if ($filtros['status'] === 'ativos') {
-                $this->db->where('e.status', 'ativa')->where('e.dias_restantes >', 0);
+                $this->db->where('e.status', 'ativa')
+                    ->group_start()
+                    ->where('e.data_vencimento >=', $hojeDate)
+                    ->or_group_start()
+                    ->where('e.data_vencimento IS NULL', null, false)
+                    ->where('e.dias_restantes >', 0)
+                    ->group_end()
+                    ->group_end();
             } elseif ($filtros['status'] === 'inativos') {
                 $this->db->group_start()
                     ->where('e.status !=', 'ativa')
-                    ->or_where('e.dias_restantes <=', 0)
+                    ->or_where('e.data_vencimento <', $hojeDate)
+                    ->or_group_start()
+                    ->where('e.data_vencimento IS NULL', null, false)
+                    ->where('e.dias_restantes <=', 0)
+                    ->group_end()
                     ->group_end();
             } elseif ($filtros['status'] === 'suspensas') {
                 $this->db->where('e.status', 'suspensa');
@@ -83,7 +108,21 @@ class Saas_model extends CI_Model
                 ->group_end();
         }
 
-        return $this->db->order_by('e.id', 'DESC')->get()->result();
+        $empresas = $this->db->order_by('e.id', 'DESC')->get()->result();
+
+        $hoje = strtotime('today');
+        foreach ($empresas as $e) {
+            if (! empty($e->data_vencimento)) {
+                $venc = strtotime($e->data_vencimento);
+                $dias = max(0, (int) ceil(($venc - $hoje) / 86400));
+                if ((int) $e->dias_restantes !== $dias) {
+                    $this->db->where('id', $e->id)->update('saas_empresas', ['dias_restantes' => $dias]);
+                }
+                $e->dias_restantes = $dias;
+            }
+        }
+
+        return $empresas;
     }
 
     public function adicionarDias(int $empresaId, int $dias): bool
@@ -105,9 +144,9 @@ class Saas_model extends CI_Model
         ]);
     }
 
-    public function atualizarDesconto(int $empresaId, int $descontoPercentual, ?string $descontoValidoAte = null): bool
+    public function atualizarDesconto(int $empresaId, string $tipoDesconto, float $desconto, ?string $descontoValidoAte = null): bool
     {
-        $desconto = max(0, min(100, $descontoPercentual));
+        $tipo = ($tipoDesconto === 'valor') ? 'valor' : 'porcentagem';
         $validade = null;
 
         if ($desconto > 0 && ! empty($descontoValidoAte)) {
@@ -117,10 +156,20 @@ class Saas_model extends CI_Model
             }
         }
 
-        return $this->db->where('id', $empresaId)->update('saas_empresas', [
-            'desconto_percentual' => $desconto,
+        $dados = [
+            'tipo_desconto' => $tipo,
             'desconto_valido_ate' => $validade,
-        ]);
+        ];
+
+        if ($tipo === 'porcentagem') {
+            $dados['desconto_percentual'] = max(0.0, min(100.0, round($desconto, 2)));
+            $dados['desconto_valor'] = 0.00;
+        } else {
+            $dados['desconto_valor'] = max(0.0, round($desconto, 2));
+            $dados['desconto_percentual'] = 0.00;
+        }
+
+        return $this->db->where('id', $empresaId)->update('saas_empresas', $dados);
     }
 
     public function alterarPlanoEmpresa(int $empresaId, int $planoId): bool
@@ -156,7 +205,7 @@ class Saas_model extends CI_Model
 
     public function getEmpresasDoUsuario(int $usuarioId): array
     {
-        return $this->db
+        $empresas = $this->db
             ->select('e.*, eu.papel, p.nome as plano_nome')
             ->from('saas_empresa_usuarios eu')
             ->join('saas_empresas e', 'e.id = eu.empresa_id')
@@ -166,6 +215,20 @@ class Saas_model extends CI_Model
             ->order_by('e.nome_fantasia', 'ASC')
             ->get()
             ->result();
+
+        $hoje = strtotime('today');
+        foreach ($empresas as $e) {
+            if (! empty($e->data_vencimento)) {
+                $venc = strtotime($e->data_vencimento);
+                $dias = max(0, (int) ceil(($venc - $hoje) / 86400));
+                if ((int) $e->dias_restantes !== $dias) {
+                    $this->db->where('id', $e->id)->update('saas_empresas', ['dias_restantes' => $dias]);
+                }
+                $e->dias_restantes = $dias;
+            }
+        }
+
+        return $empresas;
     }
 
     public function vincularUsuarioEmpresa(int $empresaId, int $usuarioId, string $papel = 'funcionario'): bool
@@ -297,11 +360,19 @@ class Saas_model extends CI_Model
 
     public function getMetricasDashboard(): array
     {
+        $hojeDate = date('Y-m-d');
+
         // 1. Assinantes Ativos
         $ativos = $this->db
             ->where('id >', 1)
             ->where('status', 'ativa')
+            ->group_start()
+            ->where('data_vencimento >=', $hojeDate)
+            ->or_group_start()
+            ->where('data_vencimento IS NULL', null, false)
             ->where('dias_restantes >', 0)
+            ->group_end()
+            ->group_end()
             ->count_all_results('saas_empresas');
 
         // 2. Novos Assinantes (últimos 30 dias)
@@ -318,19 +389,38 @@ class Saas_model extends CI_Model
             ->join('saas_planos p', 'p.id = e.plano_id')
             ->where('e.id >', 1)
             ->where('e.status', 'ativa')
+            ->group_start()
+            ->where('e.data_vencimento >=', $hojeDate)
+            ->or_group_start()
+            ->where('e.data_vencimento IS NULL', null, false)
             ->where('e.dias_restantes >', 0)
+            ->group_end()
+            ->group_end()
             ->get()
             ->result();
 
         $mrr = 0.00;
-        $hoje = date('Y-m-d');
         foreach ($empresasAtivas as $emp) {
-            $desc = (float) ($emp->desconto_percentual ?? 0);
-            if ($desc > 0 && ! empty($emp->desconto_valido_ate) && $emp->desconto_valido_ate < $hoje) {
-                $desc = 0.0;
+            $tipoDesc = $emp->tipo_desconto ?? 'porcentagem';
+            $descPerc = (float) ($emp->desconto_percentual ?? 0);
+            $descValor = (float) ($emp->desconto_valor ?? 0);
+            $validade = ! empty($emp->desconto_valido_ate) ? $emp->desconto_valido_ate : null;
+
+            $temDesconto = ($tipoDesc === 'valor' && $descValor > 0) || ($tipoDesc === 'porcentagem' && $descPerc > 0);
+            if ($temDesconto && $validade !== null && $validade < $hojeDate) {
+                $temDesconto = false;
             }
+
             $val = (float) ($emp->plano_valor ?? 0);
-            $mrr += $val * (1 - ($desc / 100));
+            if (! $temDesconto) {
+                $final = $val;
+            } elseif ($tipoDesc === 'valor') {
+                $final = max(0.0, $val - $descValor);
+            } else {
+                $final = max(0.0, $val * (1 - ($descPerc / 100)));
+            }
+
+            $mrr += $final;
         }
 
         // 4. Cancelamentos (Inativos / Churn)
@@ -339,7 +429,11 @@ class Saas_model extends CI_Model
             ->where('id >', 1)
             ->group_start()
             ->where('status !=', 'ativa')
-            ->or_where('dias_restantes <=', 0)
+            ->or_where('data_vencimento <', $hojeDate)
+            ->or_group_start()
+            ->where('data_vencimento IS NULL', null, false)
+            ->where('dias_restantes <=', 0)
+            ->group_end()
             ->group_end()
             ->count_all_results('saas_empresas');
         

@@ -60,7 +60,11 @@ $colunas = [
             if ($e->status === 'suspensa') {
                 return component('pill-status', ['label' => 'Suspensa', 'variant' => 'danger']);
             }
-            if ((int) $e->dias_restantes <= 0) {
+            $hoje = strtotime('today');
+            $venc = ! empty($e->data_vencimento) ? strtotime($e->data_vencimento) : $hoje;
+            $dias = ! empty($e->data_vencimento) ? max(0, (int) ceil(($venc - $hoje) / 86400)) : (int) ($e->dias_restantes ?? 0);
+
+            if ($dias <= 0) {
                 return component('pill-status', ['label' => 'Vencida', 'variant' => 'warning']);
             }
 
@@ -86,9 +90,15 @@ $colunas = [
         'label' => 'Dias',
         'align' => 'right',
         'nowrap' => true,
-        'render' => fn ($e) => (int) $e->dias_restantes > 0
-            ? component('pill-status', ['label' => (int) $e->dias_restantes . ' dias', 'variant' => 'success'])
-            : component('pill-status', ['label' => '0 dias', 'variant' => 'danger']),
+        'render' => function ($e) {
+            $hoje = strtotime('today');
+            $venc = ! empty($e->data_vencimento) ? strtotime($e->data_vencimento) : $hoje;
+            $dias = ! empty($e->data_vencimento) ? max(0, (int) ceil(($venc - $hoje) / 86400)) : (int) ($e->dias_restantes ?? 0);
+
+            return $dias > 0
+                ? component('pill-status', ['label' => $dias . ' dias', 'variant' => 'success'])
+                : component('pill-status', ['label' => '0 dias', 'variant' => 'danger']);
+        },
     ],
     [
         'label' => 'Valor Mensal',
@@ -96,15 +106,26 @@ $colunas = [
         'nowrap' => true,
         'render' => function ($e) {
             $valor = (float) ($e->plano_valor ?? 37.90);
-            $desc = (int) ($e->desconto_percentual ?? 0);
+            $tipoDesc = $e->tipo_desconto ?? 'porcentagem';
+            $descPerc = (float) ($e->desconto_percentual ?? 0);
+            $descValor = (float) ($e->desconto_valor ?? 0);
             $validade = ! empty($e->desconto_valido_ate) ? $e->desconto_valido_ate : null;
-            if ($desc > 0 && $validade !== null && $validade < date('Y-m-d')) {
-                $desc = 0;
+
+            $temDesconto = ($tipoDesc === 'valor' && $descValor > 0) || ($tipoDesc === 'porcentagem' && $descPerc > 0);
+            if ($temDesconto && $validade !== null && $validade < date('Y-m-d')) {
+                $temDesconto = false;
             }
-            $final = $valor * (1 - ($desc / 100));
+
+            if (! $temDesconto) {
+                $final = $valor;
+            } elseif ($tipoDesc === 'valor') {
+                $final = max(0.0, $valor - $descValor);
+            } else {
+                $final = max(0.0, $valor * (1 - ($descPerc / 100)));
+            }
 
             return html_purificado('<span class="font-semibold text-text">R$ ' . number_format($final, 2, ',', '.') . '</span>' .
-                ($desc > 0 ? ' <span class="text-caption text-muted line-through">R$ ' . number_format($valor, 2, ',', '.') . '</span>' : ''));
+                ($temDesconto ? ' <span class="text-caption text-muted line-through">R$ ' . number_format($valor, 2, ',', '.') . '</span>' : ''));
         },
     ],
     [
@@ -112,22 +133,30 @@ $colunas = [
         'align' => 'center',
         'nowrap' => true,
         'render' => function ($e) {
-            $desc = (int) ($e->desconto_percentual ?? 0);
-            if ($desc <= 0) {
+            $tipoDesc = $e->tipo_desconto ?? 'porcentagem';
+            $descPerc = (float) ($e->desconto_percentual ?? 0);
+            $descValor = (float) ($e->desconto_valor ?? 0);
+
+            $temDesconto = ($tipoDesc === 'valor' && $descValor > 0) || ($tipoDesc === 'porcentagem' && $descPerc > 0);
+            if (! $temDesconto) {
                 return component('pill-status', ['label' => 'Sem desconto', 'variant' => 'neutral']);
             }
+
+            $rotuloDesc = ($tipoDesc === 'valor')
+                ? ('R$ ' . number_format($descValor, 2, ',', '.') . ' OFF')
+                : (rtrim(rtrim(number_format($descPerc, 2, ',', '.'), '0'), ',') . '% OFF');
 
             $validade = ! empty($e->desconto_valido_ate) ? $e->desconto_valido_ate : null;
             $expirado = $validade !== null && $validade < date('Y-m-d');
 
             if ($expirado) {
                 return html_purificado(
-                    (string) component('pill-status', ['label' => $desc . '% OFF', 'variant' => 'neutral']) .
+                    (string) component('pill-status', ['label' => $rotuloDesc, 'variant' => 'neutral']) .
                     '<div class="text-[11px] text-danger-ink mt-0.5">Expirado em ' . e(date('d/m/Y', strtotime($validade))) . '</div>'
                 );
             }
 
-            $pill = (string) component('pill-status', ['label' => $desc . '% OFF', 'variant' => 'warning']);
+            $pill = (string) component('pill-status', ['label' => $rotuloDesc, 'variant' => 'warning']);
             if ($validade !== null) {
                 $pill .= '<div class="text-[11px] text-muted mt-0.5">Válido até ' . e(date('d/m/Y', strtotime($validade))) . '</div>';
             }
@@ -164,6 +193,12 @@ if ($temAcoes) {
             }
 
             if ($podeDesconto) {
+                $tipoDesc = $e->tipo_desconto ?? 'porcentagem';
+                $descAtual = ($tipoDesc === 'valor')
+                    ? (float) ($e->desconto_valor ?? 0)
+                    : (float) ($e->desconto_percentual ?? 0);
+                $descFormatado = ($descAtual > 0) ? rtrim(rtrim(number_format($descAtual, 2, ',', ''), '0'), ',') : '0';
+
                 $acoes[] = component('button', [
                     'label' => 'Ajustar desconto de ' . $nome,
                     'icon' => 'percent',
@@ -175,9 +210,10 @@ if ($temAcoes) {
                         'data-modal-abrir' => 'modal-desconto',
                         'data-valor-id' => (string) $e->id,
                         'data-valor-nome' => $nome,
-                        'data-valor-desconto' => (string) ($e->desconto_percentual ?? 0),
+                        'data-valor-tipo-desconto' => $tipoDesc,
+                        'data-valor-desconto' => $descFormatado,
                         'data-valor-validade' => (string) ($e->desconto_valido_ate ?? ''),
-                        'title' => 'Ajustar desconto comercial (%)',
+                        'title' => 'Ajustar desconto comercial',
                     ],
                 ]);
             }
@@ -231,7 +267,7 @@ $vazio = component('empty-state', [
 ]);
 ?>
 
-<div class="flex flex-col gap-4 pt-2 pb-8">
+<div class="flex flex-col gap-4 pt-2 pb-8" <?= js_module('saas/assinantes') ?>>
     <!-- Cabeçalho (Idêntico ao padrão de Produtos) -->
     <header class="flex flex-wrap items-end justify-between gap-3">
         <div>
@@ -342,14 +378,37 @@ $vazio = component('empty-state', [
         new HtmlSeguro('<form id="form-ajustar-desconto" method="post" action="' . e(site_url('saas/ajustarDesconto')) . '" novalidate ' . js_module('formulario/padrao') . '>'),
         new HtmlSeguro('<input type="hidden" name="' . e($csrf[0]) . '" value="' . e($csrf[1]) . '">'),
         new HtmlSeguro('<input type="hidden" name="empresa_id" value="" data-modal-valor="id">'),
+        new HtmlSeguro('<fieldset class="mb-4"><legend class="text-caption font-semibold text-text mb-2">Tipo de Desconto</legend><div class="flex items-center gap-6">'),
+        component('radio', [
+            'name' => 'tipo_desconto',
+            'value' => 'porcentagem',
+            'label' => 'Porcentagem (%)',
+            'checked' => true,
+            'attrs' => ['id' => 'radio-desc-porcentagem'],
+        ]),
+        component('radio', [
+            'name' => 'tipo_desconto',
+            'value' => 'valor',
+            'label' => 'Valor em Reais (R$)',
+            'checked' => false,
+            'attrs' => ['id' => 'radio-desc-valor'],
+        ]),
+        new HtmlSeguro('</div></fieldset>'),
         component('input', [
-            'name' => 'desconto_percentual',
+            'name' => 'desconto',
+            'id' => 'input-desconto-valor',
             'label' => 'Desconto Percentual (%)',
-            'type' => 'number',
+            'type' => 'text',
             'value' => '0',
             'required' => true,
             'help' => 'Porcentagem de desconto aplicada nas faturas mensais (de 0 a 100%).',
-            'attrs' => ['step' => 1, 'min' => 0, 'max' => 100, 'inputmode' => 'numeric', 'data-modal-valor' => 'desconto', 'data-msg-vazio' => 'Informe o desconto.'],
+            'attrs' => [
+                'inputmode' => 'decimal',
+                'pattern' => '^\\d+([.,]\\d{1,2})?$',
+                'data-modal-valor' => 'desconto',
+                'data-msg-vazio' => 'Informe o desconto.',
+                'data-msg-invalido' => 'Informe um número válido (ex: 10 ou 10,50).',
+            ],
         ]),
         new HtmlSeguro('<div class="mt-4">'),
         component('input', [

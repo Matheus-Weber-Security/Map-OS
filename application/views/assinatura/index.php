@@ -84,10 +84,15 @@ $primeiraForma = $formasAtivas[0];
                 <div class="mt-2 flex flex-col gap-1">
                     <?php if (! empty($ehMaster)) { ?>
                         <span class="text-success-ink font-bold text-heading-xs">Isento (Master)</span>
-                    <?php } elseif ($descontoPercentual > 0) { ?>
+                    <?php } elseif (($tipoDesconto === 'valor' && $descontoValor > 0) || ($tipoDesconto === 'porcentagem' && $descontoPercentual > 0)) { ?>
                         <div class="flex items-center gap-2 flex-wrap">
                             <span class="line-through text-muted text-caption">R$ <?= number_format($valorOriginal, 2, ',', '.') ?></span>
-                            <?= component('pill-status', ['label' => $descontoPercentual . '% OFF', 'variant' => 'warning']) ?>
+                            <?php
+                            $rotuloBadge = ($tipoDesconto === 'valor')
+                                ? ('R$ ' . number_format($descontoValor, 2, ',', '.') . ' OFF')
+                                : (rtrim(rtrim(number_format($descontoPercentual, 2, ',', '.'), '0'), ',') . '% OFF');
+                            ?>
+                            <?= component('pill-status', ['label' => $rotuloBadge, 'variant' => 'warning']) ?>
                         </div>
                         <span class="text-success-ink font-bold text-heading-xs">R$ <?= number_format($valorFinal, 2, ',', '.') ?>/mês</span>
                         <?php if (! empty($descontoValidoAte)) { ?>

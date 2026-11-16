@@ -179,10 +179,29 @@ class Saas extends MY_Controller
         }
 
         $empresaId = (int) $this->input->post('empresa_id');
-        $desconto = (int) $this->input->post('desconto_percentual');
+        $tipoDesconto = $this->input->post('tipo_desconto') === 'valor' ? 'valor' : 'porcentagem';
+
+        $descontoRaw = trim((string) ($this->input->post('desconto') ?? $this->input->post('desconto_percentual') ?? '0'));
+        $descontoLimpo = str_replace(['R$', '%', ' '], '', $descontoRaw);
+        if (strpos($descontoLimpo, ',') !== false) {
+            $descontoLimpo = str_replace('.', '', $descontoLimpo);
+            $descontoLimpo = str_replace(',', '.', $descontoLimpo);
+        }
+        $desconto = (float) $descontoLimpo;
         $validade = trim((string) $this->input->post('desconto_valido_ate'));
 
         if ($empresaId > 0) {
+            if ($tipoDesconto === 'porcentagem' && ($desconto < 0 || $desconto > 100)) {
+                $this->session->set_flashdata('error', 'A porcentagem de desconto deve ser entre 0 e 100%.');
+
+                return redirect('saas/assinantes');
+            }
+            if ($tipoDesconto === 'valor' && $desconto < 0) {
+                $this->session->set_flashdata('error', 'O valor do desconto não pode ser negativo.');
+
+                return redirect('saas/assinantes');
+            }
+
             if ($desconto > 0 && ! empty($validade)) {
                 $timestamp = strtotime(str_replace('/', '-', $validade));
                 if ($timestamp === false) {
@@ -197,7 +216,7 @@ class Saas extends MY_Controller
                 }
             }
 
-            $this->saas_model->atualizarDesconto($empresaId, $desconto, $validade ?: null);
+            $this->saas_model->atualizarDesconto($empresaId, $tipoDesconto, $desconto, $validade ?: null);
             $this->session->set_flashdata('success', 'Desconto do assinante atualizado com sucesso!');
         }
 
