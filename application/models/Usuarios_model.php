@@ -224,13 +224,17 @@ class Usuarios_model extends CI_Model
 
     public function delete($table, $fieldID, $ID)
     {
+        if ($table === 'usuarios' && $fieldID === 'idUsuarios' && $this->db->table_exists('saas_empresa_usuarios')) {
+            $this->db->where('usuario_id', $ID)->where('empresa_id', empresa_ativa_id())->delete('saas_empresa_usuarios');
+            $outrosVinculos = (int) $this->db->where('usuario_id', $ID)->count_all_results('saas_empresa_usuarios');
+            if ($outrosVinculos > 0) {
+                return true;
+            }
+        }
+
         // Os códigos de recuperação do 2FA não ficam órfãos (#2876).
         if ($table === 'usuarios' && $fieldID === 'idUsuarios' && $this->db->table_exists('usuarios_codigos_recuperacao')) {
             $this->db->where('usuario_id', $ID)->delete('usuarios_codigos_recuperacao');
-        }
-
-        if ($table === 'usuarios' && $fieldID === 'idUsuarios' && $this->db->table_exists('saas_empresa_usuarios')) {
-            $this->db->where('usuario_id', $ID)->where('empresa_id', empresa_ativa_id())->delete('saas_empresa_usuarios');
         }
 
         $this->db->where($fieldID, $ID);

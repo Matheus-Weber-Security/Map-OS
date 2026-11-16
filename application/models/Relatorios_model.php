@@ -245,6 +245,7 @@ class Relatorios_model extends CI_Model
         $subQuery2 = $this->db->get_compiled_select();
         $this->db->reset_query();
 
+        $this->db->query('DROP TEMPORARY TABLE IF EXISTS results;');
         $query = "
             CREATE TEMPORARY TABLE IF NOT EXISTS results
             (SELECT * FROM ($subQuery1 UNION $subQuery2) as unionTable)
@@ -327,6 +328,8 @@ class Relatorios_model extends CI_Model
     public function osRapid($array = false)
     {
         $empresaId = (int) empresa_ativa_id();
+        $this->db->query('DROP TEMPORARY TABLE IF EXISTS total_produtos;');
+        $this->db->query('DROP TEMPORARY TABLE IF EXISTS total_servicos;');
         $query = 'CREATE TEMPORARY TABLE IF NOT EXISTS total_produtos SELECT SUM(subTotal) as total_produto, os_id FROM produtos_os GROUP BY os_id; ';
         $this->db->query($query);
 
@@ -370,6 +373,8 @@ class Relatorios_model extends CI_Model
         if ($status != null) {
             $whereStatus = 'AND status = ' . $this->db->escape($status);
         }
+        $this->db->query('DROP TEMPORARY TABLE IF EXISTS total_produtos;');
+        $this->db->query('DROP TEMPORARY TABLE IF EXISTS total_servicos;');
         $query = 'CREATE TEMPORARY TABLE IF NOT EXISTS total_produtos SELECT SUM(subTotal) as total_produto, os_id FROM produtos_os GROUP BY os_id; ';
         $this->db->query($query);
 

@@ -278,7 +278,11 @@ class Os_model extends CI_Model
         $this->db->select('produtos_os.*, produtos.*');
         $this->db->from('produtos_os');
         $this->db->join('produtos', 'produtos.idProdutos = produtos_os.produtos_id');
-        $this->db->where('os_id', $id);
+        $this->db->join('os', 'os.idOs = produtos_os.os_id');
+        $this->db->where('produtos_os.os_id', $id);
+        if ($this->db->field_exists('empresa_id', 'os')) {
+            $this->db->where('os.empresa_id', empresa_ativa_id());
+        }
 
         return $this->db->get()->result();
     }
@@ -288,7 +292,11 @@ class Os_model extends CI_Model
         $this->db->select('servicos_os.*, servicos.nome, servicos.preco as precoVenda');
         $this->db->from('servicos_os');
         $this->db->join('servicos', 'servicos.idServicos = servicos_os.servicos_id');
-        $this->db->where('os_id', $id);
+        $this->db->join('os', 'os.idOs = servicos_os.os_id');
+        $this->db->where('servicos_os.os_id', $id);
+        if ($this->db->field_exists('empresa_id', 'os')) {
+            $this->db->where('os.empresa_id', empresa_ativa_id());
+        }
 
         return $this->db->get()->result();
     }
@@ -544,24 +552,39 @@ class Os_model extends CI_Model
 
     public function getAnexos($os)
     {
-        $this->db->where('os_id', $os);
+        $this->db->select('anexos.*');
+        $this->db->from('anexos');
+        $this->db->join('os', 'os.idOs = anexos.os_id');
+        $this->db->where('anexos.os_id', $os);
+        if ($this->db->field_exists('empresa_id', 'os')) {
+            $this->db->where('os.empresa_id', empresa_ativa_id());
+        }
 
-        return $this->db->get('anexos')->result();
+        return $this->db->get()->result();
     }
 
     public function getAnotacoes($os)
     {
-        $this->db->where('os_id', $os);
-        $this->db->order_by('idAnotacoes', 'desc');
+        $this->db->select('anotacoes_os.*');
+        $this->db->from('anotacoes_os');
+        $this->db->join('os', 'os.idOs = anotacoes_os.os_id');
+        $this->db->where('anotacoes_os.os_id', $os);
+        if ($this->db->field_exists('empresa_id', 'os')) {
+            $this->db->where('os.empresa_id', empresa_ativa_id());
+        }
+        $this->db->order_by('anotacoes_os.idAnotacoes', 'desc');
 
-        return $this->db->get('anotacoes_os')->result();
+        return $this->db->get()->result();
     }
 
     public function getCobrancas($id = null)
     {
         $this->db->select('cobrancas.*');
         $this->db->from('cobrancas');
-        $this->db->where('os_id', $id);
+        $this->db->where('cobrancas.os_id', $id);
+        if ($this->db->field_exists('empresa_id', 'cobrancas')) {
+            $this->db->where('cobrancas.empresa_id', empresa_ativa_id());
+        }
 
         return $this->db->get()->result();
     }

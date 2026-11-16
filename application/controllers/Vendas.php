@@ -437,6 +437,10 @@ class Vendas extends MY_Controller
         $this->data['custom_error'] = '';
         $this->load->model('mapos_model');
         $this->data['result'] = $this->vendas_model->getById($this->uri->segment(3));
+        if (! $this->data['result']) {
+            $this->session->set_flashdata('error', 'Venda não encontrada ou parâmetro inválido.');
+            redirect('vendas/gerenciar');
+        }
         $this->data['produtos'] = $this->vendas_model->getProdutos($this->uri->segment(3));
         $this->data['emitente'] = $this->mapos_model->getEmitente();
         $this->data['qrCode'] = $this->vendas_model->getQrCode(
@@ -464,6 +468,10 @@ class Vendas extends MY_Controller
         $this->data['custom_error'] = '';
         $this->load->model('mapos_model');
         $this->data['result'] = $this->vendas_model->getById($this->uri->segment(3));
+        if (! $this->data['result']) {
+            $this->session->set_flashdata('error', 'Venda não encontrada ou parâmetro inválido.');
+            redirect('vendas/gerenciar');
+        }
         $this->data['produtos'] = $this->vendas_model->getProdutos($this->uri->segment(3));
         $this->data['emitente'] = $this->mapos_model->getEmitente();
         $this->data['qrCode'] = $this->vendas_model->getQrCode(
@@ -492,6 +500,10 @@ class Vendas extends MY_Controller
         $this->data['custom_error'] = '';
         $this->load->model('mapos_model');
         $this->data['result'] = $this->vendas_model->getById($this->uri->segment(3));
+        if (! $this->data['result']) {
+            $this->session->set_flashdata('error', 'Venda não encontrada ou parâmetro inválido.');
+            redirect('vendas/gerenciar');
+        }
         $this->data['produtos'] = $this->vendas_model->getProdutos($this->uri->segment(3));
         $this->data['emitente'] = $this->mapos_model->getEmitente();
         $this->data['qrCode'] = $this->vendas_model->getQrCode(

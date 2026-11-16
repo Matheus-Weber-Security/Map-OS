@@ -91,6 +91,9 @@ class Cobrancas_model extends CI_Model
         $this->db->join('os', 'os.idOs = cobrancas.os_id');
         $this->db->join('clientes', 'clientes.idClientes = cobrancas.clientes_id', 'left');
         $this->db->where('cobrancas.charge_id', $id);
+        if ($this->db->field_exists('empresa_id', 'cobrancas')) {
+            $this->db->where('cobrancas.empresa_id', empresa_ativa_id());
+        }
 
         return $this->db->get()->row();
     }
@@ -103,6 +106,9 @@ class Cobrancas_model extends CI_Model
         $this->db->join('vendas', 'vendas.idVendas = cobrancas.vendas_id');
         $this->db->join('clientes', 'clientes.idClientes = cobrancas.clientes_id', 'left');
         $this->db->where('cobrancas.charge_id', $id);
+        if ($this->db->field_exists('empresa_id', 'cobrancas')) {
+            $this->db->where('cobrancas.empresa_id', empresa_ativa_id());
+        }
 
         return $this->db->get()->row();
     }
@@ -275,14 +281,28 @@ class Cobrancas_model extends CI_Model
             return false;
         }
 
-        // Verifica se a flag está ativada nas configurações
-        $config = $this->db->where('config', 'baixa_auto_cobranca')->get('configuracoes')->row();
-        if (! $config || (string) $config->valor !== '1') {
+        $cobranca = is_object($idCobranca) && isset($idCobranca->total)
+            ? $idCobranca
+            : $this->db->where('idCobranca', $id)->get('cobrancas')->row();
+        if (! $cobranca) {
             return false;
         }
 
-        $cobranca = is_object($idCobranca) && isset($idCobranca->total) ? $idCobranca : $this->getById($id);
-        if (! $cobranca) {
+        $empresaId = (int) ($cobranca->empresa_id ?? (function_exists('empresa_ativa_id') ? empresa_ativa_id() : 1));
+
+        // Verifica se a flag está ativada nas configurações
+        $config = null;
+        if ($this->db->table_exists('configuracoes')) {
+            if ($this->db->field_exists('empresa_id', 'configuracoes')) {
+                $config = $this->db->where('config', 'baixa_auto_cobranca')->where('empresa_id', $empresaId)->get('configuracoes')->row();
+                if (! $config && $empresaId !== 1) {
+                    $config = $this->db->where('config', 'baixa_auto_cobranca')->where('empresa_id', 1)->get('configuracoes')->row();
+                }
+            } else {
+                $config = $this->db->where('config', 'baixa_auto_cobranca')->get('configuracoes')->row();
+            }
+        }
+        if (! $config || (string) $config->valor !== '1') {
             return false;
         }
 
@@ -314,21 +334,23 @@ class Cobrancas_model extends CI_Model
                 $this->load->helper('vendas');
                 $this->load->helper('os');
                 $this->load->model('vendas_model');
+                $this->load->model('financeiro_model');
+                $empresaLancamento = (int) ($venda->empresa_id ?? $empresaId);
 
                 // Procura lançamento existente
                 $lancamentos = [];
                 if (! empty($venda->lancamentos_id)) {
-                    $l = $this->db->where('idLancamentos', (int) $venda->lancamentos_id)->get('lancamentos')->row();
+                    $l = $this->db->where('idLancamentos', (int) $venda->lancamentos_id)->where('empresa_id', $empresaLancamento)->get('lancamentos')->row();
                     if ($l) {
                         $lancamentos[] = $l;
                     }
                 }
                 if (empty($lancamentos)) {
-                    $lancamentos = $this->db->where('vendas_id', $idVenda)->get('lancamentos')->result();
+                    $lancamentos = $this->db->where('vendas_id', $idVenda)->where('empresa_id', $empresaLancamento)->get('lancamentos')->result();
                 }
                 if (empty($lancamentos)) {
                     $descricoes = vendaDescricoesDaFatura($idVenda);
-                    $lancamentos = $this->db->where_in('descricao', $descricoes)->get('lancamentos')->result();
+                    $lancamentos = $this->db->where_in('descricao', $descricoes)->where('empresa_id', $empresaLancamento)->get('lancamentos')->result();
                 }
 
                 if (! empty($lancamentos)) {
@@ -368,6 +390,7 @@ class Cobrancas_model extends CI_Model
                     $usuarioId = $venda->usuarios_id ?? $this->session->userdata('id_usuarios');
 
                     $dadosLancamento = [
+                        'empresa_id' => $empresaLancamento,
                         'descricao' => "Fatura de Venda Nº: {$idVenda}",
                         'valor' => $valorBruto,
                         'tipo_desconto' => 'real',
@@ -384,6 +407,9 @@ class Cobrancas_model extends CI_Model
                         'observacoes' => 'Baixa automática via cobrança #' . $id,
                         'usuarios_id' => $usuarioId,
                     ];
+                    if ($this->db->field_exists('codigo', 'lancamentos')) {
+                        $dadosLancamento['codigo'] = $this->financeiro_model->gerarProximoCodigo($empresaLancamento);
+                    }
 
                     $this->db->insert('lancamentos', $dadosLancamento);
                     $idNovoLancamento = $this->db->insert_id();
@@ -409,18 +435,20 @@ class Cobrancas_model extends CI_Model
             if ($os && $os->status !== 'Cancelado') {
                 $this->load->helper('os');
                 $this->load->model('os_model');
+                $this->load->model('financeiro_model');
+                $empresaLancamento = (int) ($os->empresa_id ?? $empresaId);
 
                 // Procura lançamento existente
                 $lancamentos = [];
                 if (! empty($os->lancamento)) {
-                    $l = $this->db->where('idLancamentos', (int) $os->lancamento)->get('lancamentos')->row();
+                    $l = $this->db->where('idLancamentos', (int) $os->lancamento)->where('empresa_id', $empresaLancamento)->get('lancamentos')->row();
                     if ($l) {
                         $lancamentos[] = $l;
                     }
                 }
                 if (empty($lancamentos)) {
                     $descricoes = osDescricoesDaFatura($idOs);
-                    $lancamentos = $this->db->where_in('descricao', $descricoes)->get('lancamentos')->result();
+                    $lancamentos = $this->db->where_in('descricao', $descricoes)->where('empresa_id', $empresaLancamento)->get('lancamentos')->result();
                 }
 
                 if (! empty($lancamentos)) {
@@ -461,6 +489,7 @@ class Cobrancas_model extends CI_Model
                     $usuarioId = $os->usuarios_id ?? $this->session->userdata('id_usuarios');
 
                     $dadosLancamento = [
+                        'empresa_id' => $empresaLancamento,
                         'descricao' => "Fatura de OS Nº: {$idOs}",
                         'valor' => $valorBruto,
                         'tipo_desconto' => 'real',
@@ -476,6 +505,9 @@ class Cobrancas_model extends CI_Model
                         'observacoes' => 'Baixa automática via cobrança #' . $id,
                         'usuarios_id' => $usuarioId,
                     ];
+                    if ($this->db->field_exists('codigo', 'lancamentos')) {
+                        $dadosLancamento['codigo'] = $this->financeiro_model->gerarProximoCodigo($empresaLancamento);
+                    }
 
                     $this->db->insert('lancamentos', $dadosLancamento);
                     $idNovoLancamento = $this->db->insert_id();

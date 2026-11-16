@@ -159,7 +159,11 @@ class Vendas_model extends CI_Model
         $this->db->select('itens_de_vendas.*, produtos.*');
         $this->db->from('itens_de_vendas');
         $this->db->join('produtos', 'produtos.idProdutos = itens_de_vendas.produtos_id');
-        $this->db->where('vendas_id', $id);
+        $this->db->join('vendas', 'vendas.idVendas = itens_de_vendas.vendas_id');
+        $this->db->where('itens_de_vendas.vendas_id', $id);
+        if ($this->db->field_exists('empresa_id', 'vendas')) {
+            $this->db->where('vendas.empresa_id', empresa_ativa_id());
+        }
 
         return $this->db->get()->result();
     }
@@ -168,7 +172,10 @@ class Vendas_model extends CI_Model
     {
         $this->db->select('cobrancas.*');
         $this->db->from('cobrancas');
-        $this->db->where('vendas_id', $id);
+        $this->db->where('cobrancas.vendas_id', $id);
+        if ($this->db->field_exists('empresa_id', 'cobrancas')) {
+            $this->db->where('cobrancas.empresa_id', empresa_ativa_id());
+        }
 
         return $this->db->get()->result();
     }
