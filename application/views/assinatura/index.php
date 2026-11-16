@@ -212,13 +212,7 @@ $primeiraForma = $formasAtivas[0];
             <span>Aguardando compensação do banco…</span>
         </div>
 
-        <!-- Botão de Simulação Instantânea em Testes -->
-        <div class="border-t border-border pt-4">
-            <button id="btn-confirmar-teste" type="button" class="w-full py-2.5 px-4 rounded-lg bg-surface-subtle hover:bg-border border border-border text-caption font-bold text-text transition-colors flex items-center justify-center gap-2">
-                <?= icon('check', ['class' => 'size-4 text-success-ink']) ?>
-                <span>Simular Confirmação Instantânea (Ambiente de Testes)</span>
-            </button>
-        </div>
+
     </div>
 </div>
 
@@ -265,13 +259,7 @@ $primeiraForma = $formasAtivas[0];
             <span id="msg-boleto-copiado" class="text-xs text-success-ink font-semibold hidden">Linha digitável copiada com sucesso!</span>
         </div>
 
-        <!-- Botão de Simulação em Testes -->
-        <div class="border-t border-border pt-2">
-            <button id="btn-confirmar-boleto-teste" type="button" class="w-full py-2.5 px-4 rounded-lg bg-surface-subtle hover:bg-border border border-border text-caption font-bold text-text transition-colors flex items-center justify-center gap-2">
-                <?= icon('check', ['class' => 'size-4 text-success-ink']) ?>
-                <span>Simular Baixa do Boleto (Ambiente de Testes)</span>
-            </button>
-        </div>
+
     </div>
 </div>
 
@@ -365,13 +353,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const pixValor = document.getElementById('pix-valor');
     const btnCopiar = document.getElementById('btn-copiar-pix');
     const msgCopiado = document.getElementById('msg-copiado');
-    const btnConfirmarTeste = document.getElementById('btn-confirmar-teste');
 
     // Elementos Boleto
     const inputBoleto = document.getElementById('boleto-linha-digitavel');
     const btnCopiarBoleto = document.getElementById('btn-copiar-boleto');
     const msgBoletoCopiado = document.getElementById('msg-boleto-copiado');
-    const btnConfirmarBoletoTeste = document.getElementById('btn-confirmar-boleto-teste');
     const boletoVencimento = document.getElementById('boleto-vencimento');
 
     // Elementos Cartão
@@ -610,47 +596,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3000);
     }
 
-    // Confirmação de Teste PIX
-    if (btnConfirmarTeste) {
-        btnConfirmarTeste.addEventListener('click', async () => {
-            await confirmarTeste();
-        });
-    }
 
-    // Confirmação de Teste Boleto
-    if (btnConfirmarBoletoTeste) {
-        btnConfirmarBoletoTeste.addEventListener('click', async () => {
-            await confirmarTeste();
-        });
-    }
-
-    async function confirmarTeste() {
-        if (!currentAssinaturaId) return;
-
-        const csrf = obterCsrf();
-        const formData = new FormData();
-        formData.append('id', currentAssinaturaId);
-        formData.append(csrf.name, csrf.hash);
-
-        const res = await fetch('<?= site_url('assinatura/confirmarPixTeste') ?>', {
-            method: 'POST',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-            body: formData,
-        });
-
-        const data = await res.json().catch(() => null);
-        if (!res.ok) {
-            alert(data?.message || `Erro no servidor (${res.status}).`);
-            return;
-        }
-        if (data.result) {
-            alert(data.message);
-            window.location.reload();
-        } else {
-            alert(data.message || 'Erro ao confirmar.');
-        }
-    }
 });
 </script>

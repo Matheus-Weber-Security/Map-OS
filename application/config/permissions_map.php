@@ -36,7 +36,6 @@ $config['permissions_map'] = [
         'index' => '*',
         'gerarPix' => '*',
         'verificarPix' => '*',
-        'confirmarPixTeste' => '*',
         'gerarBoleto' => '*',
         'gerarCartao' => '*',
     ],

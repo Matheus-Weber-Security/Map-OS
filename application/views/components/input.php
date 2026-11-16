@@ -4,7 +4,7 @@
  *
  * @var string      $name
  * @var string      $label
- * @var string      $type           text | email | password | number | date | datetime-local | time | tel | url | search
+ * @var string      $type           text | email | password | number | date | datetime-local | time | tel | url | search | file
  * @var mixed       $value
  * @var string|null $placeholder
  * @var string|null $help           Texto de ajuda abaixo do campo
@@ -40,6 +40,7 @@ $atributos = [
     'class' => componenteClasses(
         'block w-full rounded-sm border bg-field px-3 py-1.5 text-body-md text-text placeholder:text-muted max-sm:min-h-11',
         $temAlternarSenha ? 'pr-10' : '',
+        $type === 'file' ? 'file:mr-3 file:rounded-sm file:border-0 file:bg-surface-subtle file:px-3 file:py-1 file:text-label-md file:text-text cursor-pointer' : '',
         // DESIGN.md text-input: borda hairline-input (3:1), texto body-md 400,
         // foco com sombra interna e anel azul de 3px, erro em danger.
         'focus:outline-3 focus:outline-offset-0 focus:outline-ring focus:shadow-field-focus',

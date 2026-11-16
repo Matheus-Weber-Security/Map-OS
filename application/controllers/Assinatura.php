@@ -201,29 +201,6 @@ class Assinatura extends MY_Controller
     }
 
     /**
-     * Confirmação imediata para testes e demonstração do fluxo.
-     */
-    public function confirmarPixTeste()
-    {
-        $id = (int) $this->input->post('id');
-        $ok = $this->saas_model->confirmarPagamento($id);
-
-        if ($ok) {
-            return $this->output
-                ->set_content_type('application/json')
-                ->set_output(json_encode([
-                    'result' => true,
-                    'message' => 'Pagamento confirmado com sucesso! 30 dias foram adicionados à sua assinatura.',
-                ]));
-        }
-
-        return $this->output
-            ->set_status_header(400)
-            ->set_content_type('application/json')
-            ->set_output(json_encode(['result' => false, 'message' => 'Não foi possível confirmar o pagamento.']));
-    }
-
-    /**
      * Endpoint AJAX para gerar cobrança de Boleto (+30 dias).
      */
     public function gerarBoleto()

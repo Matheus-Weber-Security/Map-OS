@@ -110,7 +110,7 @@ if (! function_exists('componenteEspecificacoes')) {
                     'alternar_senha' => true,
                 ],
                 'opcoes' => [
-                    'type' => ['text', 'email', 'password', 'number', 'date', 'datetime-local', 'time', 'tel', 'url', 'search'],
+                    'type' => ['text', 'email', 'password', 'number', 'date', 'datetime-local', 'time', 'tel', 'url', 'search', 'file'],
                 ],
             ],
             'select' => [
