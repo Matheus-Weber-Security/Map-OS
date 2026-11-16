@@ -481,7 +481,8 @@ $config['csrf_cookie_name'] = $_ENV['APP_CSRF_COOKIE_NAME'] ?? 'MAPOS_COOKIE';
 $config['csrf_expire'] = $_ENV['APP_CSRF_EXPIRE'] ?? 7200;
 $config['csrf_regenerate'] = isset($_ENV['APP_CSRF_REGENERATE']) ? filter_var($_ENV['APP_CSRF_REGENERATE'], FILTER_VALIDATE_BOOLEAN) : false;
 // csp/report recebe os relatórios de CSP que o navegador envia sozinho, sem token.
-$config['csrf_exclude_uris'] = ['api.*+', 'csp/report'];
+// assinatura/webhook recebe notificações dos gateways de pagamento sem CSRF.
+$config['csrf_exclude_uris'] = ['api.*+', 'csp/report', 'assinatura/webhook.*+'];
 
 /*
 |--------------------------------------------------------------------------

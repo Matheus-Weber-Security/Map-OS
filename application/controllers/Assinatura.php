@@ -6,6 +6,14 @@ class Assinatura extends MY_Controller
 {
     public function __construct()
     {
+        $uriString = uri_string();
+        if (str_contains($uriString, 'assinatura/webhook')) {
+            CI_Controller::__construct();
+            $this->load->model('saas_model');
+
+            return;
+        }
+
         parent::__construct();
         $this->load->model('saas_model');
     }
@@ -96,18 +104,31 @@ class Assinatura extends MY_Controller
         $calculo = $this->calcularValoresPlano($empresa, $plano);
         $valorFinal = $calculo['valorFinal'];
 
-        $assinaturaId = $this->saas_model->criarAssinatura($empresaId, (int) $plano->id, $valorFinal, 'PIX');
-        $assinatura = $this->saas_model->getAssinaturaById($assinaturaId);
+        try {
+            $assinaturaId = $this->saas_model->criarAssinatura($empresaId, (int) $plano->id, $valorFinal, 'PIX');
+            $assinatura = $this->saas_model->getAssinaturaById($assinaturaId);
 
-        return $this->output
-            ->set_content_type('application/json')
-            ->set_output(json_encode([
-                'result' => true,
-                'assinatura_id' => $assinaturaId,
-                'txid' => $assinatura->txid,
-                'qr_code' => $assinatura->qr_code,
-                'valor' => number_format($valorFinal, 2, ',', '.'),
-            ]));
+            return $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode([
+                    'result' => true,
+                    'assinatura_id' => $assinaturaId,
+                    'txid' => $assinatura->txid,
+                    'qr_code' => $assinatura->qr_code,
+                    'qr_code_image' => $assinatura->qr_code_image ?? null,
+                    'valor' => number_format($valorFinal, 2, ',', '.'),
+                ]));
+        } catch (\Throwable $e) {
+            log_message('error', 'Assinatura::gerarPix: ' . $e->getMessage());
+
+            return $this->output
+                ->set_status_header(422)
+                ->set_content_type('application/json')
+                ->set_output(json_encode([
+                    'result' => false,
+                    'message' => $e->getMessage(),
+                ]));
+        }
     }
 
     /**
@@ -125,12 +146,66 @@ class Assinatura extends MY_Controller
                 ->set_output(json_encode(['result' => false, 'pago' => false]));
         }
 
+        if ($assinatura->status === 'pendente') {
+            $this->saas_model->consultarStatusGateway($assinatura);
+            $assinatura = $this->saas_model->getAssinaturaById($id);
+        }
+
         return $this->output
             ->set_content_type('application/json')
             ->set_output(json_encode([
                 'result' => true,
                 'pago' => ($assinatura->status === 'aprovado'),
             ]));
+    }
+
+    /**
+     * Webhook unificado para notificação dos gateways (Mercado Pago, Asaas e Efí).
+     */
+    public function webhook(string $gateway = '')
+    {
+        $gateway = strtolower(trim($gateway));
+        $corpo = (string) file_get_contents('php://input');
+        $dados = json_decode($corpo, true) ?: [];
+
+        log_message('info', 'Webhook Assinatura PIX [' . $gateway . ']: ' . substr($corpo, 0, 500));
+
+        if ($gateway === 'mercadopago') {
+            $chargeId = $this->input->get('data_id') ?: ($dados['data']['id'] ?? ($dados['id'] ?? null));
+            if ($chargeId) {
+                $assinatura = $this->db->where('charge_id', (string) $chargeId)->get('saas_assinaturas')->row();
+                if ($assinatura && $assinatura->status === 'pendente') {
+                    $this->saas_model->consultarStatusGateway($assinatura);
+                }
+            }
+        } elseif ($gateway === 'asaas') {
+            $evento = $dados['event'] ?? '';
+            $paymentId = $dados['payment']['id'] ?? null;
+            if ($paymentId && in_array($evento, ['PAYMENT_RECEIVED', 'PAYMENT_CONFIRMED'], true)) {
+                $assinatura = $this->db->where('charge_id', (string) $paymentId)->get('saas_assinaturas')->row();
+                if ($assinatura && $assinatura->status === 'pendente') {
+                    $this->saas_model->confirmarPagamento((int) $assinatura->id);
+                }
+            }
+        } elseif ($gateway === 'gerencianet') {
+            $pixArray = $dados['pix'] ?? [];
+            if (is_array($pixArray)) {
+                foreach ($pixArray as $pixItem) {
+                    $txid = $pixItem['txid'] ?? '';
+                    if ($txid) {
+                        $assinatura = $this->db->where('txid', (string) $txid)->get('saas_assinaturas')->row();
+                        if ($assinatura && $assinatura->status === 'pendente') {
+                            $this->saas_model->confirmarPagamento((int) $assinatura->id);
+                        }
+                    }
+                }
+            }
+        }
+
+        return $this->output
+            ->set_status_header(200)
+            ->set_content_type('application/json')
+            ->set_output(json_encode(['status' => 'ok']));
     }
 
     /**

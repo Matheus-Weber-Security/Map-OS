@@ -166,7 +166,7 @@ $provedorAtual = $forma->provedor ?: 'mercadopago';
                             <?= icon('key-round', ['class' => 'size-4 text-primary']) ?>
                             <h3 class="font-display text-sm font-semibold text-text">Credenciais de API - Asaas</h3>
                         </div>
-                        <div class="w-full">
+                        <div class="<?= e($grade) ?>">
                             <?= component('input', [
                                 'name' => 'asaas_api_key',
                                 'label' => 'Chave de API Asaas (API Key)',
@@ -174,6 +174,17 @@ $provedorAtual = $forma->provedor ?: 'mercadopago';
                                 'value' => $configuracoes['api_key'] ?? $configuracoes['asaas_api_key'] ?? '',
                                 'help' => 'Chave de API gerada no painel Asaas em Minha Conta > Integrações.',
                                 'attrs' => ['autocomplete' => 'new-password'],
+                            ]) ?>
+
+                            <?= component('select', [
+                                'name' => 'asaas_ambiente',
+                                'label' => 'Ambiente Asaas',
+                                'selected' => $configuracoes['asaas_ambiente'] ?? $configuracoes['ambiente'] ?? 'producao',
+                                'options' => [
+                                    ['value' => 'producao', 'label' => 'Produção (api.asaas.com)'],
+                                    ['value' => 'homologacao', 'label' => 'Sandbox / Homologação (sandbox.asaas.com)'],
+                                ],
+                                'help' => 'Selecione Sandbox apenas para testes de integração com o Asaas.',
                             ]) ?>
                         </div>
                     </div>
@@ -209,6 +220,26 @@ $provedorAtual = $forma->provedor ?: 'mercadopago';
                                 'type' => 'text',
                                 'value' => $configuracoes['chave_pix_efi'] ?? $configuracoes['efi_chave_pix'] ?? '',
                                 'help' => 'A chave PIX vinculada à sua conta Efí onde o valor será recebido.',
+                            ]) ?>
+
+                            <?= component('input', [
+                                'name' => 'efi_certificado',
+                                'label' => 'Caminho do Certificado (.pem ou .p12)',
+                                'type' => 'text',
+                                'value' => $configuracoes['certificado'] ?? $configuracoes['efi_certificado'] ?? '',
+                                'help' => 'Caminho absoluto do certificado no servidor (ex: application/certs/producao.p12).',
+                            ]) ?>
+                        </div>
+                        <div class="w-full sm:w-1/2">
+                            <?= component('select', [
+                                'name' => 'efi_ambiente',
+                                'label' => 'Ambiente Efí',
+                                'selected' => $configuracoes['efi_ambiente'] ?? $configuracoes['ambiente'] ?? 'producao',
+                                'options' => [
+                                    ['value' => 'producao', 'label' => 'Produção'],
+                                    ['value' => 'homologacao', 'label' => 'Sandbox / Homologação'],
+                                ],
+                                'help' => 'Selecione Sandbox apenas para testes na Efí.',
                             ]) ?>
                         </div>
                     </div>

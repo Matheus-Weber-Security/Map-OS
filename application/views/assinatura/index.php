@@ -434,7 +434,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentAssinaturaId = data.assinatura_id;
                 pixValor.textContent = `R$ ${data.valor}`;
                 inputPix.value = data.qr_code;
-                qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(data.qr_code)}`;
+                if (data.qr_code_image) {
+                    qrImg.src = data.qr_code_image.startsWith('data:')
+                        ? data.qr_code_image
+                        : `data:image/png;base64,${data.qr_code_image}`;
+                } else {
+                    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(data.qr_code)}`;
+                }
                 modalPix.classList.remove('hidden');
                 iniciarPolling(data.assinatura_id);
             } else {

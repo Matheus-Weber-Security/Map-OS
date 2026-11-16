@@ -485,6 +485,11 @@ class Saas extends MY_Controller
                 $configuracoes['api_key'] = $asaasKey;
                 $configuracoes['asaas_api_key'] = $asaasKey;
             }
+            $asaasAmbiente = trim((string) $this->input->post('asaas_ambiente'));
+            if ($asaasAmbiente !== '') {
+                $configuracoes['ambiente'] = $asaasAmbiente;
+                $configuracoes['asaas_ambiente'] = $asaasAmbiente;
+            }
 
             $efiClient = trim((string) $this->input->post('efi_client_id'));
             if ($efiClient !== '') {
@@ -500,6 +505,16 @@ class Saas extends MY_Controller
             if ($efiChave !== '') {
                 $configuracoes['chave_pix_efi'] = $efiChave;
                 $configuracoes['efi_chave_pix'] = $efiChave;
+            }
+            $efiCert = trim((string) $this->input->post('efi_certificado'));
+            if ($efiCert !== '') {
+                $configuracoes['certificado'] = $efiCert;
+                $configuracoes['efi_certificado'] = $efiCert;
+            }
+            $efiAmbiente = trim((string) $this->input->post('efi_ambiente'));
+            if ($efiAmbiente !== '') {
+                $configuracoes['ambiente'] = $efiAmbiente;
+                $configuracoes['efi_ambiente'] = $efiAmbiente;
             }
         } elseif ($forma->codigo === 'boleto') {
             $configuracoes['dias_vencimento'] = max(1, min(30, (int) ($this->input->post('dias_vencimento') ?: 3)));

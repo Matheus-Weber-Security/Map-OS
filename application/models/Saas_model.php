@@ -195,38 +195,74 @@ class Saas_model extends CI_Model
 
     public function criarAssinatura(int $empresaId, int $planoId, float $valor, string $forma = 'PIX'): int
     {
-        $txid = 'MAPOS' . date('YmdHis') . strtoupper(substr(md5(uniqid('', true)), 0, 10));
-        
-        $pixPayload = '00020126580014BR.GOV.BCB.PIX0136' . $txid . '520400005303986540' . number_format($valor, 2, '.', '') . '5802BR5915MapOS Software6009Sao Paulo62070503***6304';
+        $this->load->library('saaspaymentservice');
 
-        if (strtoupper($forma) === 'PIX') {
-            $formaPix = $this->getFormaPagamentoByCodigo('pix');
-            if ($formaPix && ! empty($formaPix->config)) {
-                $cfg = $formaPix->config;
-                if (($cfg['tipo_pix'] ?? '') === 'manual' && ! empty($cfg['chave_pix'])) {
-                    $chave = trim((string) $cfg['chave_pix']);
-                    $titular = substr(trim((string) ($cfg['titular'] ?? 'Empresa Master')), 0, 25);
-                    $cidade = substr(trim((string) ($cfg['cidade'] ?? 'Sao Paulo')), 0, 15);
-                    $pixPayload = '00020126' . str_pad((string) (14 + strlen($chave)), 2, '0', STR_PAD_LEFT) . '0014BR.GOV.BCB.PIX01' . str_pad((string) strlen($chave), 2, '0', STR_PAD_LEFT) . $chave . '520400005303986540' . number_format($valor, 2, '.', '') . '5802BR59' . str_pad((string) strlen($titular), 2, '0', STR_PAD_LEFT) . $titular . '60' . str_pad((string) strlen($cidade), 2, '0', STR_PAD_LEFT) . $cidade . '62070503***6304';
-                }
-            }
+        $empresa = $this->getEmpresaById($empresaId);
+        $plano = $this->getPlanoById($planoId);
+        if (! $plano) {
+            $planos = $this->getPlanos();
+            $plano = ! empty($planos) ? $planos[0] : (object) ['id' => $planoId, 'nome' => 'Plano Mensal', 'valor' => $valor];
         }
+
+        $formaPix = $this->getFormaPagamentoByCodigo(strtolower($forma));
+        $configPix = $formaPix && ! empty($formaPix->config) ? $formaPix->config : [];
+        if (! isset($configPix['provedor']) && $formaPix && ! empty($formaPix->provedor)) {
+            $configPix['provedor'] = $formaPix->provedor;
+        }
+
+        $dadosGateway = $this->saaspaymentservice->gerarPix($configPix, $valor, $empresa, $plano);
 
         $dados = [
             'empresa_id' => $empresaId,
             'plano_id' => $planoId,
             'valor' => $valor,
-            'forma_pagamento' => $forma,
+            'forma_pagamento' => strtoupper($forma),
+            'gateway' => $dadosGateway['gateway'] ?? 'manual',
+            'charge_id' => $dadosGateway['charge_id'] ?? null,
             'status' => 'pendente',
             'dias_adicionados' => 30,
-            'txid' => $txid,
-            'qr_code' => $pixPayload,
+            'txid' => $dadosGateway['txid'] ?? ('MAPOS' . date('YmdHis')),
+            'qr_code' => $dadosGateway['qr_code'] ?? '',
+            'qr_code_image' => $dadosGateway['qr_code_image'] ?? null,
             'criado_em' => date('Y-m-d H:i:s'),
         ];
 
         $this->db->insert('saas_assinaturas', $dados);
 
         return (int) $this->db->insert_id();
+    }
+
+    public function consultarStatusGateway(object $assinatura): bool
+    {
+        if (! $assinatura || $assinatura->status !== 'pendente') {
+            return false;
+        }
+
+        $gateway = strtolower((string) ($assinatura->gateway ?? ''));
+        if (empty($gateway) || $gateway === 'manual') {
+            return false;
+        }
+
+        $formaPix = $this->getFormaPagamentoByCodigo('pix');
+        $configPix = $formaPix && ! empty($formaPix->config) ? $formaPix->config : [];
+        if (! isset($configPix['provedor']) && $formaPix && ! empty($formaPix->provedor)) {
+            $configPix['provedor'] = $formaPix->provedor;
+        }
+
+        $this->load->library('saaspaymentservice');
+        $status = $this->saaspaymentservice->consultarStatusPix($assinatura, $configPix);
+
+        if ($status === 'aprovado') {
+            return $this->confirmarPagamento((int) $assinatura->id);
+        }
+
+        if ($status === 'cancelado') {
+            $this->db->where('id', $assinatura->id)->update('saas_assinaturas', [
+                'status' => 'cancelado',
+            ]);
+        }
+
+        return false;
     }
 
     public function getAssinaturaById(int $id): ?object
@@ -467,6 +503,20 @@ class Saas_model extends CI_Model
      */
     public function garantirTabelaFormasPagamento(): void
     {
+        if ($this->db->table_exists('saas_assinaturas')) {
+            $this->load->dbforge();
+            if (! $this->db->field_exists('gateway', 'saas_assinaturas')) {
+                $this->dbforge->add_column('saas_assinaturas', [
+                    'gateway' => ['type' => 'VARCHAR', 'constraint' => 50, 'null' => true, 'default' => null],
+                ]);
+            }
+            if (! $this->db->field_exists('charge_id', 'saas_assinaturas')) {
+                $this->dbforge->add_column('saas_assinaturas', [
+                    'charge_id' => ['type' => 'VARCHAR', 'constraint' => 100, 'null' => true, 'default' => null],
+                ]);
+            }
+        }
+
         if ($this->db->table_exists('saas_formas_pagamento')) {
             return;
         }
