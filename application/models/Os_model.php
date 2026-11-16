@@ -136,7 +136,7 @@ class Os_model extends CI_Model
         $this->aplicarFiltros($filtros, $statusVisiveis);
 
         $linhas = $this->db
-            ->order_by('os.idOs', 'asc')
+            ->order_by('os.idOs', 'desc')
             ->limit($limite, max(0, $offset))
             ->get()
             ->result();

@@ -38,7 +38,7 @@ class Vendas_model extends CI_Model
         $this->aplicarFiltros($filtros);
 
         $linhas = $this->db
-            ->order_by('vendas.idVendas', 'asc')
+            ->order_by('vendas.idVendas', 'desc')
             ->limit($limite, max(0, $offset))
             ->get()
             ->result();

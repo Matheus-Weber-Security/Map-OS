@@ -37,7 +37,7 @@ class Servicos_model extends CI_Model
     {
         $this->aplicarFiltros($filtros);
 
-        return $this->db->order_by('idServicos', 'asc')->limit($limite, max(0, $offset))->get('servicos')->result();
+        return $this->db->order_by('idServicos', 'desc')->limit($limite, max(0, $offset))->get('servicos')->result();
     }
 
     public function contar(array $filtros): int

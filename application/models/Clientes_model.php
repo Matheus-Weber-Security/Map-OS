@@ -40,8 +40,7 @@ class Clientes_model extends CI_Model
         $this->aplicarFiltros($filtros);
 
         return $this->db
-            ->order_by('codigo', 'asc')
-            ->order_by('idClientes', 'asc')
+            ->order_by('idClientes', 'desc')
             ->limit($limite, max(0, $offset))
             ->get('clientes')
             ->result();

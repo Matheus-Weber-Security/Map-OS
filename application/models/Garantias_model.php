@@ -46,7 +46,7 @@ class Garantias_model extends CI_Model
         return $this->db->select('garantias.*, usuarios.nome')
             ->from('garantias')
             ->join('usuarios', 'usuarios.idUsuarios = garantias.usuarios_id', 'left')
-            ->order_by('garantias.idGarantias', 'asc')
+            ->order_by('garantias.idGarantias', 'desc')
             ->limit($limite, max(0, $offset))
             ->get()->result();
     }

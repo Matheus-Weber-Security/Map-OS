@@ -21,7 +21,7 @@ class Compras_model extends CI_Model
         $this->aplicarFiltros($filtros);
 
         $linhas = $this->db
-            ->order_by('compras.idCompras', 'asc')
+            ->order_by('compras.idCompras', 'desc')
             ->limit($limite, max(0, $offset))
             ->get()
             ->result();

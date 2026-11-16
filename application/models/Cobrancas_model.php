@@ -25,7 +25,7 @@ class Cobrancas_model extends CI_Model
 
         return $this->db
             ->join('clientes', 'clientes.idClientes = cobrancas.clientes_id', 'left')
-            ->order_by('cobrancas.idCobranca', 'asc')
+            ->order_by('cobrancas.idCobranca', 'desc')
             ->limit($limite, max(0, $offset))
             ->get()
             ->result();
