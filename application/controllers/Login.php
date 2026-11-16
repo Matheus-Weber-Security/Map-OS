@@ -399,6 +399,8 @@ class Login extends CI_Controller
             'qtd_empresas' => count($empresas),
         ]);
 
+        $this->session->unset_userdata('modo_suporte_master');
+
         // Grupo que exige 2FA e usuário sem ele: entra, mas só alcança a tela de ativação (MY_Controller).
         if (! ($user->totp_ativado_em ?? null) && $this->mapos_model->grupoExige2fa((int) $user->permissoes_id)) {
             $this->session->set_userdata('exigir_2fa_cadastro', true);

@@ -495,7 +495,38 @@ class Mapos extends MY_Controller
 
     public function backup()
     {
-        if (!$this->permission->checkPermission($this->session->userdata('permissao'), 'cBackup')) {
+        if (! $this->permission->checkPermission($this->session->userdata('permissao'), 'cBackup')) {
+            $this->session->set_flashdata('error', 'Você não tem permissão para acessar a área de backup.');
+            redirect(base_url());
+        }
+
+        // Compatibilidade retroativa com links diretos: ?acao=download ou ?tipo=completo
+        if ($this->input->get('acao') === 'download' || $this->input->get('tipo') === 'completo') {
+            return $this->baixarBackup();
+        }
+
+        $isSuperadmin = (bool) $this->session->userdata('is_superadmin');
+        $modoSuporteMaster = (bool) ($this->session->userdata('modo_suporte_master') ?? false);
+        $empresaId = empresa_ativa_id();
+        $podeRestaurar = $isSuperadmin && $modoSuporteMaster && $empresaId > 1;
+
+        $this->load->model('saas_model');
+        $empresa = $this->saas_model->getEmpresaById($empresaId);
+
+        $this->data['menuConfiguracoes'] = 'Backup';
+        $this->data['empresa'] = $empresa;
+        $this->data['empresaId'] = $empresaId;
+        $this->data['is_superadmin'] = $isSuperadmin;
+        $this->data['pode_restaurar'] = $podeRestaurar;
+        $this->data['modo_suporte_master'] = $modoSuporteMaster;
+        $this->data['view'] = 'mapos/backup';
+
+        return $this->layout();
+    }
+
+    public function baixarBackup()
+    {
+        if (! $this->permission->checkPermission($this->session->userdata('permissao'), 'cBackup')) {
             $this->session->set_flashdata('error', 'Você não tem permissão para efetuar backup.');
             redirect(base_url());
         }
@@ -522,8 +553,87 @@ class Mapos extends MY_Controller
         } catch (\Throwable $e) {
             log_message('error', 'Erro ao gerar backup: ' . $e->getMessage());
             $this->session->set_flashdata('error', 'Não foi possível gerar o backup: ' . $e->getMessage());
-            redirect(site_url('mapos/configurar?aba=sistema'));
+            redirect(site_url('mapos/backup'));
         }
+    }
+
+    public function restaurarBackup()
+    {
+        if ($this->input->method() !== 'post') {
+            redirect('mapos/backup');
+        }
+
+        if (! $this->permission->checkPermission($this->session->userdata('permissao'), 'cBackup')) {
+            $this->session->set_flashdata('error', 'Você não tem permissão para restaurar backup.');
+            redirect('mapos/backup');
+        }
+
+        $isSuperadmin = (bool) $this->session->userdata('is_superadmin');
+        $modoSuporteMaster = (bool) ($this->session->userdata('modo_suporte_master') ?? false);
+        $empresaId = empresa_ativa_id();
+
+        // Regra estrita: apenas o Admin Master acessando a loja através da tela de assinantes pode restaurar
+        if (! ($isSuperadmin && $modoSuporteMaster && $empresaId > 1)) {
+            $this->session->set_flashdata('error', 'Apenas o Administrador Geral em modo de suporte ao assinante tem permissão para restaurar backup.');
+            redirect('mapos/backup');
+        }
+
+        if (empty($_FILES['arquivo_backup']['name']) || $_FILES['arquivo_backup']['error'] !== UPLOAD_ERR_OK) {
+            $this->session->set_flashdata('error', 'Selecione um arquivo de backup (.zip ou .sql) válido.');
+            redirect('mapos/backup');
+        }
+
+        $nomeOrig = $_FILES['arquivo_backup']['name'];
+        $tmpPath = $_FILES['arquivo_backup']['tmp_name'];
+        $ext = strtolower(pathinfo($nomeOrig, PATHINFO_EXTENSION));
+
+        if (! in_array($ext, ['zip', 'sql'], true)) {
+            $this->session->set_flashdata('error', 'Formato de arquivo inválido. Envie apenas arquivos .zip ou .sql.');
+            redirect('mapos/backup');
+        }
+
+        $sqlContent = '';
+        if ($ext === 'zip') {
+            if (! class_exists('ZipArchive')) {
+                $this->session->set_flashdata('error', 'Extensão ZipArchive não disponível no servidor PHP.');
+                redirect('mapos/backup');
+            }
+
+            $zip = new \ZipArchive();
+            if ($zip->open($tmpPath) === true) {
+                for ($i = 0; $i < $zip->numFiles; $i++) {
+                    $stat = $zip->statIndex($i);
+                    if ($stat && str_ends_with(strtolower($stat['name']), '.sql')) {
+                        $sqlContent = (string) $zip->getFromIndex($i);
+                        break;
+                    }
+                }
+                $zip->close();
+            } else {
+                $this->session->set_flashdata('error', 'Não foi possível descompactar o arquivo .zip enviado.');
+                redirect('mapos/backup');
+            }
+        } else {
+            $sqlContent = (string) file_get_contents($tmpPath);
+        }
+
+        if (empty($sqlContent)) {
+            $this->session->set_flashdata('error', 'Nenhum script SQL encontrado no arquivo enviado.');
+            redirect('mapos/backup');
+        }
+
+        $this->load->library('backup_tenant');
+        $resultado = $this->backup_tenant->restaurarBackupEmpresa($empresaId, $sqlContent);
+
+        if ($resultado['sucesso']) {
+            log_info("Restaurou backup da empresa #{$empresaId} em modo suporte.");
+            $this->session->set_flashdata('success', $resultado['mensagem']);
+        } else {
+            log_message('error', "Falha ao restaurar backup da empresa #{$empresaId}: " . $resultado['mensagem']);
+            $this->session->set_flashdata('error', $resultado['mensagem']);
+        }
+
+        redirect('mapos/backup');
     }
 
     /**

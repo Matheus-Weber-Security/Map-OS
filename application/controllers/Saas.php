@@ -338,10 +338,18 @@ class Saas extends MY_Controller
 
         $empresa = $this->saas_model->getEmpresaById($empresaId);
         if ($empresa) {
-            $this->session->set_userdata([
+            $dadosSessao = [
                 'empresa_id' => $empresa->id,
-                'empresa_nome' => $empresa->nome_fantasia,
-            ]);
+                'empresa_nome' => $empresa->nome_fantasia ?: $empresa->razao_social,
+            ];
+
+            if ((int) $empresa->id > 1) {
+                $dadosSessao['modo_suporte_master'] = true;
+            } else {
+                $this->session->unset_userdata('modo_suporte_master');
+            }
+
+            $this->session->set_userdata($dadosSessao);
             $this->session->set_flashdata('success', "Ambiente alternado para: {$empresa->nome_fantasia}");
         }
 

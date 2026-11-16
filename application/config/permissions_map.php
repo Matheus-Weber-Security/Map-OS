@@ -140,6 +140,8 @@ $config['permissions_map'] = [
         'calendario' => 'vOs',
         'uploadUserImage' => 'cUsuario',
         'backup' => 'cBackup',
+        'baixarBackup' => 'cBackup',
+        'restaurarBackup' => 'cBackup',
         // Cadastrar, editar e trocar o logo do emitente são POST em emitente.
         'emitente' => 'cEmitente',
         'emails' => 'cEmail',

@@ -123,9 +123,10 @@ foreach ($campos as $nome => $def) {
                     <?= component('button', ['label' => 'Atualizar banco de dados', 'icon' => 'download', 'variant' => 'outline', 'attrs' => ['data-modal-abrir' => 'atualizar-banco']]) ?>
                 <?php } ?>
                 <?php if ($pode_backup) { ?>
-                    <?= component('button', ['label' => 'Baixar backup da empresa', 'icon' => 'archive', 'variant' => 'ghost', 'href' => site_url('mapos/backup')]) ?>
+                    <?= component('button', ['label' => 'Gerenciamento de backup e restauração', 'icon' => 'archive', 'variant' => 'ghost', 'href' => site_url('mapos/backup')]) ?>
+                    <?= component('button', ['label' => 'Baixar backup da empresa', 'icon' => 'download', 'variant' => 'outline', 'href' => site_url('mapos/baixarBackup')]) ?>
                     <?php if (! empty($is_superadmin)) { ?>
-                        <?= component('button', ['label' => 'Baixar backup completo (todas as empresas)', 'icon' => 'download', 'variant' => 'outline', 'href' => site_url('mapos/backup?tipo=completo')]) ?>
+                        <?= component('button', ['label' => 'Baixar backup completo (todas as empresas)', 'icon' => 'download', 'variant' => 'outline', 'href' => site_url('mapos/baixarBackup?tipo=completo')]) ?>
                     <?php } ?>
                 <?php } ?>
             </div>

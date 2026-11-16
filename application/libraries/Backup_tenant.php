@@ -171,4 +171,121 @@ class Backup_tenant
 
         return $output;
     }
+
+    /**
+     * Restaura os registros isolados de uma empresa a partir do script SQL do backup (#SaaS-Restore).
+     *
+     * @return array{sucesso: bool, mensagem: string}
+     */
+    public function restaurarBackupEmpresa(int $empresaId, string $sqlContent): array
+    {
+        if ($empresaId <= 1) {
+            return ['sucesso' => false, 'mensagem' => 'A restauração de dados por este método não é permitida na Empresa Principal.'];
+        }
+
+        $sqlContent = trim($sqlContent);
+        if ($sqlContent === '') {
+            return ['sucesso' => false, 'mensagem' => 'O arquivo de backup enviado está vazio.'];
+        }
+
+        // Validação de segurança: se o SQL contiver cabeçalho com ID de outra empresa, bloqueia
+        if (preg_match('/-- Empresa:.*?\(ID:\s*(\d+)\)/', $sqlContent, $matches)) {
+            $origemId = (int) $matches[1];
+            if ($origemId !== $empresaId) {
+                return [
+                    'sucesso' => false,
+                    'mensagem' => "Arquivo de backup inválido: pertence à Empresa #{$origemId} e não pode ser restaurado na Empresa #{$empresaId}.",
+                ];
+            }
+        }
+
+        // Ordem segura de limpeza das tabelas (primeiro filhas, depois pais)
+        $tabelasParaLimpar = [
+            'anexos' => "DELETE FROM anexos WHERE os_id IN (SELECT idOs FROM os WHERE empresa_id = {$empresaId})",
+            'anotacoes_os' => "DELETE FROM anotacoes_os WHERE os_id IN (SELECT idOs FROM os WHERE empresa_id = {$empresaId})",
+            'equipamentos_os' => "DELETE FROM equipamentos_os WHERE os_id IN (SELECT idOs FROM os WHERE empresa_id = {$empresaId})",
+            'os_historico' => "DELETE FROM os_historico WHERE os_id IN (SELECT idOs FROM os WHERE empresa_id = {$empresaId})",
+            'produtos_os' => "DELETE FROM produtos_os WHERE os_id IN (SELECT idOs FROM os WHERE empresa_id = {$empresaId})",
+            'servicos_os' => "DELETE FROM servicos_os WHERE os_id IN (SELECT idOs FROM os WHERE empresa_id = {$empresaId})",
+            'itens_de_vendas' => "DELETE FROM itens_de_vendas WHERE vendas_id IN (SELECT idVendas FROM vendas WHERE empresa_id = {$empresaId})",
+            'itens_de_compras' => "DELETE FROM itens_de_compras WHERE compras_id IN (SELECT idCompras FROM compras WHERE empresa_id = {$empresaId})",
+            'cobrancas' => "DELETE FROM cobrancas WHERE empresa_id = {$empresaId}",
+            'lancamentos' => "DELETE FROM lancamentos WHERE empresa_id = {$empresaId}",
+            'documentos' => "DELETE FROM documentos WHERE empresa_id = {$empresaId}",
+            'produtos_fornecedores' => "DELETE FROM produtos_fornecedores WHERE empresa_id = {$empresaId}",
+            'os' => "DELETE FROM os WHERE empresa_id = {$empresaId}",
+            'vendas' => "DELETE FROM vendas WHERE empresa_id = {$empresaId}",
+            'compras' => "DELETE FROM compras WHERE empresa_id = {$empresaId}",
+            'garantias' => "DELETE FROM garantias WHERE empresa_id = {$empresaId}",
+            'produtos' => "DELETE FROM produtos WHERE empresa_id = {$empresaId}",
+            'servicos' => "DELETE FROM servicos WHERE empresa_id = {$empresaId}",
+            'equipamentos' => "DELETE FROM equipamentos WHERE clientes_id IN (SELECT idClientes FROM clientes WHERE empresa_id = {$empresaId})",
+            'clientes' => "DELETE FROM clientes WHERE empresa_id = {$empresaId}",
+            'emitente' => "DELETE FROM emitente WHERE empresa_id = {$empresaId}",
+        ];
+
+        // Extrai apenas os comandos INSERT INTO válidos
+        // Ignora DROP, CREATE, ALTER e TRUNCATE para proteger as demais empresas do banco compartilhado
+        $linhas = explode("\n", $sqlContent);
+        $comandosInsert = [];
+        $buffer = '';
+
+        foreach ($linhas as $linha) {
+            $linhaTrim = trim($linha);
+            if ($linhaTrim === '' || str_starts_with($linhaTrim, '--') || str_starts_with($linhaTrim, '#') || str_starts_with($linhaTrim, '/*')) {
+                continue;
+            }
+
+            $upper = strtoupper($linhaTrim);
+            if (str_starts_with($upper, 'DROP TABLE') || str_starts_with($upper, 'CREATE TABLE') || str_starts_with($upper, 'TRUNCATE') || str_starts_with($upper, 'ALTER TABLE')) {
+                continue;
+            }
+
+            if (str_starts_with($upper, 'INSERT INTO') || $buffer !== '') {
+                $buffer .= $linha . "\n";
+                if (str_ends_with($linhaTrim, ';')) {
+                    $comandosInsert[] = rtrim(trim($buffer), ';');
+                    $buffer = '';
+                }
+            }
+        }
+
+        if (empty($comandosInsert)) {
+            return ['sucesso' => false, 'mensagem' => 'Nenhum comando de dados (INSERT) válido foi encontrado no arquivo de backup.'];
+        }
+
+        $this->CI->db->trans_begin();
+        $this->CI->db->query('SET foreign_key_checks = 0');
+
+        try {
+            // 1. Limpeza dos dados antigos da empresa
+            foreach ($tabelasParaLimpar as $tab => $delQuery) {
+                if ($this->CI->db->table_exists($tab)) {
+                    $this->CI->db->query($delQuery);
+                }
+            }
+
+            // 2. Execução dos comandos INSERT do backup
+            foreach ($comandosInsert as $insertSql) {
+                $this->CI->db->query($insertSql);
+            }
+
+            $this->CI->db->query('SET foreign_key_checks = 1');
+
+            if ($this->CI->db->trans_status() === false) {
+                $this->CI->db->trans_rollback();
+
+                return ['sucesso' => false, 'mensagem' => 'Falha ao processar os registros no banco de dados. Transação desfeita.'];
+            }
+
+            $this->CI->db->trans_commit();
+
+            return ['sucesso' => true, 'mensagem' => 'Backup da empresa restaurado com sucesso! Foram processados ' . count($comandosInsert) . ' blocos de registros.'];
+        } catch (\Throwable $e) {
+            $this->CI->db->trans_rollback();
+            $this->CI->db->query('SET foreign_key_checks = 1');
+
+            return ['sucesso' => false, 'mensagem' => 'Erro durante a restauração: ' . $e->getMessage()];
+        }
+    }
 }
