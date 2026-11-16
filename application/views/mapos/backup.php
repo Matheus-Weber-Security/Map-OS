@@ -111,7 +111,7 @@ $csrf = [$this->security->get_csrf_token_name(), $this->security->get_csrf_hash(
                     </form>
                 <?php } else { ?>
                     <?= component('alert', [
-                        'variant' => 'neutral',
+                        'variant' => 'info',
                         'message' => '🔒 A restauração de banco de dados é bloqueada por segurança para evitar perda acidental de informações. Apenas o Administrador Geral em modo de suporte técnico na sua loja pode realizar restaurações.',
                     ]) ?>
 
