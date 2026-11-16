@@ -530,11 +530,21 @@ class Clientes extends MY_Controller
         $atualizados = 0;
         $substituidos = 0;
         $ignorados = 0;
+        $erros = 0;
+        $ocorrencias = [];
 
-        foreach ($linhas as $linha) {
+        foreach ($linhas as $idx => $linha) {
+            $numLinha = $idx + 2;
             $nome = trim((string) ($linha[$colunaNomeCliente] ?? ''));
             if ($nome === '') {
-                $ignorados++;
+                $erros++;
+                $ocorrencias[] = [
+                    'linha' => $numLinha,
+                    'item' => '(Sem nome)',
+                    'identificador' => $colunaDocumento !== '' && isset($linha[$colunaDocumento]) ? trim((string) $linha[$colunaDocumento]) : ($colunaEmail !== '' && isset($linha[$colunaEmail]) ? trim((string) $linha[$colunaEmail]) : '-'),
+                    'tipo' => 'erro',
+                    'motivo' => 'O nome ou razão social é obrigatório e veio vazio nesta linha.',
+                ];
                 continue;
             }
 
@@ -551,10 +561,24 @@ class Clientes extends MY_Controller
             // Aplica filtro de tipo se configurado
             if ($filtroTipo === 'apenas_clientes' && $tipo === 1) {
                 $ignorados++;
+                $ocorrencias[] = [
+                    'linha' => $numLinha,
+                    'item' => $nome,
+                    'identificador' => $colunaDocumento !== '' && isset($linha[$colunaDocumento]) ? trim((string) $linha[$colunaDocumento]) : '-',
+                    'tipo' => 'ignorado',
+                    'motivo' => 'Registro ignorado pelo filtro de tipo (apenas clientes foi selecionado, mas o registro é fornecedor).',
+                ];
                 continue;
             }
             if ($filtroTipo === 'apenas_fornecedores' && $tipo === 0) {
                 $ignorados++;
+                $ocorrencias[] = [
+                    'linha' => $numLinha,
+                    'item' => $nome,
+                    'identificador' => $colunaDocumento !== '' && isset($linha[$colunaDocumento]) ? trim((string) $linha[$colunaDocumento]) : '-',
+                    'tipo' => 'ignorado',
+                    'motivo' => 'Registro ignorado pelo filtro de tipo (apenas fornecedores foi selecionado, mas o registro é cliente).',
+                ];
                 continue;
             }
 
@@ -605,6 +629,23 @@ class Clientes extends MY_Controller
             if ($existente !== null) {
                 if ($estrategia === 'pular') {
                     $ignorados++;
+                    $motivoDuplicado = '';
+                    if ($docLimpo !== '' && isset($clientesPorDocumento[$docLimpo]) && $clientesPorDocumento[$docLimpo]->idClientes === $existente->idClientes) {
+                        $motivoDuplicado = "Documento (CPF/CNPJ) '{$documento}' já cadastrado para '{$existente->nomeCliente}'.";
+                    } elseif ($emailNorm !== '' && isset($clientesPorEmail[$emailNorm]) && $clientesPorEmail[$emailNorm]->idClientes === $existente->idClientes) {
+                        $motivoDuplicado = "E-mail '{$email}' já cadastrado para '{$existente->nomeCliente}'.";
+                    } elseif ($nomeNorm !== '' && isset($clientesPorNome[$nomeNorm]) && $clientesPorNome[$nomeNorm]->idClientes === $existente->idClientes) {
+                        $motivoDuplicado = "Nome / Razão Social '{$existente->nomeCliente}' já existente no cadastro.";
+                    } else {
+                        $motivoDuplicado = "Cliente/Fornecedor já existente no sistema (ID: {$existente->idClientes}).";
+                    }
+                    $ocorrencias[] = [
+                        'linha' => $numLinha,
+                        'item' => $nome,
+                        'identificador' => $documento !== '' ? $documento : ($email !== '' ? $email : '-'),
+                        'tipo' => 'duplicado',
+                        'motivo' => $motivoDuplicado,
+                    ];
                     continue;
                 }
 
@@ -768,21 +809,21 @@ class Clientes extends MY_Controller
             }
         }
 
-        log_info("Importação de clientes via CSV finalizada. Cadastrados: {$importados}, Mesclados: {$atualizados}, Substituídos: {$substituidos}, Ignorados: {$ignorados}.");
+        log_info("Importação de clientes via CSV finalizada. Cadastrados: {$importados}, Mesclados: {$atualizados}, Substituídos: {$substituidos}, Ignorados: {$ignorados}, Erros: {$erros}.");
 
-        $mensagem = "{$importados} cadastro(s) realizado(s) com sucesso.";
-        if ($atualizados > 0) {
-            $mensagem .= " {$atualizados} registro(s) existente(s) atualizado(s).";
-        }
-        if ($substituidos > 0) {
-            $mensagem .= " {$substituidos} registro(s) existente(s) substituído(s).";
-        }
-        if ($ignorados > 0) {
-            $mensagem .= " {$ignorados} registro(s) ignorado(s) ou repetido(s).";
-        }
+        $this->data['resultado'] = [
+            'total' => count($linhas),
+            'importados' => $importados,
+            'atualizados' => $atualizados,
+            'substituidos' => $substituidos,
+            'sucesso_total' => $importados + $atualizados + $substituidos,
+            'ignorados' => $ignorados,
+            'erros' => $erros,
+            'ocorrencias' => $ocorrencias,
+        ];
+        $this->data['view'] = 'clientes/resultado_importacao';
 
-        $this->session->set_flashdata('success', $mensagem);
-        redirect(site_url('clientes'));
+        return $this->layout();
     }
 
 }

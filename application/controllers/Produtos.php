@@ -441,11 +441,21 @@ class Produtos extends MY_Controller
         $atualizados = 0;
         $substituidos = 0;
         $ignorados = 0;
+        $erros = 0;
+        $ocorrencias = [];
 
-        foreach ($linhas as $linha) {
+        foreach ($linhas as $idx => $linha) {
+            $numLinha = $idx + 2;
             $descricao = trim((string) ($linha[$colunaDescricao] ?? ''));
             if ($descricao === '') {
-                $ignorados++;
+                $erros++;
+                $ocorrencias[] = [
+                    'linha' => $numLinha,
+                    'item' => '(Sem descrição)',
+                    'identificador' => $colunaCodDeBarra !== '' && isset($linha[$colunaCodDeBarra]) ? trim((string) $linha[$colunaCodDeBarra]) : '-',
+                    'tipo' => 'erro',
+                    'motivo' => 'A descrição do produto é obrigatória e veio vazia nesta linha.',
+                ];
                 continue;
             }
 
@@ -507,6 +517,21 @@ class Produtos extends MY_Controller
             if ($existente !== null) {
                 if ($estrategia === 'pular') {
                     $ignorados++;
+                    $motivoDuplicado = '';
+                    if ($codDeBarra !== '' && isset($produtosPorCodigo[$codDeBarra]) && $produtosPorCodigo[$codDeBarra]->idProdutos === $existente->idProdutos) {
+                        $motivoDuplicado = "Código de barras '{$codDeBarra}' já cadastrado para o produto '{$existente->descricao}'.";
+                    } elseif ($nomeNorm !== '' && isset($produtosPorNome[$nomeNorm]) && $produtosPorNome[$nomeNorm]->idProdutos === $existente->idProdutos) {
+                        $motivoDuplicado = "Produto com a descrição '{$existente->descricao}' já existente no cadastro.";
+                    } else {
+                        $motivoDuplicado = "Produto já cadastrado no sistema (ID: {$existente->idProdutos}).";
+                    }
+                    $ocorrencias[] = [
+                        'linha' => $numLinha,
+                        'item' => $descricao,
+                        'identificador' => $codDeBarra !== '' ? $codDeBarra : '-',
+                        'tipo' => 'duplicado',
+                        'motivo' => $motivoDuplicado,
+                    ];
                     continue;
                 }
 
@@ -602,20 +627,20 @@ class Produtos extends MY_Controller
             }
         }
 
-        log_info("Importação de produtos via CSV finalizada. Cadastrados: {$importados}, Mesclados: {$atualizados}, Substituídos: {$substituidos}, Ignorados: {$ignorados}.");
+        log_info("Importação de produtos via CSV finalizada. Cadastrados: {$importados}, Mesclados: {$atualizados}, Substituídos: {$substituidos}, Ignorados: {$ignorados}, Erros: {$erros}.");
 
-        $mensagem = "{$importados} produto(s) cadastrado(s) com sucesso.";
-        if ($atualizados > 0) {
-            $mensagem .= " {$atualizados} produto(s) existente(s) atualizado(s) e estoque somado.";
-        }
-        if ($substituidos > 0) {
-            $mensagem .= " {$substituidos} produto(s) existente(s) substituído(s).";
-        }
-        if ($ignorados > 0) {
-            $mensagem .= " {$ignorados} produto(s) repetido(s) ignorado(s).";
-        }
+        $this->data['resultado'] = [
+            'total' => count($linhas),
+            'importados' => $importados,
+            'atualizados' => $atualizados,
+            'substituidos' => $substituidos,
+            'sucesso_total' => $importados + $atualizados + $substituidos,
+            'ignorados' => $ignorados,
+            'erros' => $erros,
+            'ocorrencias' => $ocorrencias,
+        ];
+        $this->data['view'] = 'produtos/resultado_importacao';
 
-        $this->session->set_flashdata('success', $mensagem);
-        redirect(site_url('produtos'));
+        return $this->layout();
     }
 }
