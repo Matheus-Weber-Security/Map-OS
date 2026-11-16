@@ -146,7 +146,7 @@ $vazio = $temFiltro
         'caption' => 'Clientes e fornecedores',
     ]) ?>
 
-    <?= component('pagination', $paginacao) ?>
+    <?= listagemPaginacao($paginacao, $filtros, site_url('clientes')) ?>
 </div>
 
 <?php if ($pode['excluir']) { ?>

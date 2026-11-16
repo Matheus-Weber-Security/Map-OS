@@ -41,11 +41,12 @@ class Usuarios extends MY_Controller
         $filtros = listagemFiltros(self::FILTROS, $this->input->get());
         $offset = (int) $this->uri->segment(3);
         $total = $this->usuarios_model->contar($filtros);
+        $porPagina = $this->obterPorPagina($filtros);
 
         $this->data['filtros'] = $filtros;
         $this->data['total'] = $total;
-        $this->data['results'] = $this->usuarios_model->listar($filtros, (int) $this->data['configuration']['per_page'], $offset);
-        $this->data['paginacao'] = $this->paginacao(site_url('usuarios/gerenciar'), $total, $offset, null, $filtros);
+        $this->data['results'] = $this->usuarios_model->listar($filtros, $porPagina, $offset);
+        $this->data['paginacao'] = $this->paginacao(site_url('usuarios/gerenciar'), $total, $offset, null, $filtros, $porPagina);
         $this->data['logado'] = (int) $this->session->userdata('id_admin');
         $this->data['hoje'] = date('Y-m-d');
         $this->data['topbar_acao'] = ['label' => 'Novo usuário', 'icon' => 'plus', 'href' => site_url('usuarios/adicionar')];

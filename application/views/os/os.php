@@ -126,7 +126,7 @@ $resumo = ($total === 1 ? '1 ordem de serviço' : number_format($total, 0, ',', 
         'caption' => 'Ordens de serviço',
     ]) ?>
 
-    <?= component('pagination', $paginacao) ?>
+    <?= listagemPaginacao($paginacao, $filtros, site_url('os')) ?>
 </div>
 
 <?php if ($pode['excluir']) { ?>

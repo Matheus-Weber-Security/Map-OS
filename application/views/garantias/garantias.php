@@ -87,7 +87,7 @@ $vazio = $temFiltro
         'caption' => 'Termos de garantia',
     ]) ?>
 
-    <?= component('pagination', $paginacao) ?>
+    <?= listagemPaginacao($paginacao, $filtros, site_url('garantias')) ?>
 </div>
 
 <?php if ($pode['excluir']) { ?>

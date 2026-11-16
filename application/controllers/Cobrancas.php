@@ -116,11 +116,12 @@ class Cobrancas extends MY_Controller
         $filtros = $this->filtrosDaListagem();
         $offset = (int) $this->uri->segment(3);
         $total = $this->cobrancas_model->contar($filtros);
+        $porPagina = $this->obterPorPagina($filtros);
 
         $this->data['filtros'] = $filtros;
         $this->data['total'] = $total;
-        $this->data['results'] = $this->cobrancas_model->listar($filtros, (int) $this->data['configuration']['per_page'], $offset);
-        $this->data['paginacao'] = $this->paginacao(site_url('cobrancas/cobrancas'), $total, $offset, null, $filtros);
+        $this->data['results'] = $this->cobrancas_model->listar($filtros, $porPagina, $offset);
+        $this->data['paginacao'] = $this->paginacao(site_url('cobrancas/cobrancas'), $total, $offset, null, $filtros, $porPagina);
         $this->data['status_opcoes'] = $this->statusDosGateways();
         $this->data['gateways'] = $this->config->item('payment_gateways');
         $this->data['pode'] = [

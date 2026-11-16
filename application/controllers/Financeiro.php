@@ -46,11 +46,12 @@ class Financeiro extends MY_Controller
         $filtros = $this->filtrosDaListagem();
         $offset = (int) $this->uri->segment(3);
         $total = $this->financeiro_model->contar($filtros, $hoje);
+        $porPagina = $this->obterPorPagina($filtros);
 
         $this->data['hoje'] = $hoje;
         $this->data['filtros'] = $filtros;
         $this->data['total'] = $total;
-        $this->data['results'] = $this->financeiro_model->listar($filtros, (int) $this->data['configuration']['per_page'], $offset, $hoje);
+        $this->data['results'] = $this->financeiro_model->listar($filtros, $porPagina, $offset, $hoje);
         $this->data['totais'] = $this->financeiro_model->totais($filtros, $hoje);
         $this->data['visao_geral'] = $this->financeiro_model->visaoGeral();
 
@@ -73,7 +74,7 @@ class Financeiro extends MY_Controller
         }
         $this->data['tendencias'] = $tendencias;
         $this->data['series'] = $this->financeiro_model->serieMensal(6, $hoje);
-        $this->data['paginacao'] = $this->paginacao(site_url('financeiro/lancamentos'), $total, $offset, null, $filtros);
+        $this->data['paginacao'] = $this->paginacao(site_url('financeiro/lancamentos'), $total, $offset, null, $filtros, $porPagina);
         $this->data['permite_editar_pago'] = ($this->data['configuration']['control_edit_pago'] ?? '0') === '1';
         $this->data['permite_excluir_pago'] = ($this->data['configuration']['control_del_pago'] ?? '0') === '1';
         $this->data['pode'] = [

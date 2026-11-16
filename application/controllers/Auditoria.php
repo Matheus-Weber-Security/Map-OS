@@ -32,11 +32,12 @@ class Auditoria extends MY_Controller
         $filtros = $this->filtros();
         $offset = (int) $this->uri->segment(3);
         $total = $this->Audit_model->contar($filtros);
+        $porPagina = $this->obterPorPagina($filtros);
 
         $this->data['filtros'] = $filtros;
         $this->data['total'] = $total;
-        $this->data['results'] = $this->Audit_model->listar($filtros, (int) $this->data['configuration']['per_page'], $offset);
-        $this->data['paginacao'] = $this->paginacao(site_url('auditoria/index'), $total, $offset, null, $filtros);
+        $this->data['results'] = $this->Audit_model->listar($filtros, $porPagina, $offset);
+        $this->data['paginacao'] = $this->paginacao(site_url('auditoria/index'), $total, $offset, null, $filtros, $porPagina);
         $this->data['view'] = 'auditoria/logs';
 
         return $this->layout();

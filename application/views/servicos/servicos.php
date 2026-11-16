@@ -89,7 +89,7 @@ $vazio = $temFiltro
         'caption' => 'Serviços',
     ]) ?>
 
-    <?= component('pagination', $paginacao) ?>
+    <?= listagemPaginacao($paginacao, $filtros, site_url('servicos')) ?>
 </div>
 
 <?php if ($pode['excluir']) { ?>

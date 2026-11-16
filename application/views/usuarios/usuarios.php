@@ -76,7 +76,7 @@ $resumo = ($total === 1 ? '1 usuário' : number_format($total, 0, ',', '.') . ' 
         ]),
     ]) ?>
 
-    <?= component('pagination', $paginacao) ?>
+    <?= listagemPaginacao($paginacao, $filtros, site_url('usuarios')) ?>
 </div>
 
 <form id="form-excluir-usuario" method="post" action="<?= e(site_url('usuarios/excluir') . listagemQuery($filtros)) ?>" hidden>

@@ -51,7 +51,7 @@ $colunas = [
         ]),
     ]) ?>
 
-    <?= component('pagination', $paginacao) ?>
+    <?= listagemPaginacao($paginacao, $filtros, site_url('auditoria')) ?>
 </div>
 
 <form id="form-limpar-logs" method="post" action="<?= e(site_url('auditoria/clean')) ?>" hidden>

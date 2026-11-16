@@ -45,11 +45,12 @@ class Arquivos extends MY_Controller
 
         $offset = (int) $this->uri->segment(3);
         $total = $this->arquivos_model->contar($filtros);
+        $porPagina = $this->obterPorPagina($filtros);
 
         $this->data['filtros'] = $filtros;
         $this->data['total'] = $total;
-        $this->data['results'] = $this->arquivos_model->listar($filtros, (int) $this->data['configuration']['per_page'], $offset);
-        $this->data['paginacao'] = $this->paginacao(site_url('arquivos/gerenciar'), $total, $offset, null, $filtros);
+        $this->data['results'] = $this->arquivos_model->listar($filtros, $porPagina, $offset);
+        $this->data['paginacao'] = $this->paginacao(site_url('arquivos/gerenciar'), $total, $offset, null, $filtros, $porPagina);
         $this->data['pode'] = [
             'adicionar' => false,
             'editar' => $this->permite('eArquivo'),

@@ -126,7 +126,7 @@ $resumo = ($total === 1 ? '1 venda' : number_format($total, 0, ',', '.') . ' ven
         'caption' => 'Vendas',
     ]) ?>
 
-    <?= component('pagination', $paginacao) ?>
+    <?= listagemPaginacao($paginacao, $filtros, site_url('vendas')) ?>
 </div>
 
 <?php if ($pode['excluir']) { ?>

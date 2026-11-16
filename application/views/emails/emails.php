@@ -92,7 +92,7 @@ $corpoModalLog = new HtmlSeguro(
         ]),
     ]) ?>
 
-    <?= component('pagination', $paginacao) ?>
+    <?= listagemPaginacao($paginacao, $filtros, site_url('mapos/emails')) ?>
 </div>
 
 <?= component('modal', [

@@ -197,7 +197,7 @@ $resumo = ($total === 1 ? '1 cobrança' : number_format($total, 0, ',', '.') . '
         'caption' => 'Cobranças',
     ]) ?>
 
-    <?= component('pagination', $paginacao) ?>
+    <?= listagemPaginacao($paginacao, $filtros, site_url('cobrancas')) ?>
 </div>
 
 <form id="form-acao-cobranca" method="post" action="<?= e(site_url('cobrancas/cobrancas')) ?>" hidden>

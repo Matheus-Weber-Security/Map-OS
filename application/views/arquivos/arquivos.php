@@ -95,7 +95,7 @@ $vazio = $temFiltro
         'caption' => 'Arquivos',
     ]) ?>
 
-    <?= component('pagination', $paginacao) ?>
+    <?= listagemPaginacao($paginacao, $filtros, site_url('arquivos')) ?>
 </div>
 
 <?php if ($pode['excluir']) { ?>

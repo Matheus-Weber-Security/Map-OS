@@ -120,7 +120,7 @@ $vazio = $temFiltro
         'caption' => 'Produtos',
     ]) ?>
 
-    <?= component('pagination', $paginacao) ?>
+    <?= listagemPaginacao($paginacao, $filtros, site_url('produtos')) ?>
 </div>
 
 <?php if ($pode['editar']) { ?>

@@ -647,17 +647,30 @@ class MY_Controller extends CI_Controller
      * @param  mixed       $offset            Offset atual (segmento da URL ou query)
      * @param  string|null $parametroDaQuery  Nome do parâmetro quando o offset vai na query
      * @param  array       $filtros           Filtros da listagem (listagemFiltros()), mantidos nos links
+     * @param  int|null    $porPagina         Quantidade por página opcional (se nulo, usa obterPorPagina($filtros))
      */
-    protected function paginacao($urlBase, $totalLinhas, $offset, $parametroDaQuery = null, array $filtros = [])
+    protected function paginacao($urlBase, $totalLinhas, $offset, $parametroDaQuery = null, array $filtros = [], ?int $porPagina = null)
     {
+        $porPaginaFinal = $porPagina ?? $this->obterPorPagina($filtros);
+
         return paginacaoProps([
             'base_url' => (string) $urlBase,
             'total_rows' => (int) $totalLinhas,
-            'per_page' => (int) $this->data['configuration']['per_page'],
+            'per_page' => $porPaginaFinal,
             'offset' => $offset,
             'query_string' => $parametroDaQuery,
             'params' => $filtros,
         ]);
+    }
+
+    /**
+     * Retorna a quantidade de itens por página a partir dos filtros ou da configuração.
+     */
+    protected function obterPorPagina(array $filtros): int
+    {
+        $padrao = (int) ($this->data['configuration']['per_page'] ?? 10);
+
+        return listagemPorPagina($filtros, $padrao);
     }
 
     /**

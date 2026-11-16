@@ -114,7 +114,7 @@ $vazio = $temFiltro
         'caption' => 'Compras e entradas de estoque',
     ]) ?>
 
-    <?= component('pagination', $paginacao) ?>
+    <?= listagemPaginacao($paginacao, $filtros, site_url('compras')) ?>
 </div>
 
 <?php if ($pode['excluir']) { ?>

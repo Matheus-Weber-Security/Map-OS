@@ -43,10 +43,11 @@ class Vendas extends MY_Controller
         $filtros = $this->filtrosDaListagem();
         $offset = (int) $this->uri->segment(3);
         $total = $this->vendas_model->contar($filtros);
+        $porPagina = $this->obterPorPagina($filtros);
 
         $this->data['filtros'] = $filtros;
         $this->data['total'] = $total;
-        $results = $this->vendas_model->listar($filtros, (int) $this->data['configuration']['per_page'], $offset);
+        $results = $this->vendas_model->listar($filtros, $porPagina, $offset);
         $this->load->model('mapos_model');
         $emitente = $this->mapos_model->getEmitente();
         foreach ($results as $linha) {
@@ -54,7 +55,7 @@ class Vendas extends MY_Controller
         }
 
         $this->data['results'] = $results;
-        $this->data['paginacao'] = $this->paginacao(site_url('vendas/gerenciar'), $total, $offset, null, $filtros);
+        $this->data['paginacao'] = $this->paginacao(site_url('vendas/gerenciar'), $total, $offset, null, $filtros, $porPagina);
         $this->data['pode'] = [
             'adicionar' => $this->permite('aVenda'),
             'editar' => $this->permite('eVenda'),

@@ -712,12 +712,13 @@ class Mapos extends MY_Controller
         $filtros = listagemFiltros(['status' => ['pending', 'sending', 'sent', 'failed']], $this->input->get());
         $offset = (int) $this->uri->segment(3);
         $total = $this->email_model->contar($filtros);
+        $porPagina = $this->obterPorPagina($filtros);
 
         $this->data['menuConfiguracoes'] = 'Email';
         $this->data['filtros'] = $filtros;
         $this->data['total'] = $total;
-        $this->data['results'] = $this->email_model->listar($filtros, (int) $this->data['configuration']['per_page'], $offset);
-        $this->data['paginacao'] = $this->paginacao(site_url('mapos/emails'), $total, $offset, null, $filtros);
+        $this->data['results'] = $this->email_model->listar($filtros, $porPagina, $offset);
+        $this->data['paginacao'] = $this->paginacao(site_url('mapos/emails'), $total, $offset, null, $filtros, $porPagina);
         $this->data['view'] = 'emails/emails';
 
         return $this->layout();

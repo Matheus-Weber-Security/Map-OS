@@ -43,12 +43,13 @@ class Os extends MY_Controller
         $offset = (int) $this->uri->segment(3);
         $statusVisiveis = osStatusVisiveis($this->data['configuration']['os_status_list'] ?? null);
         $total = $this->os_model->contar($filtros, $statusVisiveis);
+        $porPagina = $this->obterPorPagina($filtros);
 
         $this->data['filtros'] = $filtros;
         $this->data['total'] = $total;
         $this->data['status_ocultos'] = ! isset($filtros['pesquisa']) && ! isset($filtros['status']) && $statusVisiveis !== null
             && array_diff(array_keys(OS_STATUS_VARIANTES), $statusVisiveis) !== [];
-        $results = $this->os_model->listar($filtros, (int) $this->data['configuration']['per_page'], $offset, $statusVisiveis);
+        $results = $this->os_model->listar($filtros, $porPagina, $offset, $statusVisiveis);
         $this->load->model('mapos_model');
         $emitente = $this->mapos_model->getEmitente();
         foreach ($results as $linha) {
@@ -56,7 +57,7 @@ class Os extends MY_Controller
         }
 
         $this->data['results'] = $results;
-        $this->data['paginacao'] = $this->paginacao(site_url('os/gerenciar'), $total, $offset, null, $filtros);
+        $this->data['paginacao'] = $this->paginacao(site_url('os/gerenciar'), $total, $offset, null, $filtros, $porPagina);
         $this->data['pode'] = [
             'adicionar' => $this->permite('aOs'),
             'editar' => $this->permite('eOs'),

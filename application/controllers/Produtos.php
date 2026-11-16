@@ -41,11 +41,12 @@ class Produtos extends MY_Controller
         $filtros = listagemFiltros(self::FILTROS, $this->input->get());
         $offset = (int) $this->uri->segment(3);
         $total = $this->produtos_model->contar($filtros);
+        $porPagina = $this->obterPorPagina($filtros);
 
         $this->data['filtros'] = $filtros;
         $this->data['total'] = $total;
-        $this->data['results'] = $this->produtos_model->listar($filtros, (int) $this->data['configuration']['per_page'], $offset);
-        $this->data['paginacao'] = $this->paginacao(site_url('produtos/gerenciar'), $total, $offset, null, $filtros);
+        $this->data['results'] = $this->produtos_model->listar($filtros, $porPagina, $offset);
+        $this->data['paginacao'] = $this->paginacao(site_url('produtos/gerenciar'), $total, $offset, null, $filtros, $porPagina);
         $this->data['pode'] = [
             'adicionar' => $this->permite('aProduto'),
             'editar' => $this->permite('eProduto'),

@@ -80,6 +80,15 @@ export function iniciarRecarregarCaptcha(raiz = document) {
     });
 }
 
+export function iniciarAutoSubmit(raiz = document) {
+    raiz.addEventListener('change', (event) => {
+        const elemento = event.target.closest('[data-auto-submit]');
+        if (elemento && elemento.form) {
+            elemento.form.submit();
+        }
+    });
+}
+
 export async function iniciarModulos(raiz = document) {
     const elementos = raiz.querySelectorAll('[data-module]');
 
@@ -110,6 +119,7 @@ export async function iniciarModulos(raiz = document) {
 if (typeof document !== 'undefined') {
     iniciarAlternarSenha(document);
     iniciarRecarregarCaptcha(document);
+    iniciarAutoSubmit(document);
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => iniciarModulos());

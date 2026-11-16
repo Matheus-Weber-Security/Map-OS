@@ -189,7 +189,7 @@ $resumo = ($total === 1 ? '1 lançamento' : number_format($total, 0, ',', '.') .
         'caption' => 'Lançamentos financeiros',
     ]) ?>
 
-    <?= component('pagination', $paginacao) ?>
+    <?= listagemPaginacao($paginacao, $filtros, site_url('financeiro/lancamentos')) ?>
 
     <section class="<?= e($caixa) ?>" aria-labelledby="secao-visao-geral">
         <h2 id="secao-visao-geral" class="text-heading-sm text-text">Visão geral</h2>
