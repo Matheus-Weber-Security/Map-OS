@@ -6,14 +6,6 @@ class Assinatura extends MY_Controller
 {
     public function __construct()
     {
-        $uriString = uri_string();
-        if (str_contains($uriString, 'assinatura/webhook')) {
-            CI_Controller::__construct();
-            $this->load->model('saas_model');
-
-            return;
-        }
-
         parent::__construct();
         $this->load->model('saas_model');
     }
