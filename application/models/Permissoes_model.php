@@ -30,9 +30,19 @@ class Permissoes_model extends CI_Model
      */
     public function listarComUsuarios(): array
     {
+        $subqueryUsuarios = '(SELECT COUNT(*) FROM usuarios WHERE usuarios.permissoes_id = permissoes.idPermissao)';
+
+        if ($this->db->table_exists('saas_empresa_usuarios')) {
+            $empresaId = (int) (function_exists('empresa_ativa_id') ? empresa_ativa_id() : 1);
+            $subqueryUsuarios = "(SELECT COUNT(*) FROM usuarios 
+                INNER JOIN saas_empresa_usuarios ON saas_empresa_usuarios.usuario_id = usuarios.idUsuarios 
+                WHERE usuarios.permissoes_id = permissoes.idPermissao 
+                  AND saas_empresa_usuarios.empresa_id = {$empresaId})";
+        }
+
         return $this->db
             ->select('permissoes.idPermissao, permissoes.nome, permissoes.data, permissoes.situacao')
-            ->select('(SELECT COUNT(*) FROM usuarios WHERE usuarios.permissoes_id = permissoes.idPermissao) AS usuarios', false)
+            ->select("{$subqueryUsuarios} AS usuarios", false)
             ->from('permissoes')
             ->order_by('permissoes.nome', 'ASC')
             ->get()
