@@ -70,6 +70,7 @@ export default async function iniciar(raiz, { doc = document } = {}) {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    resizeDelay: 150,
                     interaction: { mode: 'index', intersect: false },
                     plugins: {
                         legend: { display: false },
@@ -119,6 +120,7 @@ export default async function iniciar(raiz, { doc = document } = {}) {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    resizeDelay: 150,
                     cutout: '72%',
                     plugins: {
                         legend: { display: false },
