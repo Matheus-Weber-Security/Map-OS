@@ -195,7 +195,7 @@ class Saas_model extends CI_Model
 
     public function criarAssinatura(int $empresaId, int $planoId, float $valor, string $forma = 'PIX'): int
     {
-        $this->load->library('saaspaymentservice');
+        $this->load->library('SaasPaymentService');
 
         $empresa = $this->getEmpresaById($empresaId);
         $plano = $this->getPlanoById($planoId);
@@ -249,7 +249,7 @@ class Saas_model extends CI_Model
             $configPix['provedor'] = $formaPix->provedor;
         }
 
-        $this->load->library('saaspaymentservice');
+        $this->load->library('SaasPaymentService');
         $status = $this->saaspaymentservice->consultarStatusPix($assinatura, $configPix);
 
         if ($status === 'aprovado') {

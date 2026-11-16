@@ -95,6 +95,22 @@ class SaasPaymentService
                 $identification = ['type' => 'CPF', 'number' => $doc];
             }
 
+            if (! $identification) {
+                $usuarioId = (int) ($this->ci->session->userdata('id_admin') ?: 0);
+                if ($usuarioId > 0) {
+                    $u = $this->ci->db->where('idUsuarios', $usuarioId)->get('usuarios')->row();
+                    if ($u && ! empty($u->cpf)) {
+                        $userDoc = preg_replace('/[^0-9]/', '', (string) $u->cpf);
+                        if (strlen($userDoc) === 11) {
+                            $identification = ['type' => 'CPF', 'number' => $userDoc];
+                        }
+                    }
+                    if ($email === ('contato@' . ($_SERVER['HTTP_HOST'] ?? 'nexustkt.com.br')) && $u && ! empty($u->email) && filter_var($u->email, FILTER_VALIDATE_EMAIL)) {
+                        $email = $u->email;
+                    }
+                }
+            }
+
             $payer = [
                 'email' => $email,
                 'first_name' => $primeiroNome,
@@ -114,9 +130,21 @@ class SaasPaymentService
 
             $payment = $client->create($paymentRequest);
 
-            $qrCode = $payment->point_of_interaction->transaction_data->qr_code ?? '';
-            $qrImage = $payment->point_of_interaction->transaction_data->qr_code_base64 ?? null;
-            $chargeId = (string) ($payment->id ?? '');
+            $raw = [];
+            if (is_object($payment) && method_exists($payment, 'getResponse') && $payment->getResponse()) {
+                $raw = $payment->getResponse()->getContent() ?? [];
+                if (! is_array($raw)) {
+                    $raw = [];
+                }
+            }
+
+            $qrCode = $raw['point_of_interaction']['transaction_data']['qr_code']
+                ?? $payment->point_of_interaction->transaction_data->qr_code
+                ?? '';
+            $qrImage = $raw['point_of_interaction']['transaction_data']['qr_code_base64']
+                ?? $payment->point_of_interaction->transaction_data->qr_code_base64
+                ?? null;
+            $chargeId = (string) ($raw['id'] ?? $payment->id ?? '');
 
             if (empty($qrCode)) {
                 throw new \Exception('O Mercado Pago não retornou o código PIX Copia e Cola. Verifique se o PIX está ativo na sua conta do Mercado Pago.');

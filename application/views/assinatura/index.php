@@ -338,6 +338,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const csrfName = '<?= e($this->security->get_csrf_token_name()) ?>';
     const csrfHash = '<?= e($this->security->get_csrf_hash()) ?>';
 
+    function obterCsrf() {
+        const metaName = document.querySelector('meta[name="csrf-token-name"]')?.content;
+        const metaCookie = document.querySelector('meta[name="csrf-cookie-name"]')?.content;
+        const name = metaName || csrfName;
+        const cookieName = metaCookie || '<?= e(config_item('csrf_cookie_name')) ?>';
+        let hash = csrfHash;
+        if (cookieName && document.cookie) {
+            const m = document.cookie.match(new RegExp('(^|;\\s*)' + cookieName + '=([^;]*)'));
+            if (m && m[2]) {
+                hash = decodeURIComponent(m[2]);
+            }
+        }
+        return { name, hash };
+    }
+
     // Modais
     const modalPix = document.getElementById('modal-pix');
     const modalBoleto = document.getElementById('modal-boleto');
@@ -421,16 +436,25 @@ document.addEventListener('DOMContentLoaded', () => {
         btnPagar.classList.add('opacity-75');
 
         try {
+            const csrf = obterCsrf();
             const formData = new FormData();
-            formData.append(csrfName, csrfHash);
+            formData.append(csrf.name, csrf.hash);
 
             const res = await fetch('<?= site_url('assinatura/gerarPix') ?>', {
                 method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
                 body: formData,
             });
 
-            const data = await res.json();
-            if (data.result) {
+            const data = await res.json().catch(() => null);
+            if (!res.ok) {
+                alert(data?.message || `Erro no servidor (${res.status}).`);
+                return;
+            }
+
+            if (data && data.result) {
                 currentAssinaturaId = data.assinatura_id;
                 pixValor.textContent = `R$ ${data.valor}`;
                 inputPix.value = data.qr_code;
@@ -460,16 +484,25 @@ document.addEventListener('DOMContentLoaded', () => {
         btnPagar.classList.add('opacity-75');
 
         try {
+            const csrf = obterCsrf();
             const formData = new FormData();
-            formData.append(csrfName, csrfHash);
+            formData.append(csrf.name, csrf.hash);
 
             const res = await fetch('<?= site_url('assinatura/gerarBoleto') ?>', {
                 method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
                 body: formData,
             });
 
-            const data = await res.json();
-            if (data.result) {
+            const data = await res.json().catch(() => null);
+            if (!res.ok) {
+                alert(data?.message || `Erro no servidor (${res.status}).`);
+                return;
+            }
+
+            if (data && data.result) {
                 currentAssinaturaId = data.assinatura_id;
                 inputBoleto.value = data.linha_digitavel;
                 boletoVencimento.textContent = data.vencimento;
@@ -493,16 +526,26 @@ document.addEventListener('DOMContentLoaded', () => {
             btnProcessarCartao.classList.add('opacity-75');
 
             try {
+                const csrf = obterCsrf();
                 const formData = new FormData();
-                formData.append(csrfName, csrfHash);
+                formData.append(csrf.name, csrf.hash);
                 formData.append('tipo', formaSelecionada === 'cartao_debito' ? 'debito' : 'credito');
 
                 const res = await fetch('<?= site_url('assinatura/gerarCartao') ?>', {
                     method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
                     body: formData,
                 });
 
-                const data = await res.json();
+                const data = await res.json().catch(() => null);
+                if (!res.ok) {
+                    alert(data?.message || `Erro no servidor (${res.status}).`);
+                    btnProcessarCartao.disabled = false;
+                    btnProcessarCartao.classList.remove('opacity-75');
+                    return;
+                }
                 if (data.result) {
                     alert('🎉 ' + data.message);
                     window.location.reload();
@@ -584,16 +627,24 @@ document.addEventListener('DOMContentLoaded', () => {
     async function confirmarTeste() {
         if (!currentAssinaturaId) return;
 
+        const csrf = obterCsrf();
         const formData = new FormData();
         formData.append('id', currentAssinaturaId);
-        formData.append(csrfName, csrfHash);
+        formData.append(csrf.name, csrf.hash);
 
         const res = await fetch('<?= site_url('assinatura/confirmarPixTeste') ?>', {
             method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            },
             body: formData,
         });
 
-        const data = await res.json();
+        const data = await res.json().catch(() => null);
+        if (!res.ok) {
+            alert(data?.message || `Erro no servidor (${res.status}).`);
+            return;
+        }
         if (data.result) {
             alert(data.message);
             window.location.reload();
