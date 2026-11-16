@@ -25,7 +25,7 @@ class Cobrancas_model extends CI_Model
 
         return $this->db
             ->join('clientes', 'clientes.idClientes = cobrancas.clientes_id', 'left')
-            ->order_by('cobrancas.idCobranca', 'desc')
+            ->order_by('cobrancas.idCobranca', 'asc')
             ->limit($limite, max(0, $offset))
             ->get()
             ->result();
@@ -50,9 +50,10 @@ class Cobrancas_model extends CI_Model
         $this->db->from('cobrancas');
         $this->db->where('cobrancas.empresa_id', empresa_ativa_id());
 
-        $pesquisa = $filtros['pesquisa'] ?? '';
+        $pesquisa = trim((string) ($filtros['pesquisa'] ?? ''));
         if ($pesquisa !== '') {
-            $this->db->group_start()->like('clientes.nomeCliente', $pesquisa);
+            $this->db->group_start();
+            dbAplicarLikeCampos($this->db, ['clientes.nomeCliente'], $pesquisa);
             if (ctype_digit($pesquisa)) {
                 $this->db->or_where('cobrancas.codigo', (int) $pesquisa)->or_where('cobrancas.idCobranca', (int) $pesquisa)->or_where('cobrancas.charge_id', (int) $pesquisa);
             }

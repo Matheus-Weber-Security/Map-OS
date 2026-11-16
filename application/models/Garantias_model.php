@@ -46,7 +46,7 @@ class Garantias_model extends CI_Model
         return $this->db->select('garantias.*, usuarios.nome')
             ->from('garantias')
             ->join('usuarios', 'usuarios.idUsuarios = garantias.usuarios_id', 'left')
-            ->order_by('garantias.idGarantias', 'desc')
+            ->order_by('garantias.idGarantias', 'asc')
             ->limit($limite, max(0, $offset))
             ->get()->result();
     }
@@ -72,12 +72,12 @@ class Garantias_model extends CI_Model
         $this->db->where('garantias.empresa_id', empresa_ativa_id());
 
         if (($filtros['pesquisa'] ?? '') !== '') {
-            $this->db->group_start()
-                ->like('garantias.refGarantia', $filtros['pesquisa'])
-                ->or_like('garantias.textoGarantia', $filtros['pesquisa']);
-            if (ctype_digit((string) $filtros['pesquisa'])) {
-                $this->db->or_where('garantias.codigo', (int) $filtros['pesquisa']);
-                $this->db->or_where('garantias.idGarantias', (int) $filtros['pesquisa']);
+            $pesquisa = trim((string) $filtros['pesquisa']);
+            $this->db->group_start();
+            dbAplicarLikeCampos($this->db, ['garantias.refGarantia', 'garantias.textoGarantia'], $pesquisa);
+            if (ctype_digit($pesquisa)) {
+                $this->db->or_where('garantias.codigo', (int) $pesquisa);
+                $this->db->or_where('garantias.idGarantias', (int) $pesquisa);
             }
             $this->db->group_end();
         }

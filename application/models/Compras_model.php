@@ -21,7 +21,7 @@ class Compras_model extends CI_Model
         $this->aplicarFiltros($filtros);
 
         $linhas = $this->db
-            ->order_by('compras.idCompras', 'desc')
+            ->order_by('compras.idCompras', 'asc')
             ->limit($limite, max(0, $offset))
             ->get()
             ->result();
@@ -57,11 +57,8 @@ class Compras_model extends CI_Model
 
         $pesquisa = trim((string) ($filtros['pesquisa'] ?? ''));
         if ($pesquisa !== '') {
-            $this->db->group_start()
-                ->like('clientes.nomeCliente', $pesquisa)
-                ->or_like('clientes.documento', $pesquisa)
-                ->or_like('compras.numero_nfe', $pesquisa)
-                ->or_like('compras.chave_nfe', $pesquisa);
+            $this->db->group_start();
+            dbAplicarLikeCampos($this->db, ['clientes.nomeCliente', 'clientes.documento', 'compras.numero_nfe', 'compras.chave_nfe'], $pesquisa);
             if (ctype_digit($pesquisa)) {
                 $this->db->or_where('compras.codigo', (int) $pesquisa);
                 $this->db->or_where('compras.idCompras', (int) $pesquisa);

@@ -17,7 +17,7 @@ class Arquivos_model extends CI_Model
     {
         $this->aplicarFiltros($filtros);
 
-        return $this->db->order_by('idDocumentos', 'desc')->limit($limite, max(0, $offset))->get('documentos')->result();
+        return $this->db->order_by('idDocumentos', 'asc')->limit($limite, max(0, $offset))->get('documentos')->result();
     }
 
     public function contar(array $filtros): int
@@ -34,10 +34,12 @@ class Arquivos_model extends CI_Model
         }
 
         if (($filtros['pesquisa'] ?? '') !== '') {
-            $this->db->group_start()->like('documento', $filtros['pesquisa'])->or_like('descricao', $filtros['pesquisa']);
-            if (ctype_digit((string) $filtros['pesquisa'])) {
-                $this->db->or_where('codigo', (int) $filtros['pesquisa']);
-                $this->db->or_where('idDocumentos', (int) $filtros['pesquisa']);
+            $pesquisa = trim((string) $filtros['pesquisa']);
+            $this->db->group_start();
+            dbAplicarLikeCampos($this->db, ['documento', 'descricao'], $pesquisa);
+            if (ctype_digit($pesquisa)) {
+                $this->db->or_where('codigo', (int) $pesquisa);
+                $this->db->or_where('idDocumentos', (int) $pesquisa);
             }
             $this->db->group_end();
         }

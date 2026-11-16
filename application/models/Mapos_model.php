@@ -122,10 +122,7 @@ class Mapos_model extends CI_Model
             $this->db->where('clientes.empresa_id', $empresaId);
         }
         $this->db->group_start();
-        $this->db->like('nomeCliente', $termo);
-        $this->db->or_like('telefone', $termo);
-        $this->db->or_like('celular', $termo);
-        $this->db->or_like('documento', $termo);
+        dbAplicarLikeCampos($this->db, ['nomeCliente', 'telefone', 'celular', 'documento'], $termo);
         $this->db->group_end();
         $this->db->limit(15);
         $data['clientes'] = $this->db->get('clientes')->result();
@@ -135,8 +132,7 @@ class Mapos_model extends CI_Model
             $this->db->where('os.empresa_id', $empresaId);
         }
         $this->db->group_start();
-        $this->db->like('idOs', $termo);
-        $this->db->or_like('descricaoProduto', $termo);
+        dbAplicarLikeCampos($this->db, ['idOs', 'descricaoProduto'], $termo);
         $this->db->group_end();
         $this->db->limit(15);
         $data['os'] = $this->db->get('os')->result();
@@ -146,8 +142,7 @@ class Mapos_model extends CI_Model
             $this->db->where('produtos.empresa_id', $empresaId);
         }
         $this->db->group_start();
-        $this->db->like('codDeBarra', $termo);
-        $this->db->or_like('descricao', $termo);
+        dbAplicarLikeCampos($this->db, ['codDeBarra', 'descricao'], $termo);
         $this->db->group_end();
         $this->db->limit(50);
         $data['produtos'] = $this->db->get('produtos')->result();
@@ -156,7 +151,9 @@ class Mapos_model extends CI_Model
         if ($this->db->field_exists('empresa_id', 'servicos')) {
             $this->db->where('servicos.empresa_id', $empresaId);
         }
-        $this->db->like('nome', $termo);
+        $this->db->group_start();
+        dbAplicarLikeCampos($this->db, ['nome'], $termo);
+        $this->db->group_end();
         $this->db->limit(15);
         $data['servicos'] = $this->db->get('servicos')->result();
 

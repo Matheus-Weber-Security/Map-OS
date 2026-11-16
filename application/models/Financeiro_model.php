@@ -423,7 +423,9 @@ class Financeiro_model extends CI_Model
         if ($this->db->field_exists('empresa_id', 'clientes')) {
             $this->db->where('clientes.empresa_id', $empresaId);
         }
-        $this->db->group_start()->like('nomeCliente', $termo)->or_like('documento', $termo)->group_end();
+        $this->db->group_start();
+        dbAplicarLikeCampos($this->db, ['nomeCliente', 'documento'], $termo);
+        $this->db->group_end();
         $this->db->order_by('nomeCliente', 'asc')->limit(8);
 
         $itens = [];
@@ -453,8 +455,9 @@ class Financeiro_model extends CI_Model
         if ($this->db->field_exists('empresa_id', 'lancamentos')) {
             $this->db->where('empresa_id', $empresaId);
         }
+        $padrao = dbLikePadrao($termo);
         $linhas = $this->db
-            ->like('cliente_fornecedor', $termo)
+            ->where('cliente_fornecedor LIKE', $padrao)
             ->where('cliente_fornecedor IS NOT NULL', null, false)
             ->order_by('cliente_fornecedor', 'asc')
             ->limit(8)

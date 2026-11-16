@@ -136,7 +136,7 @@ class Os_model extends CI_Model
         $this->aplicarFiltros($filtros, $statusVisiveis);
 
         $linhas = $this->db
-            ->order_by('os.idOs', 'desc')
+            ->order_by('os.idOs', 'asc')
             ->limit($limite, max(0, $offset))
             ->get()
             ->result();
@@ -174,12 +174,10 @@ class Os_model extends CI_Model
         $this->db->join('usuarios', 'usuarios.idUsuarios = os.usuarios_id', 'left');
         $this->db->where('os.empresa_id', empresa_ativa_id());
 
-        $pesquisa = $filtros['pesquisa'] ?? '';
+        $pesquisa = trim((string) ($filtros['pesquisa'] ?? ''));
         if ($pesquisa !== '') {
-            $this->db->group_start()
-                ->like('clientes.nomeCliente', $pesquisa)
-                ->or_like('clientes.documento', $pesquisa)
-                ->or_like('os.descricaoProduto', $pesquisa);
+            $this->db->group_start();
+            dbAplicarLikeCampos($this->db, ['clientes.nomeCliente', 'clientes.documento', 'os.descricaoProduto'], $pesquisa);
             if (ctype_digit($pesquisa)) {
                 $this->db->or_where('os.codigo', (int) $pesquisa);
                 $this->db->or_where('os.idOs', (int) $pesquisa);
@@ -408,7 +406,9 @@ class Os_model extends CI_Model
         $this->db->where('produtos.empresa_id', empresa_ativa_id());
         $this->db->limit(25);
         // O OR entre parênteses, para não anular o filtro de saída.
-        $this->db->group_start()->like('codDeBarra', $q)->or_like('descricao', $q)->group_end();
+        $this->db->group_start();
+        dbAplicarLikeCampos($this->db, ['codDeBarra', 'descricao'], $q);
+        $this->db->group_end();
         if ($saida) {
             $this->db->where('saida', 1);
         }
@@ -434,10 +434,7 @@ class Os_model extends CI_Model
         $this->db->where('clientes.empresa_id', empresa_ativa_id());
         $this->db->limit(25);
         $this->db->group_start();
-        $this->db->like('nomeCliente', $q);
-        $this->db->or_like('telefone', $q);
-        $this->db->or_like('celular', $q);
-        $this->db->or_like('documento', $q);
+        dbAplicarLikeCampos($this->db, ['nomeCliente', 'telefone', 'celular', 'documento'], $q);
         $this->db->group_end();
 
         $itens = [];
@@ -496,7 +493,9 @@ class Os_model extends CI_Model
         $this->db->select('idServicos, nome, preco');
         $this->db->where('servicos.empresa_id', empresa_ativa_id());
         $this->db->limit(25);
-        $this->db->like('nome', $q);
+        $this->db->group_start();
+        dbAplicarLikeCampos($this->db, ['nome'], $q);
+        $this->db->group_end();
 
         $itens = [];
         foreach ($this->db->get('servicos')->result_array() as $row) {

@@ -401,3 +401,67 @@ if (! function_exists('empresa_ativa_id')) {
     }
 }
 
+if (! function_exists('dbLikePadrao')) {
+    /**
+     * Prepara o padrão de busca LIKE seguro, suportando o curinga '%' (ou '*').
+     *
+     * - Se o termo contiver '%' ou '*', respeita os curingas definidos pelo usuário (ex: 'M%', 'M% R%').
+     * - Se não contiver curingas, envolve com '%...%' para manter o comportamento padrão de busca parcial.
+     *
+     * @param  string  $termo  Termo pesquisado
+     * @return string  Padrão para uso em WHERE campo LIKE
+     */
+    function dbLikePadrao(string $termo): string
+    {
+        $termo = trim(str_replace('*', '%', $termo));
+        if ($termo === '') {
+            return '';
+        }
+
+        // Se o usuário digitou curinga '%' no termo, respeita a posição dos curingas
+        if (str_contains($termo, '%')) {
+            // Evita curingas repetidos consecutivos (ex: '%%%%' vira '%')
+            $normalizado = (string) preg_replace('/%{2,}/', '%', $termo);
+            // Se tiver apenas o curinga sem nenhum caractere alfanumérico ou texto, ignora para evitar DoS
+            if (trim($normalizado, '% ') === '') {
+                return '';
+            }
+
+            return $normalizado;
+        }
+
+        // Sem curinga explícito: busca parcial padrão
+        return '%' . $termo . '%';
+    }
+}
+
+if (! function_exists('dbAplicarLikeCampos')) {
+    /**
+     * Aplica condições LIKE seguras em um ou mais campos usando o padrão com curinga.
+     *
+     * @param  CI_DB_query_builder|object  $db      Instância do query builder ($this->db)
+     * @param  list<string>                $campos  Nomes das colunas (ex: ['nomeCliente', 'documento', 'email'])
+     * @param  string                      $termo   Termo pesquisado
+     * @return bool                        Se as condições foram aplicadas
+     */
+    function dbAplicarLikeCampos($db, array $campos, string $termo): bool
+    {
+        $padrao = dbLikePadrao($termo);
+        if ($padrao === '' || $campos === []) {
+            return false;
+        }
+
+        $primeiro = true;
+        foreach ($campos as $campo) {
+            if ($primeiro) {
+                $db->where("{$campo} LIKE", $padrao);
+                $primeiro = false;
+            } else {
+                $db->or_where("{$campo} LIKE", $padrao);
+            }
+        }
+
+        return true;
+    }
+}
+

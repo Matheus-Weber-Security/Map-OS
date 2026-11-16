@@ -37,7 +37,7 @@ class Servicos_model extends CI_Model
     {
         $this->aplicarFiltros($filtros);
 
-        return $this->db->order_by('idServicos', 'desc')->limit($limite, max(0, $offset))->get('servicos')->result();
+        return $this->db->order_by('idServicos', 'asc')->limit($limite, max(0, $offset))->get('servicos')->result();
     }
 
     public function contar(array $filtros): int
@@ -52,10 +52,12 @@ class Servicos_model extends CI_Model
         $this->db->where('servicos.empresa_id', empresa_ativa_id());
 
         if (($filtros['pesquisa'] ?? '') !== '') {
-            $this->db->group_start()->like('nome', $filtros['pesquisa'])->or_like('descricao', $filtros['pesquisa']);
-            if (ctype_digit((string) $filtros['pesquisa'])) {
-                $this->db->or_where('codigo', (int) $filtros['pesquisa']);
-                $this->db->or_where('idServicos', (int) $filtros['pesquisa']);
+            $pesquisa = trim((string) $filtros['pesquisa']);
+            $this->db->group_start();
+            dbAplicarLikeCampos($this->db, ['nome', 'descricao'], $pesquisa);
+            if (ctype_digit($pesquisa)) {
+                $this->db->or_where('codigo', (int) $pesquisa);
+                $this->db->or_where('idServicos', (int) $pesquisa);
             }
             $this->db->group_end();
         }

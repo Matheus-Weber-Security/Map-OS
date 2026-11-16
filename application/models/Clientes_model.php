@@ -40,7 +40,8 @@ class Clientes_model extends CI_Model
         $this->aplicarFiltros($filtros);
 
         return $this->db
-            ->order_by('idClientes', 'desc')
+            ->order_by('codigo', 'asc')
+            ->order_by('idClientes', 'asc')
             ->limit($limite, max(0, $offset))
             ->get('clientes')
             ->result();
@@ -67,15 +68,12 @@ class Clientes_model extends CI_Model
         $this->db->where('clientes.empresa_id', empresa_ativa_id());
 
         if (($filtros['pesquisa'] ?? '') !== '') {
-            $this->db->group_start()
-                ->like('nomeCliente', $filtros['pesquisa'])
-                ->or_like('documento', $filtros['pesquisa'])
-                ->or_like('email', $filtros['pesquisa'])
-                ->or_like('telefone', $filtros['pesquisa'])
-                ->or_like('celular', $filtros['pesquisa']);
-            if (ctype_digit((string) $filtros['pesquisa'])) {
-                $this->db->or_where('codigo', (int) $filtros['pesquisa']);
-                $this->db->or_where('idClientes', (int) $filtros['pesquisa']);
+            $pesquisa = trim((string) $filtros['pesquisa']);
+            $this->db->group_start();
+            dbAplicarLikeCampos($this->db, ['nomeCliente', 'documento', 'email', 'telefone', 'celular'], $pesquisa);
+            if (ctype_digit($pesquisa)) {
+                $this->db->or_where('codigo', (int) $pesquisa);
+                $this->db->or_where('idClientes', (int) $pesquisa);
             }
             $this->db->group_end();
         }

@@ -38,7 +38,7 @@ class Vendas_model extends CI_Model
         $this->aplicarFiltros($filtros);
 
         $linhas = $this->db
-            ->order_by('vendas.idVendas', 'desc')
+            ->order_by('vendas.idVendas', 'asc')
             ->limit($limite, max(0, $offset))
             ->get()
             ->result();
@@ -70,11 +70,10 @@ class Vendas_model extends CI_Model
         $this->db->join('usuarios', 'usuarios.idUsuarios = vendas.usuarios_id', 'left');
         $this->db->where('vendas.empresa_id', empresa_ativa_id());
 
-        $pesquisa = $filtros['pesquisa'] ?? '';
+        $pesquisa = trim((string) ($filtros['pesquisa'] ?? ''));
         if ($pesquisa !== '') {
-            $this->db->group_start()
-                ->like('clientes.nomeCliente', $pesquisa)
-                ->or_like('clientes.documento', $pesquisa);
+            $this->db->group_start();
+            dbAplicarLikeCampos($this->db, ['clientes.nomeCliente', 'clientes.documento'], $pesquisa);
             if (ctype_digit($pesquisa)) {
                 $this->db->or_where('vendas.codigo', (int) $pesquisa);
                 $this->db->or_where('vendas.idVendas', (int) $pesquisa);

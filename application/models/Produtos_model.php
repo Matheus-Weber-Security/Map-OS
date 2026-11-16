@@ -39,7 +39,7 @@ class Produtos_model extends CI_Model
     {
         $this->aplicarFiltros($filtros);
 
-        return $this->db->order_by('codigo', 'desc')->order_by('idProdutos', 'desc')->limit($limite, max(0, $offset))->get('produtos')->result();
+        return $this->db->order_by('codigo', 'asc')->order_by('idProdutos', 'asc')->limit($limite, max(0, $offset))->get('produtos')->result();
     }
 
     public function contar(array $filtros): int
@@ -72,10 +72,9 @@ class Produtos_model extends CI_Model
         $this->db->where('empresa_id', empresa_ativa_id());
 
         if (($filtros['pesquisa'] ?? '') !== '') {
-            $termo = $filtros['pesquisa'];
-            $this->db->group_start()
-                ->like('descricao', $termo)
-                ->or_like('codDeBarra', $termo);
+            $termo = trim((string) $filtros['pesquisa']);
+            $this->db->group_start();
+            dbAplicarLikeCampos($this->db, ['descricao', 'codDeBarra'], $termo);
             if (is_numeric($termo)) {
                 $this->db->or_where('codigo', (int) $termo);
             }
