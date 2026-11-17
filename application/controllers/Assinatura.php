@@ -260,7 +260,7 @@ class Assinatura extends MY_Controller
     }
 
     /**
-     * Endpoint AJAX para processar Cartão de Crédito (+30 dias).
+     * Endpoint AJAX para processar Cartão de Crédito ou Débito (+30 dias).
      */
     public function gerarCartao()
     {
@@ -291,20 +291,153 @@ class Assinatura extends MY_Controller
         $calculo = $this->calcularValoresPlano($empresa, $plano);
         $valorFinal = $calculo['valorFinal'];
 
-        $tipo = $this->input->post('tipo') === 'debito' ? 'CARTAO_DEBITO' : 'CARTAO_CREDITO';
-        $assinaturaId = $this->saas_model->criarAssinatura($empresaId, (int) $plano->id, $valorFinal, $tipo);
+        $isDebito = $this->input->post('tipo') === 'debito';
+        $codigoForma = $isDebito ? 'cartao_debito' : 'cartao_credito';
+        $tipoBanco = $isDebito ? 'CARTAO_DEBITO' : 'CARTAO_CREDITO';
 
-        // Confirmação do pagamento e adição imediata de +30 dias
-        $this->saas_model->confirmarPagamento($assinaturaId);
+        $formaDb = $this->saas_model->getFormaPagamentoByCodigo($codigoForma);
+        if (! $formaDb || empty($formaDb->ativo)) {
+            return $this->output
+                ->set_status_header(400)
+                ->set_content_type('application/json')
+                ->set_output(json_encode([
+                    'result' => false,
+                    'message' => 'A forma de pagamento ' . ($isDebito ? 'Cartão de Débito' : 'Cartão de Crédito') . ' está inativa no sistema.',
+                ]));
+        }
 
-        return $this->output
-            ->set_content_type('application/json')
-            ->set_output(json_encode([
-                'result' => true,
-                'assinatura_id' => $assinaturaId,
-                'message' => 'Pagamento no cartão aprovado com sucesso! Mais 30 dias foram adicionados ao seu plano.',
-                'valor' => number_format($valorFinal, 2, ',', '.'),
-            ]));
+        $configForma = $formaDb->config ?? [];
+        if (! isset($configForma['provedor']) && ! empty($formaDb->provedor)) {
+            $configForma['provedor'] = $formaDb->provedor;
+        }
+
+        $this->load->library('SaasPaymentService');
+
+        if ($isDebito) {
+            $assinaturaId = $this->saas_model->criarAssinatura($empresaId, (int) $plano->id, $valorFinal, $tipoBanco);
+            try {
+                $resultado = $this->saaspaymentservice->processarCartaoDebito($configForma, $valorFinal, $empresa, $plano, $assinaturaId);
+
+                $this->db->where('id', $assinaturaId)->update('saas_assinaturas', [
+                    'charge_id' => $resultado['charge_id'] ?? null,
+                    'gateway' => $resultado['gateway'] ?? 'mercadopago',
+                ]);
+
+                return $this->output
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode([
+                        'result' => true,
+                        'modo' => 'redirecionar',
+                        'checkout_url' => $resultado['checkout_url'],
+                        'assinatura_id' => $assinaturaId,
+                        'message' => 'Redirecionando para autenticação bancária segura (3DS)...',
+                    ]));
+            } catch (\Throwable $e) {
+                $this->db->where('id', $assinaturaId)->update('saas_assinaturas', [
+                    'status' => 'cancelado',
+                ]);
+
+                return $this->output
+                    ->set_status_header(422)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode([
+                        'result' => false,
+                        'message' => $e->getMessage(),
+                    ]));
+            }
+        }
+
+        // Cartão de Crédito
+        $dadosPost = [
+            'token' => trim((string) $this->input->post('token')),
+            'titular' => trim((string) $this->input->post('titular')),
+            'doc_titular' => trim((string) $this->input->post('doc_titular')),
+            'parcelas' => max(1, min(12, (int) ($this->input->post('parcelas') ?: 1))),
+            'numero_cartao' => trim((string) $this->input->post('numero_cartao')),
+            'mes_expiracao' => trim((string) $this->input->post('mes_expiracao')),
+            'ano_expiracao' => trim((string) $this->input->post('ano_expiracao')),
+            'cvv' => trim((string) $this->input->post('cvv')),
+        ];
+
+        $assinaturaId = $this->saas_model->criarAssinatura($empresaId, (int) $plano->id, $valorFinal, $tipoBanco);
+
+        try {
+            $resultado = $this->saaspaymentservice->processarCartaoCredito($configForma, $valorFinal, $empresa, $plano, $dadosPost, $assinaturaId);
+
+            $chargeId = $resultado['charge_id'] ?? null;
+            $gateway = $resultado['gateway'] ?? ($configForma['provedor'] ?? 'mercadopago');
+
+            $this->db->where('id', $assinaturaId)->update('saas_assinaturas', [
+                'charge_id' => $chargeId,
+                'gateway' => $gateway,
+            ]);
+
+            if ($resultado['status'] === 'aprovado') {
+                $this->saas_model->confirmarPagamento($assinaturaId);
+
+                return $this->output
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode([
+                        'result' => true,
+                        'assinatura_id' => $assinaturaId,
+                        'message' => $resultado['mensagem'] ?? 'Pagamento no cartão aprovado com sucesso! Mais 30 dias foram adicionados ao seu plano.',
+                        'valor' => number_format($valorFinal, 2, ',', '.'),
+                    ]));
+            }
+
+            return $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode([
+                    'result' => true,
+                    'pendente' => true,
+                    'assinatura_id' => $assinaturaId,
+                    'message' => $resultado['mensagem'] ?? 'O pagamento foi recebido e está em análise pela operadora.',
+                ]));
+        } catch (\Throwable $e) {
+            $this->db->where('id', $assinaturaId)->update('saas_assinaturas', [
+                'status' => 'cancelado',
+            ]);
+
+            return $this->output
+                ->set_status_header(422)
+                ->set_content_type('application/json')
+                ->set_output(json_encode([
+                    'result' => false,
+                    'message' => $e->getMessage(),
+                ]));
+        }
+    }
+
+    /**
+     * Retorno do checkout externo com autenticação 3DS (Mercado Pago).
+     */
+    public function retornoCheckout()
+    {
+        $status = strtolower(trim((string) $this->input->get('status')));
+        $collectionStatus = strtolower(trim((string) $this->input->get('collection_status')));
+        $assinaturaId = (int) $this->input->get('assinatura_id');
+        $paymentId = $this->input->get('payment_id') ?: $this->input->get('collection_id');
+
+        if ($assinaturaId > 0) {
+            $assinatura = $this->saas_model->getAssinaturaById($assinaturaId);
+            if ($assinatura && $assinatura->status === 'pendente') {
+                if ($paymentId) {
+                    $this->db->where('id', $assinaturaId)->update('saas_assinaturas', [
+                        'charge_id' => (string) $paymentId,
+                    ]);
+                    $assinatura->charge_id = (string) $paymentId;
+                }
+
+                if ($status === 'success' || $collectionStatus === 'approved') {
+                    $this->saas_model->confirmarPagamento($assinaturaId);
+                    $this->session->set_flashdata('success', 'Pagamento aprovado com sucesso! Mais 30 dias adicionados ao seu plano.');
+                } else {
+                    $this->saas_model->consultarStatusGateway($assinatura);
+                }
+            }
+        }
+
+        return redirect('assinatura');
     }
 
     /**

@@ -306,14 +306,21 @@ class Saas_model extends CI_Model
             return false;
         }
 
-        $formaPix = $this->getFormaPagamentoByCodigo('pix');
-        $configPix = $formaPix && ! empty($formaPix->config) ? $formaPix->config : [];
-        if (! isset($configPix['provedor']) && $formaPix && ! empty($formaPix->provedor)) {
-            $configPix['provedor'] = $formaPix->provedor;
+        $codigoForma = match (strtoupper((string) ($assinatura->forma_pagamento ?? ''))) {
+            'CARTAO_CREDITO' => 'cartao_credito',
+            'CARTAO_DEBITO' => 'cartao_debito',
+            'BOLETO' => 'boleto',
+            default => 'pix',
+        };
+
+        $forma = $this->getFormaPagamentoByCodigo($codigoForma);
+        $configForma = $forma && ! empty($forma->config) ? $forma->config : [];
+        if (! isset($configForma['provedor']) && $forma && ! empty($forma->provedor)) {
+            $configForma['provedor'] = $forma->provedor;
         }
 
         $this->load->library('SaasPaymentService');
-        $status = $this->saaspaymentservice->consultarStatusPix($assinatura, $configPix);
+        $status = $this->saaspaymentservice->consultarStatusPix($assinatura, $configForma);
 
         if ($status === 'aprovado') {
             return $this->confirmarPagamento((int) $assinatura->id);

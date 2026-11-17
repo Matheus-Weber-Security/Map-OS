@@ -583,10 +583,36 @@ class Saas extends MY_Controller
                 $configuracoes['mp_public_key'] = $mpPublic;
             }
 
+            $efiClient = trim((string) $this->input->post('efi_client_id'));
+            if ($efiClient !== '') {
+                $configuracoes['client_id'] = $efiClient;
+                $configuracoes['efi_client_id'] = $efiClient;
+            }
+            $efiSecret = trim((string) $this->input->post('efi_client_secret'));
+            if ($efiSecret !== '') {
+                $configuracoes['client_secret'] = $efiSecret;
+                $configuracoes['efi_client_secret'] = $efiSecret;
+            }
+            $efiPayee = trim((string) $this->input->post('efi_payee_code'));
+            if ($efiPayee !== '') {
+                $configuracoes['payee_code'] = $efiPayee;
+                $configuracoes['efi_payee_code'] = $efiPayee;
+            }
+            $efiAmbiente = trim((string) $this->input->post('efi_ambiente'));
+            if ($efiAmbiente !== '') {
+                $configuracoes['ambiente'] = $efiAmbiente;
+                $configuracoes['efi_ambiente'] = $efiAmbiente;
+            }
+
             $asaasKey = trim((string) $this->input->post('asaas_api_key'));
             if ($asaasKey !== '') {
                 $configuracoes['api_key'] = $asaasKey;
                 $configuracoes['asaas_api_key'] = $asaasKey;
+            }
+            $asaasAmbiente = trim((string) $this->input->post('asaas_ambiente'));
+            if ($asaasAmbiente !== '') {
+                $configuracoes['ambiente'] = $asaasAmbiente;
+                $configuracoes['asaas_ambiente'] = $asaasAmbiente;
             }
         } elseif ($forma->codigo === 'cartao_debito') {
             $configuracoes['modo'] = 'link';
@@ -596,11 +622,10 @@ class Saas extends MY_Controller
                 $configuracoes['access_token'] = $mpToken;
                 $configuracoes['mp_access_token'] = $mpToken;
             }
-
-            $asaasKey = trim((string) $this->input->post('asaas_api_key'));
-            if ($asaasKey !== '') {
-                $configuracoes['api_key'] = $asaasKey;
-                $configuracoes['asaas_api_key'] = $asaasKey;
+            $mpPublic = trim((string) $this->input->post('mp_public_key'));
+            if ($mpPublic !== '') {
+                $configuracoes['public_key'] = $mpPublic;
+                $configuracoes['mp_public_key'] = $mpPublic;
             }
         }
 

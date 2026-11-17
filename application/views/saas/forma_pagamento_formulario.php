@@ -431,6 +431,7 @@ $provedorAtual = $forma->provedor ?: 'mercadopago';
                         'selected' => $forma->provedor ?: 'mercadopago',
                         'options' => [
                             ['value' => 'mercadopago', 'label' => 'Mercado Pago (Recomendado)'],
+                            ['value' => 'gerencianet', 'label' => 'Efí (antiga Gerencianet)'],
                             ['value' => 'asaas', 'label' => 'Asaas'],
                         ],
                     ]) ?>
@@ -483,19 +484,74 @@ $provedorAtual = $forma->provedor ?: 'mercadopago';
                     </div>
                 </div>
 
+                <!-- Credenciais Efí (Gerencianet) -->
+                <div id="credenciais-gerencianet" class="flex flex-col gap-4 border-t border-border pt-4 <?= $forma->provedor !== 'gerencianet' ? 'hidden' : '' ?>">
+                    <div class="flex items-center gap-2">
+                        <?= icon('key-round', ['class' => 'size-4 text-primary']) ?>
+                        <h3 class="font-display text-sm font-semibold text-text">Credenciais de API - Efí (Gerencianet)</h3>
+                    </div>
+                    <div class="<?= e($grade) ?>">
+                        <?= component('input', [
+                            'name' => 'efi_client_id',
+                            'label' => 'Client ID',
+                            'type' => 'text',
+                            'value' => $configuracoes['client_id'] ?? $configuracoes['efi_client_id'] ?? '',
+                            'help' => 'Client ID da sua aplicação na Efí.',
+                        ]) ?>
+
+                        <?= component('input', [
+                            'name' => 'efi_client_secret',
+                            'label' => 'Client Secret',
+                            'type' => 'password',
+                            'value' => $configuracoes['client_secret'] ?? $configuracoes['efi_client_secret'] ?? '',
+                            'help' => 'Client Secret da sua aplicação na Efí.',
+                            'attrs' => ['autocomplete' => 'new-password'],
+                        ]) ?>
+                    </div>
+                    <div class="<?= e($grade) ?>">
+                        <?= component('input', [
+                            'name' => 'efi_payee_code',
+                            'label' => 'Identificador de Conta (Payee Code)',
+                            'type' => 'text',
+                            'value' => $configuracoes['payee_code'] ?? $configuracoes['efi_payee_code'] ?? '',
+                            'help' => 'Obrigatório para tokenizar o cartão no navegador (API > Meus Aplicativos > Identificador de Conta).',
+                        ]) ?>
+
+                        <?= component('select', [
+                            'name' => 'efi_ambiente',
+                            'label' => 'Ambiente da Efí',
+                            'selected' => $configuracoes['ambiente'] ?? $configuracoes['efi_ambiente'] ?? 'producao',
+                            'options' => [
+                                ['value' => 'producao', 'label' => 'Produção (Real)'],
+                                ['value' => 'homologacao', 'label' => 'Homologação (Sandbox de Testes)'],
+                            ],
+                        ]) ?>
+                    </div>
+                </div>
+
                 <!-- Credenciais Asaas -->
                 <div id="credenciais-asaas" class="flex flex-col gap-4 border-t border-border pt-4 <?= $forma->provedor !== 'asaas' ? 'hidden' : '' ?>">
                     <div class="flex items-center gap-2">
                         <?= icon('key-round', ['class' => 'size-4 text-primary']) ?>
                         <h3 class="font-display text-sm font-semibold text-text">Credenciais de API - Asaas</h3>
                     </div>
-                    <div class="w-full">
+                    <div class="<?= e($grade) ?>">
                         <?= component('input', [
                             'name' => 'asaas_api_key',
                             'label' => 'Chave de API Asaas (API Key)',
                             'type' => 'password',
                             'value' => $configuracoes['api_key'] ?? $configuracoes['asaas_api_key'] ?? '',
                             'attrs' => ['autocomplete' => 'new-password'],
+                        ]) ?>
+
+                        <?= component('select', [
+                            'name' => 'asaas_ambiente',
+                            'label' => 'Ambiente do Asaas',
+                            'selected' => $configuracoes['ambiente'] ?? $configuracoes['asaas_ambiente'] ?? 'producao',
+                            'options' => [
+                                ['value' => 'producao', 'label' => 'Produção (Real)'],
+                                ['value' => 'homologacao', 'label' => 'Homologação (Sandbox de Testes)'],
+                            ],
                         ]) ?>
                     </div>
                 </div>
@@ -515,7 +571,7 @@ $provedorAtual = $forma->provedor ?: 'mercadopago';
                 <div class="rounded-lg border border-border bg-surface-subtle p-3.5 flex items-start gap-3">
                     <?= icon('info', ['class' => 'size-5 text-primary shrink-0 mt-0.5']) ?>
                     <div class="text-caption text-muted">
-                        <strong class="text-text font-semibold">Autenticação 3D Secure Obrigatória:</strong> No Brasil, pagamentos em débito online exigem redirecionamento ou desafio 3DS no aplicativo do banco do cliente. O sistema utiliza a sessão segura do gateway para garantir a conformidade.
+                        <strong class="text-text font-semibold">Autenticação 3D Secure Obrigatória:</strong> No Brasil, pagamentos em débito online exigem redirecionamento para o app do banco do cliente (3DS). O Mercado Pago Checkout Pro é a solução oficial homologada para essa operação.
                     </div>
                 </div>
 
@@ -525,42 +581,33 @@ $provedorAtual = $forma->provedor ?: 'mercadopago';
                         'label' => 'Gateway Processador',
                         'selected' => $forma->provedor ?: 'mercadopago',
                         'options' => [
-                            ['value' => 'mercadopago', 'label' => 'Mercado Pago Checkout Pro (3DS)'],
-                            ['value' => 'asaas', 'label' => 'Asaas Link Seguro'],
+                            ['value' => 'mercadopago', 'label' => 'Mercado Pago (Checkout Pro / 3DS)'],
                         ],
                     ]) ?>
                 </div>
 
                 <!-- Credenciais Mercado Pago -->
-                <div id="credenciais-mercadopago" class="flex flex-col gap-4 border-t border-border pt-4 <?= ($forma->provedor ?: 'mercadopago') !== 'mercadopago' ? 'hidden' : '' ?>">
+                <div id="credenciais-mercadopago" class="flex flex-col gap-4 border-t border-border pt-4">
                     <div class="flex items-center gap-2">
                         <?= icon('key-round', ['class' => 'size-4 text-primary']) ?>
                         <h3 class="font-display text-sm font-semibold text-text">Credenciais de API - Mercado Pago</h3>
                     </div>
-                    <div class="w-full">
+                    <div class="<?= e($grade) ?>">
                         <?= component('input', [
                             'name' => 'mp_access_token',
                             'label' => 'Access Token (Produção)',
                             'type' => 'password',
                             'value' => $configuracoes['access_token'] ?? $configuracoes['mp_access_token'] ?? '',
+                            'help' => 'Access Token para gerar a preferência de checkout com débito.',
                             'attrs' => ['autocomplete' => 'new-password'],
                         ]) ?>
-                    </div>
-                </div>
 
-                <!-- Credenciais Asaas -->
-                <div id="credenciais-asaas" class="flex flex-col gap-4 border-t border-border pt-4 <?= $forma->provedor !== 'asaas' ? 'hidden' : '' ?>">
-                    <div class="flex items-center gap-2">
-                        <?= icon('key-round', ['class' => 'size-4 text-primary']) ?>
-                        <h3 class="font-display text-sm font-semibold text-text">Credenciais de API - Asaas</h3>
-                    </div>
-                    <div class="w-full">
                         <?= component('input', [
-                            'name' => 'asaas_api_key',
-                            'label' => 'Chave de API Asaas (API Key)',
-                            'type' => 'password',
-                            'value' => $configuracoes['api_key'] ?? $configuracoes['asaas_api_key'] ?? '',
-                            'attrs' => ['autocomplete' => 'new-password'],
+                            'name' => 'mp_public_key',
+                            'label' => 'Public Key (Chave Pública)',
+                            'type' => 'text',
+                            'value' => $configuracoes['public_key'] ?? $configuracoes['mp_public_key'] ?? '',
+                            'help' => 'Chave pública da sua aplicação no Mercado Pago.',
                         ]) ?>
                     </div>
                 </div>

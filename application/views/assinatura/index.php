@@ -11,7 +11,29 @@ if (empty($formasAtivas)) {
     ];
 }
 $primeiraForma = $formasAtivas[0];
+
+$formaCartaoCredito = null;
+$formaCartaoDebito = null;
+foreach ($formasAtivas as $f) {
+    if ($f->codigo === 'cartao_credito') {
+        $formaCartaoCredito = $f;
+    } elseif ($f->codigo === 'cartao_debito') {
+        $formaCartaoDebito = $f;
+    }
+}
+$provedorCartao = $formaCartaoCredito ? ($formaCartaoCredito->provedor ?: 'mercadopago') : 'mercadopago';
+$mpPublicKey = $formaCartaoCredito ? ($formaCartaoCredito->config['public_key'] ?? $formaCartaoCredito->config['mp_public_key'] ?? '') : '';
+$efiPayeeCode = $formaCartaoCredito ? ($formaCartaoCredito->config['payee_code'] ?? $formaCartaoCredito->config['efi_payee_code'] ?? '') : '';
+$efiAmbiente = $formaCartaoCredito ? ($formaCartaoCredito->config['ambiente'] ?? $formaCartaoCredito->config['efi_ambiente'] ?? 'producao') : 'producao';
+$maxParcelas = $formaCartaoCredito ? (int) ($formaCartaoCredito->config['max_parcelas'] ?? 1) : 1;
 ?>
+<?php if ($formaCartaoCredito && ! empty($formaCartaoCredito->ativo)) { ?>
+    <?php if ($provedorCartao === 'mercadopago' && ! empty($mpPublicKey)) { ?>
+        <script src="https://sdk.mercadopago.com/js/v2"></script>
+    <?php } elseif ($provedorCartao === 'gerencianet' && ! empty($efiPayeeCode)) { ?>
+        <script src="https://interfaces.efipay.com.br/token/api.min.js"></script>
+    <?php } ?>
+<?php } ?>
 <div class="flex flex-col gap-6 pt-2 pb-8 max-w-4xl mx-auto">
     <!-- Cabeçalho -->
     <header class="flex flex-wrap items-end justify-between gap-3">
@@ -280,10 +302,16 @@ $primeiraForma = $formasAtivas[0];
                 <?= icon('banknote', ['class' => 'size-6']) ?>
             </div>
             <h3 class="font-display text-heading-md font-bold text-text" id="cartao-modal-titulo">Pagamento com Cartão</h3>
-            <p class="text-caption text-muted mt-1">Liberação imediata de <strong class="text-text">+30 dias</strong> no sistema.</p>
+            <p class="text-caption text-muted mt-1" id="cartao-modal-subtitulo">Liberação imediata de <strong class="text-text">+30 dias</strong> no sistema.</p>
         </div>
 
-        <!-- Formulário Seguro de Cartão -->
+        <!-- Mensagem de Erro / Recusa do Cartão -->
+        <div id="cartao-erro-container" class="hidden rounded-lg border border-danger/30 bg-danger/10 p-3 text-xs text-danger-ink flex items-start gap-2">
+            <?= icon('circle-alert', ['class' => 'size-4 shrink-0 mt-0.5']) ?>
+            <span id="cartao-erro-texto"></span>
+        </div>
+
+        <!-- Bloco 1: Formulário de Cartão de Crédito -->
         <form id="form-cartao-pagamento" class="flex flex-col gap-4">
             <div>
                 <label class="text-caption font-semibold text-text block mb-1">Número do Cartão</label>
@@ -293,6 +321,11 @@ $primeiraForma = $formasAtivas[0];
             <div>
                 <label class="text-caption font-semibold text-text block mb-1">Nome Impresso no Cartão</label>
                 <input id="cartao-nome" type="text" placeholder="COMO NO CARTAO" required class="w-full text-sm bg-surface-subtle border border-input rounded-lg px-3 py-2 text-text focus:outline-primary uppercase">
+            </div>
+
+            <div>
+                <label class="text-caption font-semibold text-text block mb-1">CPF ou CNPJ do Titular</label>
+                <input id="cartao-doc" type="text" placeholder="000.000.000-00" value="<?= e($empresa->cnpj ?? '') ?>" required class="w-full text-sm bg-surface-subtle border border-input rounded-lg px-3 py-2 text-text focus:outline-primary font-mono">
             </div>
 
             <div class="grid grid-cols-2 gap-3">
@@ -306,6 +339,20 @@ $primeiraForma = $formasAtivas[0];
                 </div>
             </div>
 
+            <?php if ($maxParcelas > 1) { ?>
+                <div>
+                    <label class="text-caption font-semibold text-text block mb-1">Parcelamento</label>
+                    <select id="cartao-parcelas" class="w-full text-sm bg-surface-subtle border border-input rounded-lg px-3 py-2 text-text focus:outline-primary">
+                        <?php for ($p = 1; $p <= $maxParcelas; $p++) {
+                            $vParcela = $valorFinal / $p;
+                            echo '<option value="' . $p . '">&nbsp;' . $p . 'x de R$ ' . number_format($vParcela, 2, ',', '.') . ($p === 1 ? ' (à vista)' : '') . '</option>';
+                        } ?>
+                    </select>
+                </div>
+            <?php } else { ?>
+                <input type="hidden" id="cartao-parcelas" value="1">
+            <?php } ?>
+
             <div class="rounded-lg border border-border bg-surface-subtle p-3 flex items-center justify-between text-caption text-muted">
                 <span class="flex items-center gap-1.5 text-xs text-success-ink font-semibold">
                     <?= icon('shield-check', ['class' => 'size-4']) ?>
@@ -316,9 +363,38 @@ $primeiraForma = $formasAtivas[0];
 
             <button id="btn-processar-cartao" type="submit" class="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary-hover active:bg-primary-hover text-on-primary font-bold py-3 px-6 shadow-sm transition-all text-body-md mt-2">
                 <?= icon('check', ['class' => 'size-5']) ?>
-                <span>Confirmar Pagamento</span>
+                <span id="btn-processar-cartao-label">Confirmar Pagamento</span>
             </button>
         </form>
+
+        <!-- Bloco 2: Informações de Cartão de Débito (Autenticação 3DS) -->
+        <div id="bloco-debito-info" class="hidden flex flex-col gap-4">
+            <div class="rounded-xl border border-border bg-surface-subtle p-4 flex flex-col gap-2">
+                <div class="flex items-center gap-2 text-primary font-semibold text-sm">
+                    <?= icon('shield-check', ['class' => 'size-5']) ?>
+                    <span>Autenticação Bancária Obrigatória</span>
+                </div>
+                <p class="text-caption text-muted">
+                    No Brasil, pagamentos com cartão de débito exigem validação em 2 etapas (3-D Secure) com senha ou confirmação no aplicativo do seu banco.
+                </p>
+                <p class="text-caption text-muted">
+                    Ao prosseguir, você será redirecionado para a página segura de autenticação.
+                </p>
+            </div>
+
+            <div class="rounded-lg border border-border bg-surface-subtle p-3 flex items-center justify-between text-caption text-muted">
+                <span class="flex items-center gap-1.5 text-xs text-success-ink font-semibold">
+                    <?= icon('shield-check', ['class' => 'size-4']) ?>
+                    Sessão Segura 3DS
+                </span>
+                <span class="font-bold text-text text-sm">R$ <?= number_format($valorFinal, 2, ',', '.') ?></span>
+            </div>
+
+            <button id="btn-iniciar-debito" type="button" class="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary-hover active:bg-primary-hover text-on-primary font-bold py-3 px-6 shadow-sm transition-all text-body-md mt-2">
+                <?= icon('arrow-right', ['class' => 'size-5']) ?>
+                <span>Prosseguir para o Banco</span>
+            </button>
+        </div>
     </div>
 </div>
 
@@ -368,11 +444,59 @@ document.addEventListener('DOMContentLoaded', () => {
     // Elementos Cartão
     const formCartao = document.getElementById('form-cartao-pagamento');
     const btnProcessarCartao = document.getElementById('btn-processar-cartao');
+    const btnProcessarLabel = document.getElementById('btn-processar-cartao-label');
     const cartaoModalTitulo = document.getElementById('cartao-modal-titulo');
+    const cartaoModalSubtitulo = document.getElementById('cartao-modal-subtitulo');
+    const blocoDebitoInfo = document.getElementById('bloco-debito-info');
+    const btnIniciarDebito = document.getElementById('btn-iniciar-debito');
+    const erroContainer = document.getElementById('cartao-erro-container');
+    const erroTexto = document.getElementById('cartao-erro-texto');
 
     let currentAssinaturaId = null;
     let pollingInterval = null;
     let formaSelecionada = '<?= e($primeiraForma->codigo) ?>';
+
+    // Máscaras e formatações de entrada no cartão
+    const inputNum = document.getElementById('cartao-numero');
+    if (inputNum) {
+        inputNum.addEventListener('input', (e) => {
+            let v = e.target.value.replace(/\D/g, '').substring(0, 16);
+            v = v.replace(/(\d{4})(?=\d)/g, '$1 ');
+            e.target.value = v;
+        });
+    }
+    const inputVal = document.getElementById('cartao-validade');
+    if (inputVal) {
+        inputVal.addEventListener('input', (e) => {
+            let v = e.target.value.replace(/\D/g, '').substring(0, 4);
+            if (v.length >= 2) {
+                v = v.substring(0, 2) + '/' + v.substring(2);
+            }
+            e.target.value = v;
+        });
+    }
+    const inputDoc = document.getElementById('cartao-doc');
+    if (inputDoc) {
+        inputDoc.addEventListener('input', (e) => {
+            let v = e.target.value.replace(/\D/g, '').substring(0, 14);
+            if (v.length > 11) {
+                v = v.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+            } else if (v.length > 9) {
+                v = v.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4');
+            }
+            e.target.value = v;
+        });
+    }
+
+    function detectarBandeira(num) {
+        num = num.replace(/\D/g, '');
+        if (/^4/.test(num)) return 'visa';
+        if (/^(5[1-5]|222[1-9]|22[3-9]|2[3-6]|27[0-1]|2720)/.test(num)) return 'mastercard';
+        if (/^(4011|438935|451416|4576|504175|506699|5067|5090|627780|636297|636368)/.test(num)) return 'elo';
+        if (/^(34|37)/.test(num)) return 'amex';
+        if (/^(606282|3841)/.test(num)) return 'hipercard';
+        return 'visa';
+    }
 
     // Troca de forma de pagamento na tela
     if (seletorFormas) {
@@ -414,8 +538,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 await executarPix();
             } else if (formaSelecionada === 'boleto') {
                 await executarBoleto();
-            } else if (formaSelecionada === 'cartao_credito' || formaSelecionada === 'cartao_debito') {
-                cartaoModalTitulo.textContent = formaSelecionada === 'cartao_debito' ? 'Pagamento com Cartão de Débito' : 'Pagamento com Cartão de Crédito';
+            } else if (formaSelecionada === 'cartao_credito') {
+                if (cartaoModalTitulo) cartaoModalTitulo.textContent = 'Pagamento com Cartão de Crédito';
+                if (cartaoModalSubtitulo) cartaoModalSubtitulo.textContent = 'Liberação imediata de +30 dias no sistema.';
+                if (formCartao) formCartao.classList.remove('hidden');
+                if (blocoDebitoInfo) blocoDebitoInfo.classList.add('hidden');
+                if (erroContainer) erroContainer.classList.add('hidden');
+                modalCartao.classList.remove('hidden');
+            } else if (formaSelecionada === 'cartao_debito') {
+                if (cartaoModalTitulo) cartaoModalTitulo.textContent = 'Pagamento com Cartão de Débito';
+                if (cartaoModalSubtitulo) cartaoModalSubtitulo.textContent = 'Autenticação bancária segura via 3-D Secure.';
+                if (formCartao) formCartao.classList.add('hidden');
+                if (blocoDebitoInfo) blocoDebitoInfo.classList.remove('hidden');
+                if (erroContainer) erroContainer.classList.add('hidden');
                 modalCartao.classList.remove('hidden');
             }
         });
@@ -509,46 +644,161 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Submeter Cartão
-    if (formCartao) {
-        formCartao.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            btnProcessarCartao.disabled = true;
-            btnProcessarCartao.classList.add('opacity-75');
+    // Ação do Botão Débito 3DS
+    if (btnIniciarDebito) {
+        btnIniciarDebito.addEventListener('click', async () => {
+            btnIniciarDebito.disabled = true;
+            btnIniciarDebito.classList.add('opacity-75');
+            if (erroContainer) erroContainer.classList.add('hidden');
 
             try {
                 const csrf = obterCsrf();
                 const formData = new FormData();
                 formData.append(csrf.name, csrf.hash);
-                formData.append('tipo', formaSelecionada === 'cartao_debito' ? 'debito' : 'credito');
+                formData.append('tipo', 'debito');
 
                 const res = await fetch('<?= site_url('assinatura/gerarCartao') ?>', {
                     method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                    },
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
                     body: formData,
                 });
 
                 const data = await res.json().catch(() => null);
                 if (!res.ok) {
-                    alert(data?.message || `Erro no servidor (${res.status}).`);
-                    btnProcessarCartao.disabled = false;
-                    btnProcessarCartao.classList.remove('opacity-75');
-                    return;
+                    throw new Error(data?.message || `Erro no servidor (${res.status}).`);
                 }
-                if (data.result) {
+
+                if (data && data.checkout_url) {
+                    window.location.href = data.checkout_url;
+                } else {
+                    throw new Error(data?.message || 'Link de débito não retornado.');
+                }
+            } catch (err) {
+                if (erroTexto) erroTexto.textContent = err.message || 'Falha ao iniciar débito bancário.';
+                if (erroContainer) erroContainer.classList.remove('hidden');
+                btnIniciarDebito.disabled = false;
+                btnIniciarDebito.classList.remove('opacity-75');
+            }
+        });
+    }
+
+    // Submeter Cartão de Crédito com Tokenização
+    if (formCartao) {
+        formCartao.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (erroContainer) erroContainer.classList.add('hidden');
+            btnProcessarCartao.disabled = true;
+            btnProcessarCartao.classList.add('opacity-75');
+            if (btnProcessarLabel) btnProcessarLabel.textContent = 'Validando dados...';
+
+            const num = (document.getElementById('cartao-numero')?.value || '').replace(/\s+/g, '');
+            const nome = (document.getElementById('cartao-nome')?.value || '').trim();
+            const validade = (document.getElementById('cartao-validade')?.value || '').trim();
+            const cvv = (document.getElementById('cartao-cvv')?.value || '').trim();
+            const doc = (document.getElementById('cartao-doc')?.value || '').replace(/\D/g, '');
+            const parcelas = document.getElementById('cartao-parcelas')?.value || 1;
+
+            let [mes, ano] = validade.split('/');
+            mes = mes ? mes.trim() : '';
+            ano = ano ? ano.trim() : '';
+            if (ano.length === 2) {
+                ano = '20' + ano;
+            }
+
+            try {
+                let cardToken = '';
+                const provedorAtivo = '<?= e($provedorCartao) ?>';
+
+                // 1. Tokenização via Mercado Pago
+                if (provedorAtivo === 'mercadopago') {
+                    const mpKey = '<?= e($mpPublicKey) ?>';
+                    if (typeof MercadoPago !== 'undefined' && mpKey) {
+                        const mp = new MercadoPago(mpKey);
+                        const respToken = await mp.createCardToken({
+                            cardNumber: num,
+                            cardholderName: nome,
+                            cardExpirationMonth: mes,
+                            cardExpirationYear: ano,
+                            securityCode: cvv,
+                            identificationType: doc.length === 14 ? 'CNPJ' : 'CPF',
+                            identificationNumber: doc
+                        });
+                        if (respToken && respToken.id) {
+                            cardToken = respToken.id;
+                        } else if (respToken && respToken.cause && respToken.cause[0]) {
+                            throw new Error(respToken.cause[0].description || 'Dados do cartão inválidos.');
+                        }
+                    }
+                }
+                // 2. Tokenização via Efí (Gerencianet)
+                else if (provedorAtivo === 'gerencianet') {
+                    const efiPayee = '<?= e($efiPayeeCode) ?>';
+                    const efiAmb = '<?= e($efiAmbiente) ?>';
+                    if (typeof $gn !== 'undefined' && efiPayee) {
+                        cardToken = await new Promise((resolve, reject) => {
+                            $gn.ready(function(Checkout) {
+                                Checkout.setAccount(efiPayee);
+                                Checkout.setEnvironment(efiAmb === 'homologacao' ? 'sandbox' : 'production');
+                                Checkout.getPaymentToken({
+                                    brand: detectarBandeira(num),
+                                    number: num,
+                                    cvv: cvv,
+                                    expiration_month: mes,
+                                    expiration_year: ano,
+                                    reuse: false
+                                }, function(error, response) {
+                                    if (error) {
+                                        reject(new Error(error.error_description || error.message || 'Erro ao validar cartão na Efí.'));
+                                    } else if (response && response.data && response.data.payment_token) {
+                                        resolve(response.data.payment_token);
+                                    } else {
+                                        reject(new Error('Falha ao gerar token de cartão na Efí.'));
+                                    }
+                                });
+                            });
+                        });
+                    }
+                }
+
+                if (btnProcessarLabel) btnProcessarLabel.textContent = 'Processando com o banco...';
+
+                const csrf = obterCsrf();
+                const formData = new FormData();
+                formData.append(csrf.name, csrf.hash);
+                formData.append('tipo', 'credito');
+                formData.append('token', cardToken);
+                formData.append('titular', nome);
+                formData.append('doc_titular', doc);
+                formData.append('parcelas', parcelas);
+                formData.append('numero_cartao', num);
+                formData.append('mes_expiracao', mes);
+                formData.append('ano_expiracao', ano);
+                formData.append('cvv', cvv);
+
+                const res = await fetch('<?= site_url('assinatura/gerarCartao') ?>', {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    body: formData,
+                });
+
+                const data = await res.json().catch(() => null);
+                if (!res.ok) {
+                    throw new Error(data?.message || `Erro no servidor (${res.status}).`);
+                }
+
+                if (data && data.result) {
                     alert('🎉 ' + data.message);
                     window.location.reload();
                 } else {
-                    alert(data.message || 'Falha na aprovação do cartão.');
-                    btnProcessarCartao.disabled = false;
-                    btnProcessarCartao.classList.remove('opacity-75');
+                    throw new Error(data?.message || 'Falha na aprovação do cartão.');
                 }
             } catch (err) {
-                alert('Erro na comunicação.');
+                if (erroTexto) erroTexto.textContent = err.message || 'Erro ao processar cartão.';
+                if (erroContainer) erroContainer.classList.remove('hidden');
+            } finally {
                 btnProcessarCartao.disabled = false;
                 btnProcessarCartao.classList.remove('opacity-75');
+                if (btnProcessarLabel) btnProcessarLabel.textContent = 'Confirmar Pagamento';
             }
         });
     }
