@@ -420,8 +420,7 @@ class SaasPaymentService
 
         try {
             $pigglyTipo = match ($tipoChave) {
-                'cpf' => \Piggly\Pix\Parser::KEY_TYPE_CPF,
-                'cnpj' => \Piggly\Pix\Parser::KEY_TYPE_CNPJ,
+                'cpf', 'cnpj' => \Piggly\Pix\Parser::KEY_TYPE_DOCUMENT,
                 'email' => \Piggly\Pix\Parser::KEY_TYPE_EMAIL,
                 'telefone' => \Piggly\Pix\Parser::KEY_TYPE_PHONE,
                 default => \Piggly\Pix\Parser::KEY_TYPE_RANDOM,
