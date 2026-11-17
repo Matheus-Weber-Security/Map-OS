@@ -821,9 +821,11 @@ class SaasPaymentService
                     'corporate_name' => substr(trim((string) ($empresa->razao_social ?: $nome)), 0, 100),
                     'cnpj' => $doc,
                 ];
-            } else {
-                $customer['cpf'] = strlen($doc) === 11 ? $doc : '00000000000';
+            } elseif (strlen($doc) === 11) {
+                $customer['cpf'] = $doc;
                 $customer['birth'] = '1990-01-01';
+            } else {
+                throw new \Exception('O CPF ou CNPJ do titular é obrigatório e precisa ter 11 ou 14 dígitos válidos.');
             }
 
             $items = [
@@ -1291,8 +1293,8 @@ class SaasPaymentService
             : 'financeiro@' . ($_SERVER['HTTP_HOST'] ?? 'nexustkt.com.br');
 
         $doc = preg_replace('/\D/', '', (string) ($empresa->cnpj ?? ''));
-        if (empty($doc)) {
-            $doc = '00000000000';
+        if (empty($doc) || (strlen($doc) !== 11 && strlen($doc) !== 14)) {
+            throw new \Exception('O CPF ou CNPJ da sua empresa precisa estar preenchido no cadastro para emitir o boleto.');
         }
 
         $prevErrorReporting = error_reporting();

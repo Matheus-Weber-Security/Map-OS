@@ -167,10 +167,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             btn.disabled = true;
             try {
-                const csrfToken = document.querySelector('meta[name="csrf_token"]')?.content || '';
+                const csrfName = '<?= e($this->security->get_csrf_token_name()) ?>';
+                const csrfHash = '<?= e($this->security->get_csrf_hash()) ?>';
                 const formData = new FormData();
                 formData.append('id', id);
-                if (csrfToken) formData.append('ci_csrf_token', csrfToken);
+                formData.append(csrfName, csrfHash);
 
                 const res = await fetch('<?= site_url('assinatura/cancelarBoleto') ?>', {
                     method: 'POST',

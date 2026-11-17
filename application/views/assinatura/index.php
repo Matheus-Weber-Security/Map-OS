@@ -323,17 +323,17 @@ $maxParcelas = $formaCartaoCredito ? (int) ($formaCartaoCredito->config['max_par
         <form id="form-cartao-pagamento" class="flex flex-col gap-4">
             <div>
                 <label class="text-caption font-semibold text-text block mb-1">Número do Cartão</label>
-                <input id="cartao-numero" type="text" placeholder="0000 0000 0000 0000" maxlength="19" required class="w-full text-sm bg-surface-subtle border border-input rounded-lg px-3 py-2 text-text focus:outline-primary font-mono">
+                <input id="cartao-numero" type="text" placeholder="" maxlength="19" required class="w-full text-sm bg-surface-subtle border border-input rounded-lg px-3 py-2 text-text focus:outline-primary font-mono">
             </div>
 
             <div>
                 <label class="text-caption font-semibold text-text block mb-1">Nome Impresso no Cartão</label>
-                <input id="cartao-nome" type="text" placeholder="COMO NO CARTAO" required class="w-full text-sm bg-surface-subtle border border-input rounded-lg px-3 py-2 text-text focus:outline-primary uppercase">
+                <input id="cartao-nome" type="text" placeholder="" required class="w-full text-sm bg-surface-subtle border border-input rounded-lg px-3 py-2 text-text focus:outline-primary uppercase">
             </div>
 
             <div>
                 <label class="text-caption font-semibold text-text block mb-1">CPF ou CNPJ do Titular</label>
-                <input id="cartao-doc" type="text" placeholder="000.000.000-00" value="<?= e($empresa->cnpj ?? '') ?>" required class="w-full text-sm bg-surface-subtle border border-input rounded-lg px-3 py-2 text-text focus:outline-primary font-mono">
+                <input id="cartao-doc" type="text" placeholder="" value="<?= e($empresa->cnpj ?? '') ?>" required class="w-full text-sm bg-surface-subtle border border-input rounded-lg px-3 py-2 text-text focus:outline-primary font-mono">
             </div>
 
             <div class="grid grid-cols-2 gap-3">
@@ -343,7 +343,7 @@ $maxParcelas = $formaCartaoCredito ? (int) ($formaCartaoCredito->config['max_par
                 </div>
                 <div>
                     <label class="text-caption font-semibold text-text block mb-1">CVV / CVC</label>
-                    <input id="cartao-cvv" type="password" placeholder="123" maxlength="4" required class="w-full text-sm bg-surface-subtle border border-input rounded-lg px-3 py-2 text-text focus:outline-primary font-mono">
+                    <input id="cartao-cvv" type="password" placeholder="" maxlength="4" required class="w-full text-sm bg-surface-subtle border border-input rounded-lg px-3 py-2 text-text focus:outline-primary font-mono">
                 </div>
             </div>
 
