@@ -236,6 +236,17 @@ class Assinatura extends MY_Controller
         $calculo = $this->calcularValoresPlano($empresa, $plano);
         $valorFinal = $calculo['valorFinal'];
 
+        if ($valorFinal < 4.00) {
+            $valorFormatado = number_format($valorFinal, 2, ',', '.');
+            return $this->output
+                ->set_status_header(422)
+                ->set_content_type('application/json')
+                ->set_output(json_encode([
+                    'result' => false,
+                    'message' => "O valor desta fatura (R$ {$valorFormatado}) está abaixo do mínimo exigido pelos bancos para emissão de boleto bancário (R$ 5,00). Por favor, realize o pagamento via PIX ou Cartão de Crédito.",
+                ]));
+        }
+
         // Obtém configuração do boleto
         $formaBoleto = $this->saas_model->getFormaPagamentoByCodigo('boleto');
         if (! $formaBoleto || empty($formaBoleto->ativo)) {

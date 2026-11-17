@@ -1118,6 +1118,11 @@ class SaasPaymentService
      */
     public function processarBoleto(array $formaConfig, float $valor, object $empresa, object $plano, int $diasVencimento = 3, int $assinaturaId = 0): array
     {
+        if ($valor < 4.00) {
+            $valorFormatado = number_format($valor, 2, ',', '.');
+            throw new \Exception("O valor desta fatura (R$ {$valorFormatado}) está abaixo do mínimo exigido pelos bancos para emissão de boleto bancário (R$ 5,00). Por favor, realize o pagamento via PIX ou Cartão de Crédito.");
+        }
+
         $provedor = strtolower((string) ($formaConfig['provedor'] ?? 'asaas'));
 
         return match ($provedor) {
@@ -1304,20 +1309,40 @@ class SaasPaymentService
             \MercadoPago\MercadoPagoConfig::setAccessToken($token);
             $client = new \MercadoPago\Client\Payment\PaymentClient();
 
+            $cep = preg_replace('/\D/', '', (string) ($empresa->cep ?? ''));
+            $rua = substr(trim((string) ($empresa->rua ?: 'Logradouro')), 0, 100);
+            $numero = (int) preg_replace('/\D/', '', (string) ($empresa->numero ?: '1')) ?: 1;
+            $bairro = substr(trim((string) ($empresa->bairro ?: 'Bairro')), 0, 100);
+            $cidade = substr(trim((string) ($empresa->cidade ?: 'Cidade')), 0, 100);
+            $uf = strtoupper(substr(trim((string) ($empresa->estado ?: 'SP')), 0, 2));
+
+            $payerData = [
+                'email' => $email,
+                'first_name' => $primeiroNome,
+                'last_name' => $sobrenome,
+                'identification' => [
+                    'type' => strlen($doc) === 14 ? 'CNPJ' : 'CPF',
+                    'number' => $doc,
+                ],
+            ];
+
+            if (! empty($cep) && strlen($cep) === 8) {
+                $payerData['address'] = [
+                    'zip_code' => $cep,
+                    'street_name' => $rua,
+                    'street_number' => $numero,
+                    'neighborhood' => $bairro,
+                    'city' => $cidade,
+                    'federal_unit' => $uf,
+                ];
+            }
+
             $paymentRequest = [
                 'transaction_amount' => round((float) $valor, 2),
                 'description' => 'Nexus Ticket - Renovação +30 dias (' . ($plano->nome ?? 'Plano') . ')',
                 'payment_method_id' => 'bolbradesco',
                 'date_of_expiration' => $expIso,
-                'payer' => [
-                    'email' => $email,
-                    'first_name' => $primeiroNome,
-                    'last_name' => $sobrenome,
-                    'identification' => [
-                        'type' => strlen($doc) === 14 ? 'CNPJ' : 'CPF',
-                        'number' => $doc,
-                    ],
-                ],
+                'payer' => $payerData,
                 'external_reference' => 'ASSIN_' . ($assinaturaId ?: time()),
                 'notification_url' => site_url('assinatura/webhook/mercadopago'),
             ];
@@ -1341,6 +1366,11 @@ class SaasPaymentService
                 'vencimento' => $vencimentoFormatado,
                 'vencimento_db' => $vencimentoDb,
             ];
+        } catch (\MercadoPago\Exceptions\MPApiException $e) {
+            $content = $e->getApiResponse() ? $e->getApiResponse()->getContent() : null;
+            $motivo = $this->traduzirErroApiMercadoPago($content, $valor);
+            log_message('error', 'SaasPaymentService::processarBoletoMercadoPago MPApiException: ' . json_encode($content));
+            throw new \Exception($motivo);
         } catch (\Throwable $e) {
             log_message('error', 'SaasPaymentService::processarBoletoMercadoPago error: ' . $e->getMessage());
             throw new \Exception('Falha ao gerar boleto no Mercado Pago: ' . $e->getMessage());
@@ -1485,6 +1515,59 @@ class SaasPaymentService
     /**
      * Cancela cobrança de boleto no Gateway correspondente.
      */
+    /**
+     * Traduz erros de API do Mercado Pago (MPApiException) para mensagens amigáveis em português.
+     */
+    protected function traduzirErroApiMercadoPago(mixed $content, float $valor = 0.0): string
+    {
+        $rawMessage = '';
+        $causes = [];
+
+        if (is_array($content)) {
+            $rawMessage = (string) ($content['message'] ?? '');
+            if (! empty($content['cause']) && is_array($content['cause'])) {
+                foreach ($content['cause'] as $c) {
+                    if (is_array($c)) {
+                        $causes[] = (string) ($c['description'] ?? $c['code'] ?? '');
+                    } elseif (is_string($c)) {
+                        $causes[] = $c;
+                    }
+                }
+            }
+        } elseif (is_string($content)) {
+            $rawMessage = $content;
+        }
+
+        $allText = strtolower($rawMessage . ' ' . implode(' ', $causes));
+
+        // 1. Valor mínimo do boleto
+        if (str_contains($allText, 'transaction_amount') || str_contains($allText, 'greater than or equal to') || str_contains($allText, 'amount')) {
+            $valorFormatado = number_format($valor, 2, ',', '.');
+            return "O valor desta fatura (R$ {$valorFormatado}) está abaixo do mínimo exigido pelos bancos para emissão de boleto bancário (R$ 5,00). Por favor, realize o pagamento via PIX ou Cartão de Crédito.";
+        }
+
+        // 2. CPF/CNPJ inválido
+        if (str_contains($allText, 'identification') || str_contains($allText, 'number') || str_contains($allText, 'cpf') || str_contains($allText, 'cnpj')) {
+            return 'O CPF ou CNPJ da empresa precisa ser válido para registro do boleto bancário. Revise o documento em Configurações > Emitente.';
+        }
+
+        // 3. CEP ou Endereço
+        if (str_contains($allText, 'address') || str_contains($allText, 'zip_code') || str_contains($allText, 'cep')) {
+            return 'O endereço ou CEP da empresa está incompleto para registro do boleto. Por favor, revise os dados em Configurações > Emitente.';
+        }
+
+        // 4. Token / Credenciais
+        if (str_contains($allText, 'token') || str_contains($allText, 'unauthorized') || str_contains($allText, 'credentials')) {
+            return 'As credenciais de integração com o Mercado Pago precisam ser revisadas pelo administrador do sistema em Gerenciar SaaS.';
+        }
+
+        if (! empty($causes)) {
+            return 'Não foi possível emitir o boleto no Mercado Pago: ' . implode('; ', array_filter($causes));
+        }
+
+        return ! empty($rawMessage) ? "Mercado Pago: {$rawMessage}" : 'O Mercado Pago não autorizou a emissão do boleto. Tente via PIX ou Cartão.';
+    }
+
     public function cancelarBoleto(array $formaConfig, string $chargeId, string $gateway): bool
     {
         $gateway = strtolower($gateway);
