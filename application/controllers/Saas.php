@@ -643,4 +643,123 @@ class Saas extends MY_Controller
         $this->session->set_flashdata('success', "Configurações de '{$forma->nome}' salvas com sucesso!");
         return redirect('saas/gerenciar');
     }
+/**
+     * Listagem de todas as cobranças / boletos emitidos por assinantes no sistema (Painel Master).
+     */
+    public function cobrancas()
+    {
+        $isSuper = (bool) ($this->session->userdata('is_superadmin') ?? false);
+        if (! $isSuper && ! $this->permite('vSaasAssinantes') && ! $this->permite('vSaasDashboard')) {
+            $this->session->set_flashdata('error', 'Você não tem permissão para visualizar cobranças.');
+            return redirect('mapos');
+        }
+
+        $filtros = [
+            'status' => $this->input->get('status') ?: '',
+            'forma' => $this->input->get('forma') ?: '',
+            'termo' => $this->input->get('termo') ?: '',
+        ];
+
+        $page = max(1, (int) ($this->input->get('page') ?: 1));
+        $perPage = 20;
+        $offset = ($page - 1) * $perPage;
+
+        $total = $this->saas_model->countCobrancas($filtros);
+        $cobrancas = $this->saas_model->getCobrancas($filtros, $perPage, $offset);
+
+        $this->data['cobrancas'] = $cobrancas;
+        $this->data['filtros'] = $filtros;
+        $this->data['total'] = $total;
+        $this->data['page'] = $page;
+        $this->data['totalPages'] = max(1, (int) ceil($total / $perPage));
+        $this->data['view'] = 'saas/cobrancas';
+
+        return $this->layout();
+    }
+
+    /**
+     * Cancela uma cobrança no Gateway e no sistema (Ação Master).
+     */
+    public function cancelarCobranca()
+    {
+        $isSuper = (bool) ($this->session->userdata('is_superadmin') ?? false);
+        if (! $isSuper && ! $this->permite('eSaasStatusEmpresa') && ! $this->permite('vSaasAssinantes')) {
+            return $this->output
+                ->set_status_header(403)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['result' => false, 'message' => 'Sem permissão.']));
+        }
+
+        $id = (int) $this->input->post('id');
+        $cobranca = $this->saas_model->getAssinaturaById($id);
+        if (! $cobranca) {
+            return $this->output
+                ->set_status_header(404)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['result' => false, 'message' => 'Cobrança não encontrada.']));
+        }
+
+        if ($cobranca->status === 'pago') {
+            return $this->output
+                ->set_status_header(400)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['result' => false, 'message' => 'Não é possível cancelar uma cobrança já paga.']));
+        }
+
+        $forma = $this->saas_model->getFormaPagamentoByCodigo(strtolower($cobranca->forma_pagamento));
+        $config = $forma->config ?? [];
+        if (! isset($config['provedor']) && ! empty($forma->provedor)) {
+            $config['provedor'] = $forma->provedor;
+        }
+
+        $this->load->library('SaasPaymentService');
+        if (! empty($cobranca->charge_id) && ! empty($cobranca->gateway)) {
+            $this->saaspaymentservice->cancelarBoleto($config, (string) $cobranca->charge_id, (string) $cobranca->gateway);
+        }
+
+        $this->saas_model->cancelarAssinatura($id);
+
+        return $this->output
+            ->set_content_type('application/json')
+            ->set_output(json_encode(['result' => true, 'message' => 'Cobrança cancelada com sucesso.']));
+    }
+
+    /**
+     * Confirma manualmente uma cobrança e adiciona +30 dias ao assinante (Ação Master).
+     */
+    public function confirmarCobranca()
+    {
+        $isSuper = (bool) ($this->session->userdata('is_superadmin') ?? false);
+        if (! $isSuper && ! $this->permite('eSaasDias') && ! $this->permite('vSaasAssinantes')) {
+            return $this->output
+                ->set_status_header(403)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['result' => false, 'message' => 'Sem permissão.']));
+        }
+
+        $id = (int) $this->input->post('id');
+        $cobranca = $this->saas_model->getAssinaturaById($id);
+        if (! $cobranca) {
+            return $this->output
+                ->set_status_header(404)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['result' => false, 'message' => 'Cobrança não encontrada.']));
+        }
+
+        if ($cobranca->status === 'pago') {
+            return $this->output
+                ->set_status_header(400)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['result' => false, 'message' => 'Esta cobrança já foi confirmada anteriormente.']));
+        }
+
+        $this->saas_model->confirmarPagamento($id);
+
+        return $this->output
+            ->set_content_type('application/json')
+            ->set_output(json_encode([
+                'result' => true,
+                'message' => 'Pagamento confirmado com sucesso! Mais 30 dias foram adicionados ao assinante.',
+            ]));
+    }
 }

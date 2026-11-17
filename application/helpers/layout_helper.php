@@ -92,6 +92,7 @@ if (! function_exists('layoutMenu')) {
             ['grupo' => 'Relatórios', 'label' => 'SKU', 'icon' => 'barcode', 'url' => 'relatorios/sku', 'rota' => ['Relatorios', 'sku'], 'ativo' => ['Relatorios/sku', 'Relatorios/skuCustom', 'Relatorios/skuRapid']],
             ['grupo' => 'Relatórios', 'label' => 'Receitas Brutas - MEI', 'icon' => 'receipt', 'url' => 'relatorios/receitasBrutasMei', 'rota' => ['Relatorios', 'receitasBrutasMei'], 'ativo' => ['Relatorios/receitasBrutasMei', 'Relatorios/receitasBrutasCustom', 'Relatorios/receitasBrutasRapid']],
             ['grupo' => 'Sistema', 'label' => 'Assinatura', 'icon' => 'banknote', 'url' => 'assinatura', 'rota' => ['Assinatura', 'index'], 'ativo' => ['Assinatura']],
+            ['grupo' => 'Sistema', 'label' => 'Boletos', 'icon' => 'barcode', 'url' => 'assinatura/boletos', 'rota' => ['Assinatura', 'boletos'], 'ativo' => ['Assinatura/boletos']],
             ['grupo' => 'Sistema', 'label' => 'Gerenciar SaaS', 'icon' => 'settings', 'url' => 'saas/gerenciar', 'rota' => ['Saas', 'gerenciar'], 'ativo' => ['Saas']],
             ['grupo' => 'Configurações', 'label' => 'Sistema', 'icon' => 'settings', 'url' => 'mapos/configurar', 'rota' => ['Mapos', 'configurar'], 'ativo' => ['Mapos/configurar']],
             ['grupo' => 'Configurações', 'label' => 'Usuários', 'icon' => 'users', 'url' => 'usuarios', 'rota' => ['Usuarios', 'index'], 'ativo' => ['Usuarios']],
@@ -171,6 +172,15 @@ if (! function_exists('layoutMenuVisivel')) {
                     || $ci->permission->checkPermission($ci->session->userdata('permissao'), 'vSaasAssinantes'));
 
                 if (! $isSuper && (! ($empresaId === 1 && $podeSaas))) {
+                    continue;
+                }
+            }
+
+            if ($item['rota'][0] === 'Assinatura' && ($item['rota'][1] ?? '') === 'boletos') {
+                $ci = &get_instance();
+                $ci->load->model('saas_model');
+                $formaBoleto = $ci->saas_model->getFormaPagamentoByCodigo('boleto');
+                if (! $formaBoleto || empty($formaBoleto->ativo)) {
                     continue;
                 }
             }

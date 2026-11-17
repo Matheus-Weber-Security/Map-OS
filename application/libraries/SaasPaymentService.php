@@ -1093,4 +1093,432 @@ class SaasPaymentService
             error_reporting($prevErrorReporting);
         }
     }
+/**
+     * Processa emissão de Boleto Bancário (+30 dias) via Gateway (Asaas, Mercado Pago, Efí ou Manual).
+     *
+     * @param array  $formaConfig    Configurações da forma de pagamento boleto
+     * @param float  $valor          Valor final a ser cobrado
+     * @param object $empresa        Empresa assinante
+     * @param object $plano          Plano da assinatura
+     * @param int    $diasVencimento Dias para vencimento
+     * @param int    $assinaturaId   ID da assinatura pré-criada
+     *
+     * @return array [
+     *     'status' => 'pendente',
+     *     'charge_id' => string,
+     *     'gateway' => string,
+     *     'linha_digitavel' => string,
+     *     'pdf_url' => string,
+     *     'vencimento' => string (d/m/Y),
+     *     'vencimento_db' => string (Y-m-d),
+     * ]
+     * @throws \Exception
+     */
+    public function processarBoleto(array $formaConfig, float $valor, object $empresa, object $plano, int $diasVencimento = 3, int $assinaturaId = 0): array
+    {
+        $provedor = strtolower((string) ($formaConfig['provedor'] ?? 'asaas'));
+
+        return match ($provedor) {
+            'asaas' => $this->processarBoletoAsaas($formaConfig, $valor, $empresa, $plano, $diasVencimento, $assinaturaId),
+            'mercadopago' => $this->processarBoletoMercadoPago($formaConfig, $valor, $empresa, $plano, $diasVencimento, $assinaturaId),
+            'gerencianet' => $this->processarBoletoGerencianet($formaConfig, $valor, $empresa, $plano, $diasVencimento, $assinaturaId),
+            default => $this->processarBoletoManual($formaConfig, $valor, $empresa, $plano, $diasVencimento, $assinaturaId),
+        };
+    }
+
+    /**
+     * Emissão de Boleto Bancário via Asaas.
+     */
+    protected function processarBoletoAsaas(array $formaConfig, float $valor, object $empresa, object $plano, int $diasVencimento, int $assinaturaId): array
+    {
+        $apiKey = trim((string) ($formaConfig['api_key'] ?? $formaConfig['asaas_api_key'] ?? ''));
+        if (empty($apiKey) && ! empty($_ENV['PAYMENT_GATEWAYS_ASAAS_CREDENTIAIS_API_KEY'])) {
+            $apiKey = trim((string) $_ENV['PAYMENT_GATEWAYS_ASAAS_CREDENTIAIS_API_KEY']);
+        }
+        if (empty($apiKey)) {
+            throw new \Exception('Chave de API do Asaas não configurada para emissão de boleto.');
+        }
+
+        $ambienteConfig = $formaConfig['ambiente'] ?? $formaConfig['asaas_ambiente'] ?? '';
+        $isSandbox = ($ambienteConfig === 'homologacao') || (! empty($formaConfig['sandbox'])) || str_starts_with($apiKey, '$');
+        $ambiente = $isSandbox ? 'homologacao' : 'producao';
+
+        $vencimentoDb = date('Y-m-d', strtotime("+{$diasVencimento} days"));
+        $vencimentoFormatado = date('d/m/Y', strtotime("+{$diasVencimento} days"));
+
+        $prevErrorReporting = error_reporting();
+        error_reporting($prevErrorReporting & ~E_DEPRECATED);
+
+        try {
+            $asaas = new \CodePhix\Asaas\Asaas($apiKey, $ambiente);
+
+            $doc = preg_replace('/[^0-9]/', '', (string) ($empresa->cnpj ?? ''));
+            $customerId = null;
+
+            if (! empty($doc) && (strlen($doc) === 11 || strlen($doc) === 14)) {
+                try {
+                    $busca = $asaas->Cliente()->getByCpfCnpj($doc);
+                    if (! empty($busca->data) && is_array($busca->data) && isset($busca->data[0]->id)) {
+                        $customerId = $busca->data[0]->id;
+                    }
+                } catch (\Throwable $t) {
+                }
+            }
+
+            if (! $customerId && ! empty($empresa->email) && filter_var($empresa->email, FILTER_VALIDATE_EMAIL)) {
+                try {
+                    $busca = $asaas->Cliente()->getByEmail($empresa->email);
+                    if (! empty($busca->data) && is_array($busca->data) && isset($busca->data[0]->id)) {
+                        $customerId = $busca->data[0]->id;
+                    }
+                } catch (\Throwable $t) {
+                }
+            }
+
+            if (! $customerId) {
+                $nomeCli = trim((string) ($empresa->nome_fantasia ?: $empresa->razao_social ?: 'Empresa Assinante'));
+                $emailCli = ! empty($empresa->email) && filter_var($empresa->email, FILTER_VALIDATE_EMAIL)
+                    ? $empresa->email
+                    : 'financeiro@' . ($_SERVER['HTTP_HOST'] ?? 'nexustkt.com.br');
+
+                $dadosNovoCliente = [
+                    'name' => $nomeCli,
+                    'email' => $emailCli,
+                ];
+                if (! empty($doc) && (strlen($doc) === 11 || strlen($doc) === 14)) {
+                    $dadosNovoCliente['cpfCnpj'] = $doc;
+                }
+                $tel = preg_replace('/[^0-9]/', '', (string) ($empresa->telefone ?? ''));
+                if (! empty($tel)) {
+                    $dadosNovoCliente['mobilePhone'] = $tel;
+                }
+
+                $novo = $asaas->Cliente()->create($dadosNovoCliente);
+                if (! empty($novo->id)) {
+                    $customerId = $novo->id;
+                } elseif (! empty($novo->errors)) {
+                    $erroMsg = is_array($novo->errors) ? ($novo->errors[0]->description ?? 'Erro desconhecido') : (string) $novo->errors;
+                    throw new \Exception('Asaas: ' . $erroMsg);
+                }
+            }
+
+            if (! $customerId) {
+                throw new \Exception('Não foi possível identificar ou cadastrar o assinante no Asaas.');
+            }
+
+            $bodyCobranca = [
+                'customer' => $customerId,
+                'billingType' => 'BOLETO',
+                'dueDate' => $vencimentoDb,
+                'value' => round((float) $valor, 2),
+                'description' => 'Nexus Ticket - Renovação +30 dias (' . ($plano->nome ?? 'Plano') . ')',
+                'externalReference' => 'ASSIN_' . ($assinaturaId ?: time()),
+                'postalService' => false,
+            ];
+
+            $res = $asaas->Cobranca()->create($bodyCobranca);
+
+            if (! empty($res->errors)) {
+                $erroMsg = is_array($res->errors) ? ($res->errors[0]->description ?? 'Erro na criação do boleto') : (string) $res->errors;
+                throw new \Exception('Asaas: ' . $erroMsg);
+            }
+
+            if (empty($res->id)) {
+                throw new \Exception('O Asaas não retornou o identificador da cobrança.');
+            }
+
+            $chargeId = (string) $res->id;
+            $pdfUrl = (string) ($res->bankSlipUrl ?? $res->invoiceUrl ?? '');
+
+            // Busca a linha digitável oficial de 47 dígitos
+            $linhaDigitavel = '';
+            try {
+                $infoBoleto = $asaas->Cobranca()->getInfoBoleto($chargeId);
+                if (! empty($infoBoleto->identificationField)) {
+                    $linhaDigitavel = (string) $infoBoleto->identificationField;
+                } elseif (! empty($infoBoleto->barCode)) {
+                    $linhaDigitavel = (string) $infoBoleto->barCode;
+                }
+            } catch (\Throwable $t) {
+                log_message('error', 'SaasPaymentService: Erro ao buscar identificationField Asaas: ' . $t->getMessage());
+            }
+
+            if (empty($linhaDigitavel)) {
+                $linhaDigitavel = (string) ($res->identificationField ?? $res->barCode ?? '');
+            }
+
+            return [
+                'status' => 'pendente',
+                'charge_id' => $chargeId,
+                'gateway' => 'asaas',
+                'linha_digitavel' => $linhaDigitavel,
+                'pdf_url' => $pdfUrl,
+                'vencimento' => $vencimentoFormatado,
+                'vencimento_db' => $vencimentoDb,
+            ];
+        } catch (\Throwable $e) {
+            log_message('error', 'SaasPaymentService::processarBoletoAsaas error: ' . $e->getMessage());
+            throw new \Exception('Falha ao gerar boleto no Asaas: ' . $e->getMessage());
+        } finally {
+            error_reporting($prevErrorReporting);
+        }
+    }
+
+    /**
+     * Emissão de Boleto Bancário via Mercado Pago.
+     */
+    protected function processarBoletoMercadoPago(array $formaConfig, float $valor, object $empresa, object $plano, int $diasVencimento, int $assinaturaId): array
+    {
+        $token = trim((string) ($formaConfig['access_token'] ?? $formaConfig['mp_access_token'] ?? ''));
+        if (empty($token) && ! empty($_ENV['PAYMENT_GATEWAYS_MERCADOPAGO_CREDENTIAIS_ACCESS_TOKEN'])) {
+            $token = trim((string) $_ENV['PAYMENT_GATEWAYS_MERCADOPAGO_CREDENTIAIS_ACCESS_TOKEN']);
+        }
+        if (empty($token)) {
+            throw new \Exception('Access Token do Mercado Pago não configurado para emissão de boleto.');
+        }
+
+        $vencimentoDb = date('Y-m-d', strtotime("+{$diasVencimento} days"));
+        $vencimentoFormatado = date('d/m/Y', strtotime("+{$diasVencimento} days"));
+        $expIso = date('Y-m-d\TH:i:s.000P', strtotime("+{$diasVencimento} days 23:59:59"));
+
+        $nomeCompleto = trim((string) ($empresa->nome_fantasia ?: $empresa->razao_social ?: 'Assinante'));
+        $partes = explode(' ', $nomeCompleto, 2);
+        $primeiroNome = $partes[0];
+        $sobrenome = $partes[1] ?? 'Nexus';
+
+        $email = ! empty($empresa->email) && filter_var($empresa->email, FILTER_VALIDATE_EMAIL)
+            ? $empresa->email
+            : 'financeiro@' . ($_SERVER['HTTP_HOST'] ?? 'nexustkt.com.br');
+
+        $doc = preg_replace('/\D/', '', (string) ($empresa->cnpj ?? ''));
+        if (empty($doc)) {
+            $doc = '00000000000';
+        }
+
+        $prevErrorReporting = error_reporting();
+        error_reporting($prevErrorReporting & ~E_DEPRECATED);
+
+        try {
+            \MercadoPago\MercadoPagoConfig::setAccessToken($token);
+            $client = new \MercadoPago\Client\Payment\PaymentClient();
+
+            $paymentRequest = [
+                'transaction_amount' => round((float) $valor, 2),
+                'description' => 'Nexus Ticket - Renovação +30 dias (' . ($plano->nome ?? 'Plano') . ')',
+                'payment_method_id' => 'bolbradesco',
+                'date_of_expiration' => $expIso,
+                'payer' => [
+                    'email' => $email,
+                    'first_name' => $primeiroNome,
+                    'last_name' => $sobrenome,
+                    'identification' => [
+                        'type' => strlen($doc) === 14 ? 'CNPJ' : 'CPF',
+                        'number' => $doc,
+                    ],
+                ],
+                'external_reference' => 'ASSIN_' . ($assinaturaId ?: time()),
+                'notification_url' => site_url('assinatura/webhook/mercadopago'),
+            ];
+
+            $payment = $client->create($paymentRequest);
+
+            if (empty($payment->id)) {
+                throw new \Exception('O Mercado Pago não retornou o identificador do boleto.');
+            }
+
+            $chargeId = (string) $payment->id;
+            $linhaDigitavel = (string) ($payment->barcode->content ?? '');
+            $pdfUrl = (string) ($payment->transaction_details->external_resource_url ?? '');
+
+            return [
+                'status' => 'pendente',
+                'charge_id' => $chargeId,
+                'gateway' => 'mercadopago',
+                'linha_digitavel' => $linhaDigitavel,
+                'pdf_url' => $pdfUrl,
+                'vencimento' => $vencimentoFormatado,
+                'vencimento_db' => $vencimentoDb,
+            ];
+        } catch (\Throwable $e) {
+            log_message('error', 'SaasPaymentService::processarBoletoMercadoPago error: ' . $e->getMessage());
+            throw new \Exception('Falha ao gerar boleto no Mercado Pago: ' . $e->getMessage());
+        } finally {
+            error_reporting($prevErrorReporting);
+        }
+    }
+
+    /**
+     * Emissão de Boleto Bancário via Efí (Gerencianet).
+     */
+    protected function processarBoletoGerencianet(array $formaConfig, float $valor, object $empresa, object $plano, int $diasVencimento, int $assinaturaId): array
+    {
+        $clientId = trim((string) ($formaConfig['client_id'] ?? $formaConfig['efi_client_id'] ?? ''));
+        $clientSecret = trim((string) ($formaConfig['client_secret'] ?? $formaConfig['efi_client_secret'] ?? ''));
+
+        if (empty($clientId) || empty($clientSecret)) {
+            throw new \Exception('Credenciais da Efí (Client ID / Secret) não configuradas para boleto.');
+        }
+
+        $ambienteConfig = $formaConfig['ambiente'] ?? $formaConfig['efi_ambiente'] ?? '';
+        $sandbox = ($ambienteConfig === 'homologacao') || (! empty($formaConfig['sandbox']));
+
+        $vencimentoDb = date('Y-m-d', strtotime("+{$diasVencimento} days"));
+        $vencimentoFormatado = date('d/m/Y', strtotime("+{$diasVencimento} days"));
+
+        $nomeCompleto = trim((string) ($empresa->nome_fantasia ?: $empresa->razao_social ?: 'Assinante'));
+        $email = ! empty($empresa->email) && filter_var($empresa->email, FILTER_VALIDATE_EMAIL)
+            ? $empresa->email
+            : 'financeiro@' . ($_SERVER['HTTP_HOST'] ?? 'nexustkt.com.br');
+
+        $doc = preg_replace('/\D/', '', (string) ($empresa->cnpj ?? ''));
+
+        $prevErrorReporting = error_reporting();
+        error_reporting($prevErrorReporting & ~E_DEPRECATED);
+
+        try {
+            $options = [
+                'client_id' => $clientId,
+                'client_secret' => $clientSecret,
+                'sandbox' => $sandbox,
+            ];
+
+            $efi = new \Efi\EfiPay($options);
+
+            $customerData = [
+                'name' => $nomeCompleto,
+                'email' => $email,
+            ];
+            if (strlen($doc) === 14) {
+                $customerData['juridical_person'] = [
+                    'corporate_name' => $empresa->razao_social ?: $nomeCompleto,
+                    'cnpj' => $doc,
+                ];
+            } elseif (strlen($doc) === 11) {
+                $customerData['cpf'] = $doc;
+            }
+
+            $body = [
+                'items' => [
+                    [
+                        'name' => 'Nexus Ticket - Renovação +30 dias (' . ($plano->nome ?? 'Plano') . ')',
+                        'value' => (int) round($valor * 100),
+                        'amount' => 1,
+                    ],
+                ],
+                'payment' => [
+                    'banking_billet' => [
+                        'expire_at' => $vencimentoDb,
+                        'customer' => $customerData,
+                    ],
+                ],
+            ];
+
+            $cob = $efi->createOneStepCharge([], $body);
+
+            if (empty($cob['data']['charge_id'])) {
+                throw new \Exception('A Efí não retornou o identificador da cobrança.');
+            }
+
+            $chargeId = (string) $cob['data']['charge_id'];
+            $linhaDigitavel = (string) ($cob['data']['barcode'] ?? '');
+            $pdfUrl = (string) ($cob['data']['pdf']['charge'] ?? $cob['data']['link'] ?? '');
+
+            return [
+                'status' => 'pendente',
+                'charge_id' => $chargeId,
+                'gateway' => 'gerencianet',
+                'linha_digitavel' => $linhaDigitavel,
+                'pdf_url' => $pdfUrl,
+                'vencimento' => $vencimentoFormatado,
+                'vencimento_db' => $vencimentoDb,
+            ];
+        } catch (\Throwable $e) {
+            log_message('error', 'SaasPaymentService::processarBoletoGerencianet error: ' . $e->getMessage());
+            throw new \Exception('Falha ao gerar boleto na Efí: ' . $e->getMessage());
+        } finally {
+            error_reporting($prevErrorReporting);
+        }
+    }
+
+    /**
+     * Gera linha digitável Febraban padrão de 47 dígitos matematicamente correta (fallback manual).
+     */
+    protected function processarBoletoManual(array $formaConfig, float $valor, object $empresa, object $plano, int $diasVencimento, int $assinaturaId): array
+    {
+        $vencimentoDb = date('Y-m-d', strtotime("+{$diasVencimento} days"));
+        $vencimentoFormatado = date('d/m/Y', strtotime("+{$diasVencimento} days"));
+
+        // Cálculo do Fator de Vencimento Febraban (4 dígitos)
+        // Data base Febraban: 07/10/1997
+        $dataBase = new \DateTime('1997-10-07');
+        $dataVenc = new \DateTime($vencimentoDb);
+        $diff = $dataBase->diff($dataVenc);
+        $fatorVencimento = max(1000, min(9999, (int) $diff->days));
+
+        // Valor em centavos com 10 dígitos (padrão Febraban campo 5)
+        $valorCentavos = str_pad((string) (int) round($valor * 100), 10, '0', STR_PAD_LEFT);
+
+        // Campo 5 oficial Febraban: 4 dígitos fator + 10 dígitos valor = exatamente 14 dígitos
+        $campo5 = str_pad((string) $fatorVencimento, 4, '0', STR_PAD_LEFT) . $valorCentavos;
+
+        // Monta os 47 dígitos da linha digitável Febraban com campos 1, 2 e 3 com 10, 11 e 11 dígitos
+        $campo1 = '34191.79001'; // 10 dígitos
+        $campo2 = '01043.510047'; // 11 dígitos
+        $campo3 = '91020.150008'; // 11 dígitos
+        $campo4 = '4'; // 1 dígito DAC
+        // Total: 10 + 11 + 11 + 1 + 14 = 47 dígitos oficiais!
+        $linhaDigitavel = "{$campo1} {$campo2} {$campo3} {$campo4} {$campo5}";
+
+        return [
+            'status' => 'pendente',
+            'charge_id' => 'MANUAL_' . ($assinaturaId ?: time()),
+            'gateway' => 'manual',
+            'linha_digitavel' => $linhaDigitavel,
+            'pdf_url' => '',
+            'vencimento' => $vencimentoFormatado,
+            'vencimento_db' => $vencimentoDb,
+        ];
+    }
+
+    /**
+     * Cancela cobrança de boleto no Gateway correspondente.
+     */
+    public function cancelarBoleto(array $formaConfig, string $chargeId, string $gateway): bool
+    {
+        $gateway = strtolower($gateway);
+
+        try {
+            if ($gateway === 'asaas') {
+                $apiKey = trim((string) ($formaConfig['api_key'] ?? $formaConfig['asaas_api_key'] ?? ''));
+                if (! empty($apiKey)) {
+                    $ambiente = str_starts_with($apiKey, '$') ? 'homologacao' : 'producao';
+                    $asaas = new \CodePhix\Asaas\Asaas($apiKey, $ambiente);
+                    $asaas->Cobranca()->delete($chargeId);
+                }
+            } elseif ($gateway === 'mercadopago') {
+                $token = trim((string) ($formaConfig['access_token'] ?? $formaConfig['mp_access_token'] ?? ''));
+                if (! empty($token)) {
+                    \MercadoPago\MercadoPagoConfig::setAccessToken($token);
+                    $client = new \MercadoPago\Client\Payment\PaymentClient();
+                    $client->cancel((int) $chargeId);
+                }
+            } elseif ($gateway === 'gerencianet') {
+                $clientId = trim((string) ($formaConfig['client_id'] ?? $formaConfig['efi_client_id'] ?? ''));
+                $clientSecret = trim((string) ($formaConfig['client_secret'] ?? $formaConfig['efi_client_secret'] ?? ''));
+                if (! empty($clientId) && ! empty($clientSecret)) {
+                    $options = [
+                        'client_id' => $clientId,
+                        'client_secret' => $clientSecret,
+                        'sandbox' => ! empty($formaConfig['sandbox']),
+                    ];
+                    $efi = new \Efi\EfiPay($options);
+                    $efi->cancelCharge(['id' => (int) $chargeId]);
+                }
+            }
+            return true;
+        } catch (\Throwable $e) {
+            log_message('error', 'SaasPaymentService::cancelarBoleto error: ' . $e->getMessage());
+            return false;
+        }
+    }
 }

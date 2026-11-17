@@ -37,7 +37,10 @@ $config['permissions_map'] = [
         'gerarPix' => '*',
         'verificarPix' => '*',
         'gerarBoleto' => '*',
+        'boletos' => '*',
+        'cancelarBoleto' => '*',
         'gerarCartao' => '*',
+        'retornoCheckout' => '*',
     ],
 
     'Saas' => [
@@ -53,6 +56,9 @@ $config['permissions_map'] = [
         'alternarFormaPagamento' => 'eSaasPreco',
         'editarFormaPagamento' => 'eSaasPreco',
         'salvarFormaPagamento' => 'eSaasPreco',
+        'cobrancas' => ['vSaasDashboard', 'vSaasAssinantes'],
+        'cancelarCobranca' => ['eSaasStatusEmpresa', 'vSaasAssinantes'],
+        'confirmarCobranca' => ['eSaasDias', 'vSaasAssinantes'],
     ],
 
     'Arquivos' => [

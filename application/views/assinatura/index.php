@@ -286,6 +286,14 @@ $maxParcelas = $formaCartaoCredito ? (int) ($formaCartaoCredito->config['max_par
             <span id="msg-boleto-copiado" class="text-xs text-success-ink font-semibold hidden">Linha digitável copiada com sucesso!</span>
         </div>
 
+        <!-- Botão Imprimir Boleto / Visualizar PDF -->
+        <div class="pt-1">
+            <a id="btn-imprimir-boleto" href="#" target="_blank" class="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary-hover active:bg-primary-hover text-on-primary font-bold py-3 px-6 shadow-sm transition-all text-body-md text-center">
+                <?= icon('printer', ['class' => 'size-5']) ?>
+                <span>Imprimir Boleto / Visualizar PDF</span>
+            </a>
+        </div>
+
 
     </div>
 </div>
@@ -632,6 +640,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentAssinaturaId = data.assinatura_id;
                 inputBoleto.value = data.linha_digitavel;
                 boletoVencimento.textContent = data.vencimento;
+                const btnImprimir = document.getElementById('btn-imprimir-boleto');
+                if (btnImprimir) {
+                    if (data.pdf_url) {
+                        btnImprimir.href = data.pdf_url;
+                        btnImprimir.classList.remove('hidden');
+                    } else {
+                        btnImprimir.classList.add('hidden');
+                    }
+                }
                 modalBoleto.classList.remove('hidden');
             } else {
                 alert(data.message || 'Erro ao gerar Boleto.');

@@ -110,12 +110,21 @@
             <div class="mb-4 flex items-center justify-between border-b border-border pb-3">
                 <h2 class="font-display text-base font-semibold text-text">Últimos Assinantes</h2>
                 <?php if (! empty($podeAssinantes)) { ?>
-                    <?= component('button', [
-                        'label' => 'Ver todos os assinantes',
-                        'variant' => 'ghost',
-                        'size' => 'sm',
-                        'href' => site_url('saas/assinantes'),
-                    ]) ?>
+                    <div class="flex items-center gap-2">
+                        <?= component('button', [
+                            'label' => 'Cobranças',
+                            'icon' => 'receipt',
+                            'variant' => 'ghost',
+                            'size' => 'sm',
+                            'href' => site_url('saas/cobrancas'),
+                        ]) ?>
+                        <?= component('button', [
+                            'label' => 'Ver todos os assinantes',
+                            'variant' => 'ghost',
+                            'size' => 'sm',
+                            'href' => site_url('saas/assinantes'),
+                        ]) ?>
+                    </div>
                 <?php } ?>
             </div>
 

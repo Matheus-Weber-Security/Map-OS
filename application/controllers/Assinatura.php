@@ -238,25 +238,59 @@ class Assinatura extends MY_Controller
 
         // Obtém configuração do boleto
         $formaBoleto = $this->saas_model->getFormaPagamentoByCodigo('boleto');
-        $diasVencimento = (int) ($formaBoleto->config['dias_vencimento'] ?? 3);
-        $vencimentoData = date('d/m/Y', strtotime("+{$diasVencimento} days"));
+        if (! $formaBoleto || empty($formaBoleto->ativo)) {
+            return $this->output
+                ->set_status_header(400)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['result' => false, 'message' => 'A emissão de boleto bancário está inativa no sistema.']));
+        }
+
+        $configBoleto = $formaBoleto->config ?? [];
+        if (! isset($configBoleto['provedor']) && ! empty($formaBoleto->provedor)) {
+            $configBoleto['provedor'] = $formaBoleto->provedor;
+        }
+
+        $diasVencimento = max(1, min(30, (int) ($configBoleto['dias_vencimento'] ?? 3)));
 
         $assinaturaId = $this->saas_model->criarAssinatura($empresaId, (int) $plano->id, $valorFinal, 'BOLETO');
-        $assinatura = $this->saas_model->getAssinaturaById($assinaturaId);
 
-        // Linha digitável simulada/padrão Febraban
-        $linhaDigitavel = '34191.79001 01043.510047 91020.150008 4 ' . date('Ymd') . '0000' . str_pad((string) (int) ($valorFinal * 100), 6, '0', STR_PAD_LEFT);
+        $this->load->library('SaasPaymentService');
 
-        return $this->output
-            ->set_content_type('application/json')
-            ->set_output(json_encode([
-                'result' => true,
-                'assinatura_id' => $assinaturaId,
-                'linha_digitavel' => $linhaDigitavel,
-                'vencimento' => $vencimentoData,
-                'valor' => number_format($valorFinal, 2, ',', '.'),
-                'instrucoes' => $formaBoleto->instrucoes ?? 'Pagar até a data de vencimento.',
-            ]));
+        try {
+            $resultado = $this->saaspaymentservice->processarBoleto($configBoleto, $valorFinal, $empresa, $plano, $diasVencimento, $assinaturaId);
+
+            $this->db->where('id', $assinaturaId)->update('saas_assinaturas', [
+                'gateway' => $resultado['gateway'],
+                'charge_id' => $resultado['charge_id'],
+                'linha_digitavel' => $resultado['linha_digitavel'],
+                'pdf_url' => $resultado['pdf_url'],
+                'data_vencimento' => $resultado['vencimento_db'],
+            ]);
+
+            return $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode([
+                    'result' => true,
+                    'assinatura_id' => $assinaturaId,
+                    'linha_digitavel' => $resultado['linha_digitavel'],
+                    'pdf_url' => $resultado['pdf_url'],
+                    'vencimento' => $resultado['vencimento'],
+                    'valor' => number_format($valorFinal, 2, ',', '.'),
+                    'instrucoes' => $formaBoleto->instrucoes ?? 'Pagar até a data de vencimento.',
+                ]));
+        } catch (\Throwable $e) {
+            $this->db->where('id', $assinaturaId)->update('saas_assinaturas', [
+                'status' => 'cancelado',
+            ]);
+
+            return $this->output
+                ->set_status_header(422)
+                ->set_content_type('application/json')
+                ->set_output(json_encode([
+                    'result' => false,
+                    'message' => $e->getMessage(),
+                ]));
+        }
     }
 
     /**
@@ -482,5 +516,82 @@ class Assinatura extends MY_Controller
             'descontoValidoAte' => $descontoValidoAte,
             'descontoExpirado' => $descontoExpirado,
         ];
+    }
+/**
+     * Tela de visualização e gerenciamento de boletos da assinatura da empresa.
+     */
+    public function boletos()
+    {
+        $formaBoleto = $this->saas_model->getFormaPagamentoByCodigo('boleto');
+        if (! $formaBoleto || empty($formaBoleto->ativo)) {
+            $this->session->set_flashdata('error', 'A opção de pagamento por boleto não está disponível no momento.');
+            return redirect('assinatura');
+        }
+
+        $empresaId = (int) ($this->session->userdata('empresa_id') ?: 1);
+        $empresa = $this->saas_model->getEmpresaById($empresaId);
+
+        if (! $empresa) {
+            $this->session->set_flashdata('error', 'Empresa não encontrada.');
+            return redirect('mapos');
+        }
+
+        $this->data['empresa'] = $empresa;
+        $this->data['boletos'] = $this->saas_model->getBoletosByEmpresa($empresaId);
+        $this->data['formaBoleto'] = $formaBoleto;
+        $this->data['view'] = 'assinatura/boletos';
+
+        return $this->layout();
+    }
+
+    /**
+     * Cancela um boleto pendente gerado pela empresa assinante.
+     */
+    public function cancelarBoleto()
+    {
+        if ($this->input->method() !== 'post') {
+            return $this->output
+                ->set_status_header(405)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['result' => false, 'message' => 'Método não permitido']));
+        }
+
+        $empresaId = (int) ($this->session->userdata('empresa_id') ?: 1);
+        $id = (int) $this->input->post('id');
+
+        $assinatura = $this->saas_model->getAssinaturaById($id);
+        if (! $assinatura || (int) $assinatura->empresa_id !== $empresaId) {
+            return $this->output
+                ->set_status_header(404)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['result' => false, 'message' => 'Boleto não encontrado.']));
+        }
+
+        if ($assinatura->status !== 'pendente') {
+            return $this->output
+                ->set_status_header(400)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['result' => false, 'message' => 'Apenas boletos pendentes podem ser cancelados.']));
+        }
+
+        $formaBoleto = $this->saas_model->getFormaPagamentoByCodigo('boleto');
+        $configBoleto = $formaBoleto->config ?? [];
+        if (! isset($configBoleto['provedor']) && ! empty($formaBoleto->provedor)) {
+            $configBoleto['provedor'] = $formaBoleto->provedor;
+        }
+
+        $this->load->library('SaasPaymentService');
+        if (! empty($assinatura->charge_id) && ! empty($assinatura->gateway)) {
+            $this->saaspaymentservice->cancelarBoleto($configBoleto, (string) $assinatura->charge_id, (string) $assinatura->gateway);
+        }
+
+        $this->saas_model->cancelarAssinatura($id);
+
+        return $this->output
+            ->set_content_type('application/json')
+            ->set_output(json_encode([
+                'result' => true,
+                'message' => 'Boleto cancelado com sucesso.',
+            ]));
     }
 }

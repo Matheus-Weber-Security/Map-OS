@@ -616,6 +616,21 @@ class Saas_model extends CI_Model
                     'charge_id' => ['type' => 'VARCHAR', 'constraint' => 100, 'null' => true, 'default' => null],
                 ]);
             }
+            if (! $this->db->field_exists('linha_digitavel', 'saas_assinaturas')) {
+                $this->dbforge->add_column('saas_assinaturas', [
+                    'linha_digitavel' => ['type' => 'VARCHAR', 'constraint' => 100, 'null' => true, 'default' => null],
+                ]);
+            }
+            if (! $this->db->field_exists('pdf_url', 'saas_assinaturas')) {
+                $this->dbforge->add_column('saas_assinaturas', [
+                    'pdf_url' => ['type' => 'TEXT', 'null' => true, 'default' => null],
+                ]);
+            }
+            if (! $this->db->field_exists('data_vencimento', 'saas_assinaturas')) {
+                $this->dbforge->add_column('saas_assinaturas', [
+                    'data_vencimento' => ['type' => 'DATE', 'null' => true, 'default' => null],
+                ]);
+            }
         }
 
         if ($this->db->table_exists('saas_formas_pagamento')) {
@@ -848,5 +863,106 @@ class Saas_model extends CI_Model
         return $this->db
             ->where('id', $id)
             ->update('saas_formas_pagamento', $dados);
+    }
+/**
+     * Retorna os boletos emitidos para uma empresa assinante.
+     */
+    public function getBoletosByEmpresa(int $empresaId): array
+    {
+        $this->garantirTabelaFormasPagamento();
+
+        return $this->db
+            ->select('a.*, p.nome as plano_nome')
+            ->from('saas_assinaturas a')
+            ->join('saas_planos p', 'p.id = a.plano_id', 'left')
+            ->where('a.empresa_id', $empresaId)
+            ->where('a.forma_pagamento', 'BOLETO')
+            ->order_by('a.id', 'DESC')
+            ->get()
+            ->result();
+    }
+
+    /**
+     * Retorna a listagem de cobranças com paginação e filtros (para o painel Master).
+     */
+    public function getCobrancas(array $filtros = [], int $limit = 20, int $offset = 0): array
+    {
+        $this->garantirTabelaFormasPagamento();
+
+        $this->db
+            ->select('a.*, e.razao_social, e.nome_fantasia, p.nome as plano_nome')
+            ->from('saas_assinaturas a')
+            ->join('saas_empresas e', 'e.id = a.empresa_id', 'left')
+            ->join('saas_planos p', 'p.id = a.plano_id', 'left');
+
+        if (! empty($filtros['status'])) {
+            $this->db->where('a.status', $filtros['status']);
+        }
+        if (! empty($filtros['forma'])) {
+            $this->db->where('a.forma_pagamento', strtoupper($filtros['forma']));
+        }
+        if (! empty($filtros['empresa_id'])) {
+            $this->db->where('a.empresa_id', (int) $filtros['empresa_id']);
+        }
+        if (! empty($filtros['termo'])) {
+            $termo = trim((string) $filtros['termo']);
+            $this->db->group_start()
+                ->like('e.nome_fantasia', $termo)
+                ->or_like('e.razao_social', $termo)
+                ->or_like('a.charge_id', $termo)
+                ->or_like('a.linha_digitavel', $termo)
+                ->group_end();
+        }
+
+        return $this->db
+            ->order_by('a.id', 'DESC')
+            ->limit($limit, $offset)
+            ->get()
+            ->result();
+    }
+
+    /**
+     * Conta o total de cobranças de acordo com os filtros.
+     */
+    public function countCobrancas(array $filtros = []): int
+    {
+        $this->garantirTabelaFormasPagamento();
+
+        $this->db
+            ->from('saas_assinaturas a')
+            ->join('saas_empresas e', 'e.id = a.empresa_id', 'left');
+
+        if (! empty($filtros['status'])) {
+            $this->db->where('a.status', $filtros['status']);
+        }
+        if (! empty($filtros['forma'])) {
+            $this->db->where('a.forma_pagamento', strtoupper($filtros['forma']));
+        }
+        if (! empty($filtros['empresa_id'])) {
+            $this->db->where('a.empresa_id', (int) $filtros['empresa_id']);
+        }
+        if (! empty($filtros['termo'])) {
+            $termo = trim((string) $filtros['termo']);
+            $this->db->group_start()
+                ->like('e.nome_fantasia', $termo)
+                ->or_like('e.razao_social', $termo)
+                ->or_like('a.charge_id', $termo)
+                ->or_like('a.linha_digitavel', $termo)
+                ->group_end();
+        }
+
+        return (int) $this->db->count_all_results();
+    }
+
+    /**
+     * Cancela uma assinatura/cobrança no banco.
+     */
+    public function cancelarAssinatura(int $id): bool
+    {
+        return $this->db
+            ->where('id', $id)
+            ->update('saas_assinaturas', [
+                'status' => 'cancelado',
+            ]);
     }
 }
