@@ -3,8 +3,9 @@
 // Gerencia a alternância dinâmica entre Porcentagem (%) e Valor em Reais (R$)
 // no modal de desconto comercial do assinante.
 
-export default function iniciar(raiz, { doc = document } = {}) {
-    const modal = raiz.querySelector('#modal-desconto');
+export default function iniciar(raiz) {
+    const doc = raiz?.ownerDocument || document;
+    const modal = raiz?.id === 'modal-desconto' ? raiz : (raiz?.querySelector('#modal-desconto') || doc.querySelector('#modal-desconto'));
     if (!modal) {
         return;
     }
@@ -21,11 +22,14 @@ export default function iniciar(raiz, { doc = document } = {}) {
             if (radioValor) {
                 radioValor.checked = true;
             }
+            if (radioPorcento) {
+                radioPorcento.checked = false;
+            }
             if (rotuloDesconto) {
                 rotuloDesconto.innerHTML = 'Desconto em Reais (R$) <span class="text-danger-ink" aria-hidden="true">*</span>';
             }
             if (ajudaDesconto) {
-                ajudaDesconto.textContent = 'Valor em reais abatido mensalmente das faturas.';
+                ajudaDesconto.textContent = 'Valor fixo em reais abatido da mensalidade do plano.';
             }
             if (inputDesconto) {
                 inputDesconto.placeholder = 'Ex: 20,00';
@@ -34,11 +38,14 @@ export default function iniciar(raiz, { doc = document } = {}) {
             if (radioPorcento) {
                 radioPorcento.checked = true;
             }
+            if (radioValor) {
+                radioValor.checked = false;
+            }
             if (rotuloDesconto) {
                 rotuloDesconto.innerHTML = 'Desconto Percentual (%) <span class="text-danger-ink" aria-hidden="true">*</span>';
             }
             if (ajudaDesconto) {
-                ajudaDesconto.textContent = 'Porcentagem de desconto aplicada nas faturas (de 0 a 100%).';
+                ajudaDesconto.textContent = 'Porcentagem de desconto aplicada nas faturas mensais (de 0 a 100%).';
             }
             if (inputDesconto) {
                 inputDesconto.placeholder = 'Ex: 10 ou 10,50';
@@ -46,6 +53,7 @@ export default function iniciar(raiz, { doc = document } = {}) {
         }
     }
 
+    // Ouvinte ao abrir o modal pelo botão da tabela de assinantes
     doc.addEventListener('click', (evento) => {
         const gatilho = evento.target.closest?.('[data-modal-abrir="modal-desconto"]');
         if (!gatilho) {
@@ -61,12 +69,23 @@ export default function iniciar(raiz, { doc = document } = {}) {
         }
     });
 
+    // Ouvintes de clique e mudança nas opções do rádio
     modal.addEventListener('change', (evento) => {
         if (evento.target.name === 'tipo_desconto') {
             atualizarModo(evento.target.value);
         }
     });
 
+    if (radioPorcento) {
+        radioPorcento.addEventListener('click', () => atualizarModo('porcentagem'));
+        radioPorcento.addEventListener('change', () => atualizarModo('porcentagem'));
+    }
+    if (radioValor) {
+        radioValor.addEventListener('click', () => atualizarModo('valor'));
+        radioValor.addEventListener('change', () => atualizarModo('valor'));
+    }
+
+    // Validação no envio
     if (form && inputDesconto) {
         form.addEventListener('submit', (evento) => {
             const ehPorcento = !radioValor || !radioValor.checked;
