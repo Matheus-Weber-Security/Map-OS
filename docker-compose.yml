@@ -19,6 +19,7 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-}
       - DB_DATABASE=${DB_DATABASE:-NexusDB}
       - DB_SSL=${DB_SSL:-true}
+      - APP_PROXY_IPS=${APP_PROXY_IPS:-10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,127.0.0.1}
     volumes:
       - uploads_data:/var/www/html/assets/uploads
       - userimage_data:/var/www/html/assets/userImage

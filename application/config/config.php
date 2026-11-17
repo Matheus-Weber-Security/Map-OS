@@ -448,6 +448,17 @@ $config['sess_regenerate_destroy'] = cookieEnvFlag($_ENV['APP_SESS_REGENERATE_DE
 $config['cookie_prefix'] = $_ENV['APP_COOKIE_PREFIX'] ?? '';
 $config['cookie_domain'] = $_ENV['APP_COOKIE_DOMAIN'] ?? '';
 $config['cookie_path'] = $_ENV['APP_COOKIE_PATH'] ?? '/';
+// Configuração de IPs de proxy confiáveis (APP_PROXY_IPS).
+// Se não especificado no .env, assume as sub-redes privadas RFC 1918 e localhost
+// como padrão seguro para containers e proxies reversos (Docker, Nginx, Traefik).
+$proxyEnv = $_ENV['APP_PROXY_IPS'] ?? getenv('APP_PROXY_IPS') ?? null;
+if ($proxyEnv !== null && trim((string) $proxyEnv) !== '') {
+    $proxyIps = in_array(strtolower(trim((string) $proxyEnv)), ['none', 'false', 'off'], true) ? '' : trim((string) $proxyEnv);
+} else {
+    $proxyIps = '10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,127.0.0.1,::1';
+}
+$config['proxy_ips'] = $proxyIps;
+
 // Os padrões ficam em cookie_seguro_helper.php. Resumo, com a variável ausente
 // do .env:
 // - cookie_secure: Secure só quando a requisição chega por HTTPS
@@ -456,7 +467,7 @@ $config['cookie_path'] = $_ENV['APP_COOKIE_PATH'] ?? '/';
 //   assets/js/csrf.js precisa lê-lo (ver MY_Security).
 // - cookie_samesite / sess_samesite: Lax.
 // Valores explícitos no .env são respeitados. Ver docs/cookies-e-sessao.md.
-$config['cookie_secure'] = cookieSecure($_ENV['APP_COOKIE_SECURE'] ?? null, $_SERVER, $_ENV['APP_PROXY_IPS'] ?? '');
+$config['cookie_secure'] = cookieSecure($_ENV['APP_COOKIE_SECURE'] ?? null, $_SERVER, $config['proxy_ips']);
 $config['cookie_httponly'] = cookieEnvFlag($_ENV['APP_COOKIE_HTTPONLY'] ?? null, true);
 $config['cookie_samesite'] = cookieSameSite($_ENV['APP_COOKIE_SAMESITE'] ?? 'Lax', $config['cookie_secure']);
 $config['sess_samesite'] = $config['cookie_samesite'];
@@ -535,7 +546,8 @@ $config['time_reference'] = $_ENV['APP_TIMEZONE'] ?? 'America/Sao_Paulo';
 | Comma-separated:	'10.0.1.200,192.168.5.0/24'
 | Array:		array('10.0.1.200', '192.168.5.0/24')
 */
-$config['proxy_ips'] = $_ENV['APP_PROXY_IPS'] ?? '';
+// Já inicializado acima respeitando APP_PROXY_IPS ou o padrão seguro de sub-redes privadas.
+$config['proxy_ips'] = $proxyIps;
 
 /*
 |--------------------------------------------------------------------------
