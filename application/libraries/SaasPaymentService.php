@@ -87,7 +87,7 @@ class SaasPaymentService
             $primeiroNome = substr($partesNome[0], 0, 30);
             $sobrenome = isset($partesNome[1]) ? substr($partesNome[1], 0, 30) : 'Empresa';
 
-            $doc = preg_replace('/[^0-9]/', '', (string) ($empresa->cnpj ?? ''));
+            $doc = preg_replace('/[^0-9]/', '', (string) ($empresa->cnpj ?? $empresa->documento ?? ''));
             $identification = null;
             if (strlen($doc) === 14) {
                 $identification = ['type' => 'CNPJ', 'number' => $doc];
@@ -197,7 +197,7 @@ class SaasPaymentService
         try {
             $asaas = new \CodePhix\Asaas\Asaas($apiKey, $ambiente);
 
-            $doc = preg_replace('/[^0-9]/', '', (string) ($empresa->cnpj ?? ''));
+            $doc = preg_replace('/[^0-9]/', '', (string) ($empresa->cnpj ?? $empresa->documento ?? ''));
             $customerId = null;
 
             // Busca cliente existente no Asaas
@@ -356,7 +356,7 @@ class SaasPaymentService
                 'solicitacaoPagador' => 'Nexus Ticket - Renovação +30 dias',
             ];
 
-            $doc = preg_replace('/[^0-9]/', '', (string) ($empresa->cnpj ?? ''));
+            $doc = preg_replace('/[^0-9]/', '', (string) ($empresa->cnpj ?? $empresa->documento ?? ''));
             if (strlen($doc) === 14) {
                 $body['devedor'] = [
                     'cnpj' => $doc,
@@ -651,7 +651,7 @@ class SaasPaymentService
         $primeiroNome = substr($partesNome[0], 0, 30);
         $sobrenome = isset($partesNome[1]) ? substr($partesNome[1], 0, 30) : 'Empresa';
 
-        $doc = preg_replace('/[^0-9]/', '', (string) ($dadosPagamento['doc_titular'] ?? $empresa->cnpj ?? ''));
+        $doc = preg_replace('/[^0-9]/', '', (string) ($dadosPagamento['doc_titular'] ?? $empresa->cnpj ?? $empresa->documento ?? ''));
         $identification = null;
         if (strlen($doc) === 14) {
             $identification = ['type' => 'CNPJ', 'number' => $doc];
@@ -787,7 +787,7 @@ class SaasPaymentService
             $api = new \Efi\EfiPay($options);
 
             $nome = trim((string) ($dadosPagamento['titular'] ?? $empresa->nome_fantasia ?: $empresa->razao_social ?: 'Assinante'));
-            $doc = preg_replace('/[^0-9]/', '', (string) ($dadosPagamento['doc_titular'] ?? $empresa->cnpj ?? ''));
+            $doc = preg_replace('/[^0-9]/', '', (string) ($dadosPagamento['doc_titular'] ?? $empresa->cnpj ?? $empresa->documento ?? ''));
             $email = ! empty($empresa->email) && filter_var($empresa->email, FILTER_VALIDATE_EMAIL)
                 ? $empresa->email
                 : 'contato@' . ($_SERVER['HTTP_HOST'] ?? 'nexustkt.com.br');
@@ -908,7 +908,7 @@ class SaasPaymentService
         try {
             $asaas = new \CodePhix\Asaas\Asaas($apiKey, $ambiente);
 
-            $doc = preg_replace('/[^0-9]/', '', (string) ($dadosPagamento['doc_titular'] ?? $empresa->cnpj ?? ''));
+            $doc = preg_replace('/[^0-9]/', '', (string) ($dadosPagamento['doc_titular'] ?? $empresa->cnpj ?? $empresa->documento ?? ''));
             $customerId = null;
 
             if (! empty($doc) && (strlen($doc) === 11 || strlen($doc) === 14)) {
@@ -1154,7 +1154,7 @@ class SaasPaymentService
         try {
             $asaas = new \CodePhix\Asaas\Asaas($apiKey, $ambiente);
 
-            $doc = preg_replace('/[^0-9]/', '', (string) ($empresa->cnpj ?? ''));
+            $doc = preg_replace('/[^0-9]/', '', (string) ($empresa->cnpj ?? $empresa->documento ?? ''));
             $customerId = null;
 
             if (! empty($doc) && (strlen($doc) === 11 || strlen($doc) === 14)) {
@@ -1292,7 +1292,7 @@ class SaasPaymentService
             ? $empresa->email
             : 'financeiro@' . ($_SERVER['HTTP_HOST'] ?? 'nexustkt.com.br');
 
-        $doc = preg_replace('/\D/', '', (string) ($empresa->cnpj ?? ''));
+        $doc = preg_replace('/\D/', '', (string) ($empresa->cnpj ?? $empresa->documento ?? ''));
         if (empty($doc) || (strlen($doc) !== 11 && strlen($doc) !== 14)) {
             throw new \Exception('O CPF ou CNPJ da sua empresa precisa estar preenchido no cadastro para emitir o boleto.');
         }
@@ -1372,7 +1372,7 @@ class SaasPaymentService
             ? $empresa->email
             : 'financeiro@' . ($_SERVER['HTTP_HOST'] ?? 'nexustkt.com.br');
 
-        $doc = preg_replace('/\D/', '', (string) ($empresa->cnpj ?? ''));
+        $doc = preg_replace('/\D/', '', (string) ($empresa->cnpj ?? $empresa->documento ?? ''));
 
         $prevErrorReporting = error_reporting();
         error_reporting($prevErrorReporting & ~E_DEPRECATED);

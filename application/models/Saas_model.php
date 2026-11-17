@@ -44,6 +44,8 @@ class Saas_model extends CI_Model
 
     public function getEmpresaById(int $id): ?object
     {
+        $this->garantirTabelaFormasPagamento();
+
         $emp = $this->db
             ->select('e.*, p.nome as plano_nome, p.valor as plano_valor')
             ->from('saas_empresas e')
@@ -52,14 +54,39 @@ class Saas_model extends CI_Model
             ->get()
             ->row();
 
-        if ($emp && ! empty($emp->data_vencimento)) {
-            $hoje = strtotime('today');
-            $venc = strtotime($emp->data_vencimento);
-            $dias = max(0, (int) ceil(($venc - $hoje) / 86400));
-            if ((int) $emp->dias_restantes !== $dias) {
-                $this->db->where('id', $id)->update('saas_empresas', ['dias_restantes' => $dias]);
+        if ($emp) {
+            // Enriquece a empresa com dados cadastrais de Configurações > Emitente (se preenchidos)
+            $emitente = $this->db->where('empresa_id', $id)->get('emitente')->row();
+            if ($emitente) {
+                if (empty($emp->documento) && ! empty($emitente->cnpj)) {
+                    $emp->documento = $emitente->cnpj;
+                }
+                $emp->cnpj = ! empty($emp->cnpj) ? $emp->cnpj : (! empty($emp->documento) ? $emp->documento : ($emitente->cnpj ?? ''));
+                $emp->cep = ! empty($emp->cep) ? $emp->cep : ($emitente->cep ?? '');
+                $emp->rua = ! empty($emp->rua) ? $emp->rua : ($emitente->rua ?? '');
+                $emp->numero = ! empty($emp->numero) ? $emp->numero : ($emitente->numero ?? '');
+                $emp->bairro = ! empty($emp->bairro) ? $emp->bairro : ($emitente->bairro ?? '');
+                $emp->cidade = ! empty($emp->cidade) ? $emp->cidade : ($emitente->cidade ?? '');
+                $emp->estado = ! empty($emp->estado) ? $emp->estado : ($emitente->uf ?? '');
+                if (empty($emp->telefone) && ! empty($emitente->telefone)) {
+                    $emp->telefone = $emitente->telefone;
+                }
+                if (empty($emp->email) && ! empty($emitente->email)) {
+                    $emp->email = $emitente->email;
+                }
+            } else {
+                $emp->cnpj = ! empty($emp->cnpj) ? $emp->cnpj : ($emp->documento ?? '');
             }
-            $emp->dias_restantes = $dias;
+
+            if (! empty($emp->data_vencimento)) {
+                $hoje = strtotime('today');
+                $venc = strtotime($emp->data_vencimento);
+                $dias = max(0, (int) ceil(($venc - $hoje) / 86400));
+                if ((int) $emp->dias_restantes !== $dias) {
+                    $this->db->where('id', $id)->update('saas_empresas', ['dias_restantes' => $dias]);
+                }
+                $emp->dias_restantes = $dias;
+            }
         }
 
         return $emp ?: null;
@@ -604,6 +631,15 @@ class Saas_model extends CI_Model
      */
     public function garantirTabelaFormasPagamento(): void
     {
+        if ($this->db->table_exists('saas_empresas')) {
+            $this->load->dbforge();
+            if (! $this->db->field_exists('cnpj', 'saas_empresas')) {
+                $this->dbforge->add_column('saas_empresas', [
+                    'cnpj' => ['type' => 'VARCHAR', 'constraint' => 20, 'null' => true, 'default' => null],
+                ]);
+            }
+        }
+
         if ($this->db->table_exists('saas_assinaturas')) {
             $this->load->dbforge();
             if (! $this->db->field_exists('gateway', 'saas_assinaturas')) {

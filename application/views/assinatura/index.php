@@ -333,7 +333,7 @@ $maxParcelas = $formaCartaoCredito ? (int) ($formaCartaoCredito->config['max_par
 
             <div>
                 <label class="text-caption font-semibold text-text block mb-1">CPF ou CNPJ do Titular</label>
-                <input id="cartao-doc" type="text" placeholder="" value="<?= e($empresa->cnpj ?? '') ?>" required class="w-full text-sm bg-surface-subtle border border-input rounded-lg px-3 py-2 text-text focus:outline-primary font-mono">
+                <input id="cartao-doc" type="text" placeholder="" value="<?= e($empresa->cnpj ?? $empresa->documento ?? '') ?>" required class="w-full text-sm bg-surface-subtle border border-input rounded-lg px-3 py-2 text-text focus:outline-primary font-mono">
             </div>
 
             <div class="grid grid-cols-2 gap-3">
