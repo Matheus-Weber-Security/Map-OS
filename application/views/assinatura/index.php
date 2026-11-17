@@ -391,7 +391,7 @@ $maxParcelas = $formaCartaoCredito ? (int) ($formaCartaoCredito->config['max_par
             </div>
 
             <button id="btn-iniciar-debito" type="button" class="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary-hover active:bg-primary-hover text-on-primary font-bold py-3 px-6 shadow-sm transition-all text-body-md mt-2">
-                <?= icon('arrow-right', ['class' => 'size-5']) ?>
+                <?= icon('external-link', ['class' => 'size-5']) ?>
                 <span>Prosseguir para o Banco</span>
             </button>
         </div>
