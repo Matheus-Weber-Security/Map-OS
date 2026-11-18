@@ -15,6 +15,7 @@
  * @var array{adicionar: bool, editar: bool, excluir: bool} $pode
  */
 $temFiltro = $filtros !== [];
+$query = listagemQuery($filtros);
 
 $colunas = [
     ['label' => 'Nº', 'align' => 'right', 'nowrap' => true, 'render' => fn ($o) => (string) ($o->codigo ?? $o->idOs)],
@@ -28,7 +29,7 @@ $colunas = [
     ['label' => 'Entrega', 'align' => 'right', 'nowrap' => true, 'hide_until' => 'xl', 'render' => fn ($o) => dataBr($o->dataFinal)],
     ['label' => 'Status', 'nowrap' => true, 'render' => fn ($o) => component('pill-status', osStatusPill($o->status))],
     ['label' => 'Total', 'align' => 'right', 'nowrap' => true, 'render' => fn ($o) => dinheiro($o->total)],
-    ['label' => 'Ações', 'align' => 'right', 'nowrap' => true, 'render' => function ($o) use ($pode, $controle_editos) {
+    ['label' => 'Ações', 'align' => 'right', 'nowrap' => true, 'render' => function ($o) use ($pode, $controle_editos, $query) {
         $numero = 'OS ' . ($o->codigo ?? $o->idOs);
         $editavel = osEditavel($o, $pode['editar'], $controle_editos);
         $itens = [
@@ -40,6 +41,17 @@ $colunas = [
         $itens[] = ['label' => 'Imprimir', 'icon' => 'printer', 'href' => site_url('os/imprimir/' . $o->idOs), 'attrs' => ['target' => '_blank', 'rel' => 'noopener']];
         $itens[] = ['label' => 'Cupom 80mm', 'icon' => 'receipt', 'href' => site_url('os/imprimirTermica/' . $o->idOs), 'attrs' => ['target' => '_blank', 'rel' => 'noopener']];
         $itens[] = osMenuItemWhatsApp($o->whatsapp ?? null);
+        if ($pode['editar']) {
+            $itens[] = [
+                'label' => 'Enviar Email',
+                'icon' => 'mail',
+                'attrs' => [
+                    'type' => 'submit',
+                    'form' => 'form-acao-os',
+                    'formaction' => site_url('os/enviar_email/' . $o->idOs) . $query,
+                ],
+            ];
+        }
         // Como na v4: excluir exige dOs e uma OS que ainda pode ser editada.
         if ($pode['excluir'] && $editavel) {
             $itens[] = ['separador' => true];
@@ -129,8 +141,12 @@ $resumo = ($total === 1 ? '1 ordem de serviço' : number_format($total, 0, ',', 
     <?= listagemPaginacao($paginacao, $filtros, site_url('os')) ?>
 </div>
 
+<form id="form-acao-os" method="post" action="<?= e(site_url('os')) ?>" hidden>
+    <input type="hidden" name="<?= e($this->security->get_csrf_token_name()) ?>" value="<?= e($this->security->get_csrf_hash()) ?>">
+</form>
+
 <?php if ($pode['excluir']) { ?>
-    <form id="form-excluir-os" method="post" action="<?= e(site_url('os/excluir') . listagemQuery($filtros)) ?>" hidden>
+    <form id="form-excluir-os" method="post" action="<?= e(site_url('os/excluir') . $query) ?>" hidden>
         <input type="hidden" name="<?= e($this->security->get_csrf_token_name()) ?>" value="<?= e($this->security->get_csrf_hash()) ?>">
         <input type="hidden" name="id" value="" data-modal-de="excluir-os" data-modal-valor="id">
     </form>

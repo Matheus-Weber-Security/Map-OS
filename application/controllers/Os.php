@@ -599,24 +599,28 @@ class Os extends MY_Controller
             redirect(base_url());
         }
 
+        $idOs = (int) $this->uri->segment(3);
+        $referencia = (string) $this->input->server('HTTP_REFERER');
+        $destino = str_contains($referencia, 'os/visualizar/' . $idOs)
+            ? site_url('os/visualizar/' . $idOs)
+            : site_url('os') . listagemQuery($this->filtrosDaListagem());
+
         $this->load->model('mapos_model');
         $this->load->model('usuarios_model');
-        $this->data['result'] = $this->os_model->getById($this->uri->segment(3));
-        if (! isset($this->data['result']->email)) {
+        $this->data['result'] = $this->os_model->getById($idOs);
+        if (empty($this->data['result']->email)) {
             $this->session->set_flashdata('error', 'O cliente não tem e-mail cadastrado.');
-            redirect(site_url('os'));
+            redirect($destino);
         }
 
-        $this->data['produtos'] = $this->os_model->getProdutos($this->uri->segment(3));
-        $this->data['servicos'] = $this->os_model->getServicos($this->uri->segment(3));
+        $this->data['produtos'] = $this->os_model->getProdutos($idOs);
+        $this->data['servicos'] = $this->os_model->getServicos($idOs);
         $this->data['emitente'] = $this->mapos_model->getEmitente();
 
-        if (! isset($this->data['emitente']->email)) {
+        if (empty($this->data['emitente']->email)) {
             $this->session->set_flashdata('error', 'Efetue o cadastro dos dados de emitente');
-            redirect(site_url('os'));
+            redirect($destino);
         }
-
-        $idOs = $this->uri->segment(3);
 
         $emitente = $this->data['emitente'];
         $tecnico = $this->usuarios_model->getById($this->data['result']->usuarios_id);
@@ -651,7 +655,7 @@ class Os extends MY_Controller
             if ($ValidarEmail) {
                 if (empty($this->data['result']->email) || ! filter_var($this->data['result']->email, FILTER_VALIDATE_EMAIL)) {
                     $this->session->set_flashdata('error', 'Por favor preencha o email do cliente');
-                    redirect(site_url('os/visualizar/') . $this->uri->segment(3));
+                    redirect($destino);
                 }
             }
 
@@ -660,15 +664,15 @@ class Os extends MY_Controller
             if ($enviouEmail) {
                 $this->session->set_flashdata('success', 'E-mail enviado para o cliente com sucesso.');
                 log_info('Enviou e-mail para o cliente: ' . $this->data['result']->nomeCliente . '. E-mail: ' . $this->data['result']->email);
-                redirect(site_url('os'));
+                redirect($destino);
             } else {
                 $this->session->set_flashdata('error', 'Não foi possível enviar o e-mail. Confira os detalhes no Log da página de e-mails.');
-                redirect(site_url('os'));
+                redirect($destino);
             }
         }
 
         $this->session->set_flashdata('success', 'O sistema está com uma configuração ativada para não notificar. Entre em contato com o administrador.');
-        redirect(site_url('os'));
+        redirect($destino);
     }
 
     private function devolucaoEstoque($id)
