@@ -9,9 +9,8 @@ class Publico extends CI_Controller
     public function __construct()
     {
         parent::__construct();
-        $this->load->model('Os_model');
-        $this->load->model('Mapos_model');
-        $this->load->helper(['os', 'financeiro']);
+        $this->load->model(['Os_model', 'Vendas_model', 'Mapos_model']);
+        $this->load->helper(['os', 'vendas', 'financeiro']);
     }
 
     /**
@@ -98,6 +97,88 @@ class Publico extends CI_Controller
         }
 
         $this->load->view('os/imprimirOs', $this->data);
+    }
+
+    /**
+     * Visualização e download público do comprovante da Venda (80mm) pelo cliente via token seguro.
+     *
+     * @param int|string|null $id
+     * @param string|null $token
+     */
+    public function venda($id = null, $token = null)
+    {
+        $id = (int) $id;
+        $token = trim((string) $token);
+
+        if ($id <= 0 || $token === '') {
+            show_404();
+        }
+
+        $venda = $this->Vendas_model->getByIdPublico($id);
+        if (! $venda) {
+            show_404();
+        }
+
+        $tokenEsperado = vendaTokenPublico($venda);
+        if (! hash_equals($tokenEsperado, $token)) {
+            // Compatibilidade com links gerados anteriormente onde empresa_id não estava no SELECT (fallback para 1)
+            $vendaCompat = clone $venda;
+            $vendaCompat->empresa_id = 1;
+            if (! hash_equals(vendaTokenPublico($vendaCompat), $token)) {
+                show_error('Acesso não autorizado ou link inválido.', 403, 'Acesso Negado');
+            }
+        }
+
+        $empresaId = (int) ($venda->empresa_id ?? 1);
+
+        // Carrega configurações da empresa da Venda
+        $configuration = [];
+        if ($this->db->table_exists('configuracoes')) {
+            $configs = $this->db->where('empresa_id', $empresaId)->get('configuracoes')->result();
+            foreach ($configs as $c) {
+                $configuration[$c->config] = $c->valor;
+            }
+        }
+        $configuration['pix_key'] = $configuration['pix_key'] ?? '';
+
+        // Carrega emitente da empresa
+        $emitente = null;
+        if ($this->db->table_exists('emitente')) {
+            $emitente = $this->db->where('empresa_id', $empresaId)->get('emitente', 1)->row();
+        }
+        if (! $emitente) {
+            $emitente = $this->Mapos_model->getEmitente();
+        }
+
+        $produtos = $this->Vendas_model->getProdutosPublico($id, $empresaId);
+
+        $this->data['result'] = $venda;
+        $this->data['produtos'] = $produtos;
+        $this->data['emitente'] = $emitente;
+        $this->data['configuration'] = $configuration;
+        $this->data['publico'] = true;
+
+        $this->data['qrCode'] = '';
+        $this->data['chaveFormatada'] = '';
+
+        $pixKey = $emitente->pix_key ?? ($configuration['pix_key'] ?? '');
+        $configuration['pix_key'] = $pixKey;
+        if (! empty($pixKey)) {
+            $this->data['qrCode'] = $this->Vendas_model->getQrCodePublico($id, $pixKey, $emitente, $venda, $produtos);
+            $this->data['chaveFormatada'] = $this->formatarChavePix($pixKey);
+        }
+
+        // Se solicitado o download direto do PDF via streaming na memória (0 bytes no disco)
+        if ($this->input->get('pdf') || $this->input->get('download')) {
+            $this->load->helper('mpdf');
+            $html = $this->load->view('vendas/imprimirVendaTermica', $this->data, true);
+            $codigoVenda = $venda->codigo ?? $venda->idVendas;
+            $nomeArquivo = 'Venda_' . str_pad((string) $codigoVenda, 4, '0', STR_PAD_LEFT);
+            pdf_create_termica($html, $nomeArquivo, true);
+            return;
+        }
+
+        $this->load->view('vendas/imprimirVendaTermica', $this->data);
     }
 
     private function formatarChavePix(string $chave): string

@@ -31,7 +31,7 @@ class Vendas_model extends CI_Model
     {
         $totalItens = '(SELECT COALESCE(SUM(itens_de_vendas.subTotal), 0) FROM itens_de_vendas WHERE itens_de_vendas.vendas_id = vendas.idVendas)';
 
-        $this->db->select('vendas.idVendas, vendas.codigo, vendas.dataVenda, vendas.status, vendas.faturado, vendas.garantia, vendas.desconto, vendas.valor_desconto, vendas.clientes_id, vendas.usuarios_id');
+        $this->db->select('vendas.idVendas, vendas.codigo, vendas.empresa_id, vendas.dataVenda, vendas.status, vendas.faturado, vendas.garantia, vendas.desconto, vendas.valor_desconto, vendas.clientes_id, vendas.usuarios_id');
         $this->db->select('clientes.nomeCliente, clientes.celular AS celular_cliente, clientes.telefone AS telefone_cliente, usuarios.nome AS vendedor');
         $this->db->select($totalItens . ' AS totalItens', false);
 
@@ -122,6 +122,19 @@ class Vendas_model extends CI_Model
         return $this->db->get()->row();
     }
 
+    public function getByIdPublico($id)
+    {
+        $this->db->select('vendas.*, clientes.*, vendas.empresa_id as empresa_id, vendas.codigo as codigo, vendas.idVendas as idVendas, clientes.codigo as codigo_cliente, clientes.celular as celular_cliente, clientes.telefone as telefone_cliente, clientes.contato as contato_cliente, clientes.email as emailCliente, lancamentos.data_vencimento, usuarios.telefone as telefone_usuario, usuarios.email as email_usuario, usuarios.nome as nome');
+        $this->db->from('vendas');
+        $this->db->join('clientes', 'clientes.idClientes = vendas.clientes_id');
+        $this->db->join('usuarios', 'usuarios.idUsuarios = vendas.usuarios_id');
+        $this->db->join('lancamentos', 'vendas.idVendas = lancamentos.vendas_id', 'LEFT');
+        $this->db->where('vendas.idVendas', $id);
+        $this->db->limit(1);
+
+        return $this->db->get()->row();
+    }
+
     /**
      * Venda faturada ou cancelada só pode ser alterada com a configuração
      * control_edit_vendas ligada, a mesma regra da OS (Os_model::isEditable()).
@@ -163,6 +176,20 @@ class Vendas_model extends CI_Model
         $this->db->where('itens_de_vendas.vendas_id', $id);
         if ($this->db->field_exists('empresa_id', 'vendas')) {
             $this->db->where('vendas.empresa_id', empresa_ativa_id());
+        }
+
+        return $this->db->get()->result();
+    }
+
+    public function getProdutosPublico($id, int $empresaId)
+    {
+        $this->db->select('itens_de_vendas.*, produtos.*');
+        $this->db->from('itens_de_vendas');
+        $this->db->join('produtos', 'produtos.idProdutos = itens_de_vendas.produtos_id');
+        $this->db->join('vendas', 'vendas.idVendas = itens_de_vendas.vendas_id');
+        $this->db->where('itens_de_vendas.vendas_id', $id);
+        if ($this->db->field_exists('empresa_id', 'vendas')) {
+            $this->db->where('vendas.empresa_id', $empresaId);
         }
 
         return $this->db->get()->result();
@@ -275,7 +302,7 @@ class Vendas_model extends CI_Model
      * Totais da venda para a tela (osTotais(), sem serviços): produtos,
      * desconto e total, calculados pelos itens e pelo desconto gravado.
      */
-    public function totais(object $venda): array
+    public function totais(object $venda, ?array $produtos = null): array
     {
         $soma = (float) ($this->db
             ->select_sum('subTotal')
@@ -285,7 +312,7 @@ class Vendas_model extends CI_Model
 
         // A soma já traz o desconto individual dos itens (#2880); aqui só se
         // calcula quanto eles somam, para mostrar.
-        $descontoItens = osDescontoDosItens($this->getProdutos((int) $venda->idVendas));
+        $descontoItens = osDescontoDosItens($produtos ?? $this->getProdutos((int) $venda->idVendas));
 
         return osTotais($soma, 0.0, $venda->valor_desconto ?? 0, $venda->tipo_desconto ?? null, $venda->desconto ?? 0, $descontoItens);
     }
@@ -350,6 +377,11 @@ class Vendas_model extends CI_Model
         return $this->pix($id, $pixKey, $emitente)?->getQRCode();
     }
 
+    public function getQrCodePublico($id, $pixKey, $emitente, object $venda, array $produtos = [])
+    {
+        return $this->pixPublico($id, $pixKey, $emitente, $venda, $produtos)?->getQRCode();
+    }
+
     /**
      * Código PIX "copia e cola" (BR Code) da venda: o mesmo payload do QR Code
      * de getQrCode(). Na v4 a tela decodificava a imagem do QR no navegador
@@ -358,6 +390,11 @@ class Vendas_model extends CI_Model
     public function getPixPayload($id, $pixKey, $emitente): ?string
     {
         return $this->pix($id, $pixKey, $emitente)?->getPixCode();
+    }
+
+    public function getPixPayloadPublico($id, $pixKey, $emitente, object $venda, array $produtos = []): ?string
+    {
+        return $this->pixPublico($id, $pixKey, $emitente, $venda, $produtos)?->getPixCode();
     }
 
     /**
@@ -371,7 +408,21 @@ class Vendas_model extends CI_Model
         }
 
         $venda = $this->getById($id);
-        $amount = $venda ? round($this->totais($venda)['total'], 2) : 0.0;
+        if (! $venda) {
+            return null;
+        }
+
+        return $this->pixPublico($id, $pixKey, $emitente, $venda);
+    }
+
+    private function pixPublico($id, $pixKey, $emitente, object $venda, array $produtos = []): ?StaticPayload
+    {
+        if (empty($id) || empty($pixKey) || empty($emitente)) {
+            return null;
+        }
+
+        $totais = $this->totais($venda, $produtos ?: null);
+        $amount = round($totais['total'], 2);
 
         if ($amount <= 0) {
             return null;

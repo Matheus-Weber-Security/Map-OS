@@ -345,7 +345,7 @@ class Vendas extends MY_Controller
                 'qr' => $this->vendas_model->getQrCode($idVenda, $configuracao['pix_key'], $emitente),
                 'chave' => $this->formatarChave($configuracao['pix_key']),
             ],
-            'whatsapp' => $telefone === null ? null : ['telefone' => $telefone],
+            'whatsapp' => vendaDadosWhatsApp($venda, $emitente, (float) $totais['total']),
             'garantia_ate' => vendaGarantiaAte($venda->dataVenda, $venda->garantia),
             'pode' => [
                 'editar' => $editavel,
@@ -1015,6 +1015,8 @@ class Vendas extends MY_Controller
         if (empty($emitente->email)) {
             return false;
         }
+
+        $dados['linkVenda'] = site_url("publico/venda/{$idVenda}/" . vendaTokenPublico($dados['result']));
 
         $html = $this->load->view('vendas/emails/venda', $dados, true);
 

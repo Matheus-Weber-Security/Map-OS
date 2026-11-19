@@ -74,6 +74,16 @@
 </head>
 
 <body>
+    <?php if (! empty($publico)) : ?>
+        <div class="doc-sem-impressao" style="max-width: 80mm; margin: 10px auto; display: flex; gap: 8px; justify-content: center; align-items: center; padding: 8px; background: #f4f4f5; border-radius: 6px; border: 1px solid #e4e4e7;">
+            <a href="?pdf=1" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; background: #f37338; color: #fff; text-decoration: none; font-size: 13px; font-weight: 500; border-radius: 4px;">
+                📥 Baixar em PDF
+            </a>
+            <button type="button" onclick="window.print()" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; background: #fff; color: #18181b; border: 1px solid #d4d4d8; font-size: 13px; font-weight: 500; border-radius: 4px; cursor: pointer;">
+                🖨️ Imprimir
+            </button>
+        </div>
+    <?php endif; ?>
     <div class="cupom">
         <?php if ($emitente == null) { ?>
             <div class="bg-warning-soft p-2 text-warning-ink">
@@ -81,6 +91,9 @@
             </div>
         <?php } else { ?>
             <div class="text-center">
+                <?php if (! empty($emitente->url_logo)) : ?>
+                    <img class="mx-auto max-h-[80px] object-contain" src="<?= e(emitenteLogoSrc($emitente->url_logo)) ?>" alt=""><br>
+                <?php endif; ?>
                 <span class="text-xl"><b><?php echo e($emitente->nome); ?></b></span><br>
                 <span>
                     <?php echo e('CNPJ: ' . $emitente->cnpj); ?><br>

@@ -229,9 +229,6 @@ if (! function_exists('vendaDadosWhatsApp')) {
         $numeroVenda = (string) ($venda->codigo ?? $idVenda);
         $token = vendaTokenPublico($venda);
         $linkVenda = site_url("publico/venda/{$idVenda}/{$token}");
-        if ($telefone === null) {
-            return null;
-        }
 
         $cliente = trim((string) ($venda->nomeCliente ?? 'Cliente'));
         $texto = sprintf(
@@ -247,6 +244,8 @@ if (! function_exists('vendaDadosWhatsApp')) {
         if ($nomeEmitente !== '') {
             $texto .= ' Atenciosamente, ' . $nomeEmitente . ($foneEmitente !== '' ? ' ' . $foneEmitente : '') . '.';
         }
+
+        $texto .= "\n\n📄 Visualize o comprovante da sua venda aqui:\n" . $linkVenda;
 
         return [
             'telefone' => $telefone,
