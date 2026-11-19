@@ -80,6 +80,10 @@ class Clientes_model extends CI_Model
         if (($filtros['tipo'] ?? '') !== '') {
             $this->db->where('fornecedor', $filtros['tipo'] === 'fornecedor' ? 1 : 0);
         }
+
+        if (($filtros['status'] ?? '') !== '') {
+            $this->db->where('ativo', $filtros['status'] === 'inativo' ? 0 : 1);
+        }
     }
 
     public function getById($id)

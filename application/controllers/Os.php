@@ -161,8 +161,9 @@ class Os extends MY_Controller
             }
 
             if ($erros === []) {
-                if (! $this->os_model->existe('clientes', 'idClientes', $dados['clientes_id'])) {
-                    $erros['cliente'] = 'Escolha um cliente da lista.';
+                $validarClienteAtivo = $os === null;
+                if (! $this->os_model->existe('clientes', 'idClientes', $dados['clientes_id'], $validarClienteAtivo)) {
+                    $erros['cliente'] = $validarClienteAtivo ? 'Escolha um cliente ativo da lista.' : 'Escolha um cliente da lista.';
                 }
                 if (! $this->os_model->existe('usuarios', 'idUsuarios', $dados['usuarios_id'], true)) {
                     $erros['tecnico'] = 'Escolha um técnico ativo da lista.';

@@ -426,6 +426,7 @@ class Financeiro_model extends CI_Model
         $this->db->group_start();
         dbAplicarLikeCampos($this->db, ['nomeCliente', 'documento'], $termo);
         $this->db->group_end();
+        $this->db->where('clientes.ativo', 1);
         $this->db->order_by('nomeCliente', 'asc')->limit(8);
 
         $itens = [];

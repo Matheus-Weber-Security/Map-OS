@@ -37,6 +37,7 @@ if (! function_exists('clienteDadosDoFormulario')) {
         $documento = (string) preg_replace('/[^A-Za-z0-9]/', '', $dados['documento']);
         $dados['pessoa_fisica'] = strlen($documento) === 11 ? 1 : 0;
         $dados['fornecedor'] = empty($post['fornecedor']) ? 0 : 1;
+        $dados['ativo'] = empty($post['ativo']) ? 0 : 1;
 
         $senha = $texto('senha');
         if ($senha !== '') {
@@ -70,6 +71,7 @@ if (! function_exists('clienteValoresDoFormulario')) {
         }
 
         $valores['fornecedor'] = is_array($post) ? ! empty($post['fornecedor']) : (bool) ($cliente->fornecedor ?? false);
+        $valores['ativo'] = is_array($post) ? ! empty($post['ativo']) : ($cliente !== null ? (bool) ($cliente->ativo ?? true) : true);
 
         return $valores;
     }

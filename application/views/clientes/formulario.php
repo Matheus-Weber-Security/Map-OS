@@ -55,6 +55,15 @@ $grade = 'mt-4 grid gap-4 sm:grid-cols-2';
                         <?= component('radio', ['name' => 'fornecedor', 'value' => '1', 'label' => 'Fornecedor', 'checked' => (bool) $valores['fornecedor']]) ?>
                     </div>
                 </fieldset>
+                <div class="sm:col-span-2">
+                    <?= component('switch', [
+                        'name' => 'ativo',
+                        'label' => 'Cadastro ativo',
+                        'value' => '1',
+                        'checked' => (bool) ($valores['ativo'] ?? true),
+                        'help' => 'Cadastros inativos não aparecem na abertura de vendas ou OS e não acessam a área do cliente desta oficina.',
+                    ]) ?>
+                </div>
 
                 <div class="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
                     <?= component('input', $campo('documento', [

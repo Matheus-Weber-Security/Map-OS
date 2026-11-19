@@ -57,6 +57,7 @@ $secoes = [
             <div class="flex flex-wrap items-center gap-2">
                 <h1 class="font-display text-heading-xl [overflow-wrap:anywhere] text-text"><?= e($cliente->nomeCliente) ?></h1>
                 <?= component('pill-status', $cliente->fornecedor ? ['label' => 'Fornecedor', 'variant' => 'info'] : ['label' => 'Cliente', 'variant' => 'neutral']) ?>
+                <?= component('pill-status', ! empty($cliente->ativo) ? ['label' => 'Ativo', 'variant' => 'success'] : ['label' => 'Inativo', 'variant' => 'danger']) ?>
             </div>
             <p class="text-caption text-muted"><?= e('Cliente nº ' . ($cliente->codigo ?? $id) . ($cliente->documento ? ' · ' . $cliente->documento : '')) ?></p>
         </div>

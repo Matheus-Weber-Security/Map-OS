@@ -440,6 +440,7 @@ class Os_model extends CI_Model
     {
         $this->db->select('idClientes, nomeCliente, telefone, celular, documento');
         $this->db->where('clientes.empresa_id', empresa_ativa_id());
+        $this->db->where('clientes.ativo', 1);
         $this->db->limit(25);
         $this->db->group_start();
         dbAplicarLikeCampos($this->db, ['nomeCliente', 'telefone', 'celular', 'documento'], $q);
@@ -527,7 +528,7 @@ class Os_model extends CI_Model
     {
         $this->db->where($chave, $id);
         if ($ativo) {
-            $this->db->where('situacao', 1);
+            $this->db->where($tabela === 'clientes' ? 'ativo' : 'situacao', 1);
         }
         if (in_array($tabela, ['clientes', 'produtos', 'servicos', 'garantias', 'os', 'lancamentos'], true)) {
             $this->db->where('empresa_id', empresa_ativa_id());

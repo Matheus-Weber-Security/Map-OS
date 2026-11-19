@@ -220,6 +220,7 @@ class Conecte_model extends CI_Model
             $this->db->or_where('documento', $documento);
         }
         $this->db->group_end();
+        $this->db->where('ativo', 1);
         $this->db->order_by('idClientes', 'desc');
 
         $clientes = $this->db->get('clientes')->result();

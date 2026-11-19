@@ -324,7 +324,7 @@ class Vendas_model extends CI_Model
     {
         $this->db->where($chave, $id);
         if ($ativo) {
-            $this->db->where('situacao', 1);
+            $this->db->where($tabela === 'clientes' ? 'ativo' : 'situacao', 1);
         }
         if (in_array($tabela, ['clientes', 'produtos', 'vendas', 'lancamentos'], true)) {
             $this->db->where('empresa_id', empresa_ativa_id());

@@ -91,6 +91,7 @@ class Mine extends CI_Controller
         $cliente = $this->db
             ->where('idClientes', $idClienteAlvo)
             ->where('email', $email)
+            ->where('ativo', 1)
             ->get('clientes')
             ->row();
 
@@ -356,6 +357,20 @@ class Mine extends CI_Controller
         // Busca todas as empresas vinculadas a este cliente
         $empresas = $this->Conecte_model->getEmpresasDoCliente($email, $clienteAutenticado->documento);
         $qtdEmpresas = count($empresas);
+
+        if ($qtdEmpresas === 0) {
+            echo json_encode([
+                'result' => false,
+                'message' => 'Seu cadastro nesta empresa está inativo. Entre em contato com a assistência para mais informações.',
+                'MAPOS_TOKEN' => $this->security->get_csrf_hash(),
+            ]);
+
+            return;
+        }
+
+        if (empty($clienteAutenticado->ativo)) {
+            $clienteAutenticado = $this->db->where('idClientes', $empresas[0]->cliente_id)->get('clientes')->row();
+        }
 
         $empresaAtivaId = (int) ($clienteAutenticado->empresa_id ?: 1);
         $empresaAtivaNome = 'Oficina #' . $empresaAtivaId;
@@ -843,7 +858,15 @@ class Mine extends CI_Controller
             redirect('mine');
         }
 
-        return (int) $this->session->userdata('cliente_id');
+        $clienteId = (int) $this->session->userdata('cliente_id');
+        $clienteChecagem = $this->db->select('idClientes, ativo')->where('idClientes', $clienteId)->get('clientes')->row();
+        if (! $clienteChecagem || empty($clienteChecagem->ativo)) {
+            $this->session->set_flashdata('error', 'Seu cadastro nesta empresa está inativo. Entre em contato com a oficina.');
+            $this->session->sess_destroy();
+            redirect('mine');
+        }
+
+        return $clienteId;
     }
 
     /**

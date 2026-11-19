@@ -36,6 +36,7 @@ $colunas = [
         'attrs' => ['title' => $c->email],
     ]) : ''],
     ['label' => 'Tipo', 'nowrap' => true, 'render' => fn ($c) => component('pill-status', $c->fornecedor ? ['label' => 'Fornecedor', 'variant' => 'info'] : ['label' => 'Cliente', 'variant' => 'neutral'])],
+    ['label' => 'Status', 'nowrap' => true, 'render' => fn ($c) => component('pill-status', ($c->ativo ?? 1) ? ['label' => 'Ativo', 'variant' => 'success'] : ['label' => 'Inativo', 'variant' => 'danger'])],
     ['label' => 'Ações', 'align' => 'right', 'nowrap' => true, 'render' => function ($c) use ($pode) {
         $tipo = $c->fornecedor ? 'fornecedor' : 'cliente';
         $itens = [
@@ -115,7 +116,7 @@ $vazio = $temFiltro
         </div>
     </header>
 
-    <form method="get" action="<?= e(site_url('clientes')) ?>" role="search" aria-label="Filtrar clientes" class="grid items-end gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-[minmax(0,1fr)_12rem_auto]">
+    <form method="get" action="<?= e(site_url('clientes')) ?>" role="search" aria-label="Filtrar clientes" class="grid items-end gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-[minmax(0,1fr)_10rem_10rem_auto]">
         <?= component('input', [
             'name' => 'pesquisa',
             'label' => 'Buscar',
@@ -130,6 +131,13 @@ $vazio = $temFiltro
             'placeholder' => 'Todos',
             'options' => ['cliente' => 'Clientes', 'fornecedor' => 'Fornecedores'],
             'selected' => $filtros['tipo'] ?? null,
+        ]) ?>
+        <?= component('select', [
+            'name' => 'status',
+            'label' => 'Situação',
+            'placeholder' => 'Todas',
+            'options' => ['ativo' => 'Ativos', 'inativo' => 'Inativos'],
+            'selected' => $filtros['status'] ?? null,
         ]) ?>
         <div class="flex gap-2">
             <?= component('button', ['label' => 'Filtrar', 'icon' => 'search', 'variant' => 'outline', 'type' => 'submit']) ?>

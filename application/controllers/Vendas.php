@@ -159,8 +159,9 @@ class Vendas extends MY_Controller
             }
 
             if ($erros === []) {
-                if (! $this->vendas_model->existe('clientes', 'idClientes', $dados['clientes_id'])) {
-                    $erros['cliente'] = 'Escolha um cliente da lista.';
+                $validarClienteAtivo = $venda === null;
+                if (! $this->vendas_model->existe('clientes', 'idClientes', $dados['clientes_id'], $validarClienteAtivo)) {
+                    $erros['cliente'] = $validarClienteAtivo ? 'Escolha um cliente ativo da lista.' : 'Escolha um cliente da lista.';
                 }
                 if (! $this->vendas_model->existe('usuarios', 'idUsuarios', $dados['usuarios_id'], true)) {
                     $erros['vendedor'] = 'Escolha um vendedor ativo da lista.';

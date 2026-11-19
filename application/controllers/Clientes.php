@@ -10,6 +10,7 @@ class Clientes extends MY_Controller
     public const FILTROS = [
         'pesquisa' => 'texto',
         'tipo' => ['cliente', 'fornecedor'],
+        'status' => ['ativo', 'inativo'],
     ];
 
     public function __construct()
@@ -790,6 +791,7 @@ class Clientes extends MY_Controller
                     'estado' => $estado,
                     'pessoa_fisica' => $pessoaFisica,
                     'fornecedor' => $tipo,
+                    'ativo' => 1,
                     'senha' => $senhaHash,
                     'dataCadastro' => date('Y-m-d'),
                 ];
