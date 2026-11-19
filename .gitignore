@@ -39,3 +39,6 @@ application/.env
 *.zip
 assets/userImage
 application/storage/
+
+# Documento de homologacao QA
+GUIA_TESTES_QA_MTS.pdf
