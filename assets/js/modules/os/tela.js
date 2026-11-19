@@ -457,4 +457,16 @@ export default function iniciar(raiz, { post = postPadrao, doc = document, naveg
             }
         }
     });
+
+    // Botão Salvar: permanece na mesma página e confirma com toast.
+    doc.addEventListener('click', (evento) => {
+        const botao = evento.target.closest?.('[data-os-salvar]');
+        if (!botao) {
+            return;
+        }
+
+        evento.preventDefault();
+        const mensagem = botao.dataset.msgSucesso || 'Salvo com sucesso.';
+        mostrarToast({ mensagem, variante: 'success' }, doc);
+    });
 }

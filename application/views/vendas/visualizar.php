@@ -211,7 +211,11 @@ $textos = $campos([
             'label' => 'Salvar',
             'icon' => 'check',
             'variant' => 'primary',
-            'href' => site_url('vendas'),
+            'type' => 'button',
+            'attrs' => [
+                'data-os-salvar' => true,
+                'data-msg-sucesso' => 'Venda salva com sucesso.',
+            ],
         ]) ?>
     </div>
 </div>

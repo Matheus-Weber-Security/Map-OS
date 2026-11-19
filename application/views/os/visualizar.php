@@ -265,7 +265,11 @@ $textos = [
             'label' => 'Salvar',
             'icon' => 'check',
             'variant' => 'primary',
-            'href' => site_url('os'),
+            'type' => 'button',
+            'attrs' => [
+                'data-os-salvar' => true,
+                'data-msg-sucesso' => 'Ordem de serviço salva com sucesso.',
+            ],
         ]) ?>
     </div>
 </div>
