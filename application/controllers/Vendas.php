@@ -929,6 +929,125 @@ class Vendas extends MY_Controller
         return $dv2 == $cnpj[13];
     }
     
+    public function enviar_email()
+    {
+        // Envia e-mail e grava log: só por POST (com CSRF), nunca por um link.
+        if ($this->input->method() !== 'post') {
+            redirect(site_url('vendas'));
+        }
+
+        if (! $this->uri->segment(3) || ! is_numeric($this->uri->segment(3))) {
+            $this->session->set_flashdata('error', 'Item não pode ser encontrado, parâmetro não foi passado corretamente.');
+            redirect('mapos');
+        }
+
+        if (! $this->permission->checkPermission($this->session->userdata('permissao'), 'eVenda')) {
+            $this->session->set_flashdata('error', 'Você não tem permissão para enviar Venda por e-mail.');
+            redirect(base_url());
+        }
+
+        $idVenda = (int) $this->uri->segment(3);
+        $referencia = (string) $this->input->server('HTTP_REFERER');
+        $destino = str_contains($referencia, 'vendas/visualizar/' . $idVenda)
+            ? site_url('vendas/visualizar/' . $idVenda)
+            : site_url('vendas') . listagemQuery($this->filtrosDaListagem());
+
+        $this->load->model('mapos_model');
+        $this->load->model('usuarios_model');
+        $this->data['result'] = $this->vendas_model->getById($idVenda);
+        if (! $this->data['result']) {
+            $this->session->set_flashdata('error', 'Venda não encontrada.');
+            redirect($destino);
+        }
+
+        $emailCliente = ! empty($this->data['result']->emailCliente) ? $this->data['result']->emailCliente : (! empty($this->data['result']->email) ? $this->data['result']->email : null);
+        if (empty($emailCliente)) {
+            $this->session->set_flashdata('error', 'O cliente não tem e-mail cadastrado.');
+            redirect($destino);
+        }
+
+        if (! filter_var($emailCliente, FILTER_VALIDATE_EMAIL)) {
+            $this->session->set_flashdata('error', 'Por favor preencha o email do cliente com um endereço válido.');
+            redirect($destino);
+        }
+
+        $this->data['produtos'] = $this->vendas_model->getProdutos($idVenda);
+        $this->data['emitente'] = $this->mapos_model->getEmitente();
+
+        if (empty($this->data['emitente']->email)) {
+            $this->session->set_flashdata('error', 'Efetue o cadastro dos dados de emitente');
+            redirect($destino);
+        }
+
+        $remetentes = [$emailCliente];
+
+        $enviouEmail = $this->enviarVendaPorEmail($idVenda, $remetentes, 'Venda #' . ($this->data['result']->codigo ?? $idVenda));
+
+        if ($enviouEmail) {
+            $this->session->set_flashdata('success', 'E-mail enviado para o cliente com sucesso.');
+            log_info('Enviou e-mail para o cliente: ' . $this->data['result']->nomeCliente . '. E-mail: ' . $emailCliente);
+            redirect($destino);
+        } else {
+            $this->session->set_flashdata('error', 'Não foi possível enviar o e-mail. Confira os detalhes no Log da página de e-mails.');
+            redirect($destino);
+        }
+    }
+
+    private function enviarVendaPorEmail($idVenda, $remetentes, $assunto)
+    {
+        $dados = [];
+
+        $this->load->model('mapos_model');
+        $dados['result'] = $this->vendas_model->getById($idVenda);
+        if (! $dados['result']) {
+            return false;
+        }
+
+        $emailCliente = ! empty($dados['result']->emailCliente) ? $dados['result']->emailCliente : (! empty($dados['result']->email) ? $dados['result']->email : null);
+        if (empty($emailCliente)) {
+            return false;
+        }
+
+        $dados['produtos'] = $this->vendas_model->getProdutos($idVenda);
+        $dados['emitente'] = $this->mapos_model->getEmitente();
+        $emitente = $dados['emitente'];
+        if (empty($emitente->email)) {
+            return false;
+        }
+
+        $html = $this->load->view('vendas/emails/venda', $dados, true);
+
+        $this->load->model('email_model');
+
+        $empresaId = (int) ($dados['result']->empresa_id ?? ($this->session->userdata('empresa_id') ?: 1));
+        $enviadosComSucesso = 0;
+        $tentativas = 0;
+
+        $remetentes = array_unique($remetentes);
+        foreach ($remetentes as $remetente) {
+            if ($remetente) {
+                $tentativas++;
+                $headers = ['From' => '"' . $emitente->nome . '" <' . $emitente->email . '>', 'Subject' => $assunto, 'Return-Path' => ''];
+                $email = [
+                    'empresa_id' => $empresaId,
+                    'to' => $remetente,
+                    'message' => $html,
+                    'status' => 'pending',
+                    'date' => date('Y-m-d H:i:s'),
+                    'headers' => json_encode($headers),
+                ];
+                $res = $this->email_model->enviarImediato($email);
+                if (! empty($res['enviado'])) {
+                    $enviadosComSucesso++;
+                }
+            } else {
+                log_info('Email não adicionado a Lista de envio de e-mails. Verifique se o remetente esta cadastrado. Venda ID: ' . $idVenda);
+            }
+        }
+
+        return $tentativas > 0 && $enviadosComSucesso > 0;
+    }
+
     public function formatarChave($chave)
     {
         if ($this->validarCPF($chave)) {

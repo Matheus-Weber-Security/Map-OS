@@ -283,6 +283,7 @@ $config['permissions_map'] = [
         'imprimirVendaOrcamento' => 'vVenda',
         'adicionar' => 'aVenda',
         'editar' => 'eVenda',
+        'enviar_email' => 'eVenda',
         // Produtos, desconto e faturamento da tela da venda (JSON). Os
         // autocompletes de produto, cliente e vendedor são os de
         // os/autoComplete*, que aceitam aVenda e eVenda.

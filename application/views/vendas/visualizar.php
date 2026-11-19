@@ -61,6 +61,12 @@ $textos = $campos([
             <?= component('button', ['label' => 'Imprimir', 'icon' => 'printer', 'variant' => 'ghost', 'href' => site_url('vendas/imprimir/' . $idVenda), 'attrs' => ['target' => '_blank', 'rel' => 'noopener']]) ?>
             <?= component('button', ['label' => 'Orçamento', 'icon' => 'file-text', 'variant' => 'ghost', 'href' => site_url('vendas/imprimirVendaOrcamento/' . $idVenda), 'attrs' => ['target' => '_blank', 'rel' => 'noopener']]) ?>
             <?= component('button', ['label' => 'Cupom 80mm', 'icon' => 'receipt', 'variant' => 'ghost', 'href' => site_url('vendas/imprimirTermica/' . $idVenda), 'attrs' => ['target' => '_blank', 'rel' => 'noopener']]) ?>
+            <?php if ($pode['editar']) { ?>
+                <form method="post" action="<?= e(site_url('vendas/enviar_email/' . $idVenda)) ?>" class="inline">
+                    <input type="hidden" name="<?= e($this->security->get_csrf_token_name()) ?>" value="<?= e($this->security->get_csrf_hash()) ?>">
+                    <?= component('button', ['label' => 'E-mail', 'icon' => 'mail', 'variant' => 'ghost', 'type' => 'submit']) ?>
+                </form>
+            <?php } ?>
             <?php if ($pode['cobrar'] && $gateways !== []) { ?>
                 <?= component('button', ['label' => 'Gerar cobrança', 'icon' => 'banknote', 'variant' => 'ghost', 'attrs' => ['data-modal-abrir' => 'gerar-cobranca']]) ?>
             <?php } elseif ($cobranca !== null && $pode['ver_cobranca']) { ?>

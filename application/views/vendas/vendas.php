@@ -15,6 +15,7 @@
  * @var array{adicionar: bool, editar: bool, excluir: bool} $pode
  */
 $temFiltro = $filtros !== [];
+$query = listagemQuery($filtros);
 
 $colunas = [
     ['label' => 'Nº', 'align' => 'right', 'nowrap' => true, 'render' => fn ($v) => (string) ($v->codigo ?? $v->idVendas)],
@@ -30,7 +31,7 @@ $colunas = [
     }],
     ['label' => 'Status', 'nowrap' => true, 'render' => fn ($v) => component('pill-status', osStatusPill($v->status))],
     ['label' => 'Total', 'align' => 'right', 'nowrap' => true, 'render' => fn ($v) => dinheiro($v->total)],
-    ['label' => 'Ações', 'align' => 'right', 'nowrap' => true, 'render' => function ($v) use ($pode, $controle_edicao) {
+    ['label' => 'Ações', 'align' => 'right', 'nowrap' => true, 'render' => function ($v) use ($pode, $controle_edicao, $query) {
         $numero = 'venda ' . ($v->codigo ?? $v->idVendas);
         // Mesma regra da OS: faturada ou cancelada só edita com a configuração ligada.
         $editavel = osEditavel($v, $pode['editar'], $controle_edicao);
@@ -43,6 +44,17 @@ $colunas = [
         $itens[] = ['label' => 'Imprimir', 'icon' => 'printer', 'href' => site_url('vendas/imprimir/' . $v->idVendas), 'attrs' => ['target' => '_blank', 'rel' => 'noopener']];
         $itens[] = ['label' => 'Cupom 80mm', 'icon' => 'receipt', 'href' => site_url('vendas/imprimirTermica/' . $v->idVendas), 'attrs' => ['target' => '_blank', 'rel' => 'noopener']];
         $itens[] = osMenuItemWhatsApp($v->whatsapp ?? null);
+        if ($pode['editar']) {
+            $itens[] = [
+                'label' => 'Enviar Email',
+                'icon' => 'mail',
+                'attrs' => [
+                    'type' => 'submit',
+                    'form' => 'form-acao-venda',
+                    'formaction' => site_url('vendas/enviar_email/' . $v->idVendas) . $query,
+                ],
+            ];
+        }
         // Como na v4: excluir exige dVenda e uma venda que ainda pode ser alterada (eVenda não entra).
         if ($pode['excluir'] && osEditavel($v, true, $controle_edicao)) {
             $itens[] = ['separador' => true];
@@ -129,8 +141,12 @@ $resumo = ($total === 1 ? '1 venda' : number_format($total, 0, ',', '.') . ' ven
     <?= listagemPaginacao($paginacao, $filtros, site_url('vendas')) ?>
 </div>
 
+<form id="form-acao-venda" method="post" action="<?= e(site_url('vendas')) ?>" hidden>
+    <input type="hidden" name="<?= e($this->security->get_csrf_token_name()) ?>" value="<?= e($this->security->get_csrf_hash()) ?>">
+</form>
+
 <?php if ($pode['excluir']) { ?>
-    <form id="form-excluir-venda" method="post" action="<?= e(site_url('vendas/excluir') . listagemQuery($filtros)) ?>" hidden>
+    <form id="form-excluir-venda" method="post" action="<?= e(site_url('vendas/excluir') . $query) ?>" hidden>
         <input type="hidden" name="<?= e($this->security->get_csrf_token_name()) ?>" value="<?= e($this->security->get_csrf_hash()) ?>">
         <input type="hidden" name="id" value="" data-modal-de="excluir-venda" data-modal-valor="id">
     </form>
