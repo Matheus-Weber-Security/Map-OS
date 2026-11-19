@@ -196,6 +196,21 @@ if (! function_exists('vendaFaturaDoFormulario')) {
     }
 }
 
+if (! function_exists('vendaTokenPublico')) {
+    /**
+     * Gera um token seguro para visualização pública e download do cupom da Venda pelo cliente.
+     */
+    function vendaTokenPublico(object $venda): string
+    {
+        $id = (int) ($venda->idVendas ?? 0);
+        $clienteId = (int) ($venda->clientes_id ?? 0);
+        $empresaId = (int) ($venda->empresa_id ?? 1);
+        $segredo = config_item('encryption_key') ?: 'nexus_ticket_venda_token_secret';
+
+        return substr(hash_hmac('sha256', "venda:{$id}:{$clienteId}:{$empresaId}", $segredo), 0, 32);
+    }
+}
+
 if (! function_exists('vendaDadosWhatsApp')) {
     /**
      * Telefone normalizado e resumo da venda para o link de WhatsApp (wa.me).
@@ -205,14 +220,22 @@ if (! function_exists('vendaDadosWhatsApp')) {
      */
     function vendaDadosWhatsApp(object $venda, ?object $emitente, float $total): ?array
     {
-        $telefone = osTelefoneWhatsApp(($venda->celular_cliente ?? null) ?: ($venda->telefone_cliente ?? null));
+        $telefone = osTelefoneWhatsApp(($venda->celular_cliente ?? null) ?: ($venda->telefone_cliente ?? null) ?: ($venda->celular ?? null) ?: ($venda->telefone ?? null));
+        if ($telefone === null) {
+            return null;
+        }
+
+        $idVenda = (int) ($venda->idVendas ?? 0);
+        $numeroVenda = (string) ($venda->codigo ?? $idVenda);
+        $token = vendaTokenPublico($venda);
+        $linkVenda = site_url("publico/venda/{$idVenda}/{$token}");
         if ($telefone === null) {
             return null;
         }
 
         $cliente = trim((string) ($venda->nomeCliente ?? 'Cliente'));
         $texto = sprintf(
-            'Olá %s! Seguem os dados da Venda #%d (%s) no valor total de %s.',
+            'Olá %s! Seguem os dados da Venda #%s (%s) no valor total de %s.',
             $cliente,
             (int) $venda->idVendas,
             (string) ($venda->status ?? ''),
