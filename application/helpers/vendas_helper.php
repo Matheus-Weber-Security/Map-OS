@@ -237,7 +237,7 @@ if (! function_exists('vendaDadosWhatsApp')) {
         $texto = sprintf(
             'Olá %s! Seguem os dados da Venda #%s (%s) no valor total de %s.',
             $cliente,
-            (int) $venda->idVendas,
+            $numeroVenda,
             (string) ($venda->status ?? ''),
             dinheiro($total)
         );
